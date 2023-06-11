@@ -1,0 +1,101 @@
+{
+    "altitudes": {
+        "groundLevel": 608,
+        "handOff": 2500
+    },
+    "VOR": [
+        {
+            "name": "GFE",
+            "symbol": "TRIANGLE",
+            "x": 205,
+            "y": 103
+        },
+        {
+            "name": "LFT",
+            "symbol": "CIRCLES",
+            "x": 88,
+            "y": 33
+        },
+        {
+            "name": "XCY",
+            "symbol": "STAR",
+            "x": 99,
+            "y": 300
+        },
+        {
+            "name": "RYO",
+            "symbol": "CIRCLES",
+            "x": 499,
+            "y": 600
+        },
+        {
+            "name": "BIX",
+            "symbol": "STAR",
+            "x": 1023,
+            "y": 808
+        }
+    ],
+    "runways": [
+        {
+            "number": 1,
+            "headL": {
+                "x": 569,
+                "y": 433,
+                "tag": {
+                    "text": "10",
+                    "xy": [
+                        550,
+                        425
+                    ],
+                    "heading": 95.19
+                }
+            },
+            "headR": {
+                "x": 624,
+                "y": 438,
+                "tag": {
+                    "text": "28",
+                    "xy": [
+                        628,
+                        435
+                    ],
+                    "heading": 275.19
+                }
+            },
+            "width": 2
+        },
+        {
+            "number": 2,
+            "headL": {
+                "x": 552,
+                "y": 443,
+                "tag": {
+                    "text": "15",
+                    "xy": [
+                        534,
+                        434
+                    ],
+                    "heading": 145.95
+                }
+            },
+            "headR": {
+                "x": 577,
+                "y": 480,
+                "tag": {
+                    "text": "33",
+                    "xy": [
+                        575,
+                        483
+                    ],
+                    "heading": 325.95
+                }
+            },
+            "width": 3
+        }
+    ],
+    "callsigns": [
+        "SW",
+        "AA",
+        "DL"
+    ]
+}

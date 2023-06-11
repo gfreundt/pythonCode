@@ -1,0 +1,167 @@
+{
+    "altitudes": {
+        "groundLevel": 34,
+        "handOff": 2500
+    },
+    "VOR": [
+        {
+            "name": "PAPAR",
+            "symbol": "STAR",
+            "x": 698,
+            "y": 20
+        },
+        {
+            "name": "MAXMO",
+            "symbol": "STAR",
+            "x": 1654,
+            "y": 22
+        },
+        {
+            "name": "PUVAL",
+            "symbol": "STAR",
+            "x": 1862,
+            "y": 37
+        },
+        {
+            "name": "ORLIK",
+            "symbol": "STAR",
+            "x": 294,
+            "y": 167
+        },
+        {
+            "name": "TOSBO",
+            "symbol": "STAR",
+            "x": 789,
+            "y": 324
+        },
+        {
+            "name": "RAGSO",
+            "symbol": "STAR",
+            "x": 1718,
+            "y": 377
+        },
+        {
+            "name": "RANBI",
+            "symbol": "STAR",
+            "x": 17,
+            "y": 692
+        },
+        {
+            "name": "SHJ",
+            "symbol": "CIRCLES",
+            "x": 1482,
+            "y": 622
+        },
+        {
+            "name": "LADVI",
+            "symbol": "STAR",
+            "x": 1436,
+            "y": 716
+        },
+        {
+            "name": "LALDO",
+            "symbol": "STAR",
+            "x": 2232,
+            "y": 717
+        },
+        {
+            "name": "BUBOK",
+            "symbol": "STAR",
+            "x": 1682,
+            "y": 875
+        },
+        {
+            "name": "MOGAV",
+            "symbol": "STAR",
+            "x": 902,
+            "y": 1063
+        },
+        {
+            "name": "BUBIN",
+            "symbol": "STAR",
+            "x": 2229,
+            "y": 1218
+        },
+        {
+            "name": "MIADA",
+            "symbol": "STAR",
+            "x": 570,
+            "y": 1501
+        },
+        {
+            "name": "GIDIS",
+            "symbol": "STAR",
+            "x": 2231,
+            "y": 1503
+        },
+        {
+            "name": "TEST",
+            "symbol": "CIRCLES",
+            "x": 2050,
+            "y": 1350
+        }
+    ],
+    "runways": [
+        {
+            "number": 1,
+            "headL": {
+                "x": 1124,
+                "y": 750,
+                "tag": {
+                    "text": "12L",
+                    "xy": [
+                        1075,
+                        740
+                    ],
+                    "heading": 95.19
+                }
+            },
+            "headR": {
+                "x": 1220,
+                "y": 806,
+                "tag": {
+                    "text": "30R",
+                    "xy": [
+                        1270,
+                        810
+                    ],
+                    "heading": 275.19
+                }
+            },
+            "width": 3
+        },
+        {
+            "number": 2,
+            "headL": {
+                "x": 1126,
+                "y": 765,
+                "tag": {
+                    "text": "12R",
+                    "xy": [
+                        1276,
+                        715
+                    ],
+                    "heading": 145.95
+                }
+            },
+            "headR": {
+                "x": 1223,
+                "y": 820,
+                "tag": {
+                    "text": "30L",
+                    "xy": [
+                        1273,
+                        825
+                    ],
+                    "heading": 325.95
+                }
+            },
+            "width": 3
+        }
+    ],
+    "callsigns": [
+        "SW",
+        "AA",
+        "DL"
+    ]
+}
