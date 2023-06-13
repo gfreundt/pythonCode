@@ -6,6 +6,8 @@ from selenium.webdriver.chrome.service import Service
 
 
 class ChromePreLoad:
+    """Returns a ChromeDriver object with commonly used parameters allowing for some optional settings"""
+
     def init_driver(self=None, **kwargs):
         # set defaults that can be overridden by passed parameters
         parameters = {
