@@ -18,7 +18,7 @@ def load_webdriver():
     options.add_argument("--log-level=3")
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
     return webdriver.Chrome(
-        service=Service(os.path.join(r"C:\pythonCode", "chromedriver.exe")),
+        service=Service(os.path.join(r"C:\pythonCode\Resources", "chromedriver.exe")),
         options=options,
     )
 
@@ -49,11 +49,12 @@ while True:
     )
     webd.switch_to.frame("TaskListFrame")
     solpeds = webd.find_elements(By.ID, "GridView1$ctl02_table")
+    print("elements:", solpeds)
     if solpeds:
         counter += 1
-        solpeds[-1].click()
+        solpeds[0].click()
     else:
-        webd.close()
+        webd.quit()
         break
     time.sleep(3)
     keyboard.press_and_release("enter")
