@@ -49,7 +49,8 @@ while True:
     )
     webd.switch_to.frame("TaskListFrame")
     solpeds = webd.find_elements(By.ID, "GridView1$ctl02_table")
-    print("elements:", solpeds)
+    print("elements:", solpeds, len(solpeds))
+    print("-------------------")
     if solpeds:
         counter += 1
         solpeds[0].click()
