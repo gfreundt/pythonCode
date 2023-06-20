@@ -1,5 +1,17 @@
 import time
 import random
+import sys, os
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+sys.path.append(r"\pythonCode\Resources\Scripts")
+from gft_utils import ChromePreLoad
+
+webdriver = ChromePreLoad.init_driver()
+
+webdriver.get("https://www.nytimes.com/games/wordle/index.html")
 
 
 class Wordle:
@@ -125,7 +137,35 @@ class Wordle:
             turn += 1
 
 
+def login():
+    email = "gabfre@gmail.com"
+    password = "A4Dh$yta#n#iDr_"
+
+    button = wait.until(
+        EC.element_to_be_clickable(
+            (By.XPATH, "/html/body/div/div/div/div/div[3]/a/button")
+        )
+    )
+    button.click()
+    time.sleep(3)
+
+    input = wait.until(EC.presence_of_element_located((By.ID, "email")))
+    input.send_keys(email)
+    time.sleep(0.5)
+    input.send_keys(Keys.RETURN)
+
+    input = wait.until(EC.presence_of_element_located((By.ID, "password")))
+    input.send_keys(password)
+    time.sleep(0.5)
+    input.send_keys(Keys.RETURN)
+    time.sleep(2)
+
+
+time.sleep(100)
+
+
 def main():
+    os.chdir(os.path.join(r"\pythonCode", "Automation", "Wordle"))
     WORDLE = Wordle()
     starting_words = WORDLE.allWords
     random.shuffle(starting_words)
@@ -134,7 +174,7 @@ def main():
         total_attempts, unsolved = 0, 0
         start = time.perf_counter()
         test = [i.upper().strip() for i in open("allWordleAnswers.txt").readlines()]
-        test = ["BEAST"]  # , "SPATE", "TOUGH", "POINT"]
+        test = ["SHYLY"]  # , "SPATE", "TOUGH", "POINT"]
         for word in test:
             WORDLE.tryWord = starting_word
             attempts = WORDLE.solve(word)

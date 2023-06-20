@@ -1,25 +1,36 @@
 import time
-import platform
+import sys, os
+import random
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as WebDriverOptions
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.keys import Keys
 import base64
 import numpy as np
 from PIL import Image
 from io import BytesIO
 
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
+
+# Custom imports
+sys.path.append(r"\pythonCode\Resources\Scripts")
+from gft_utils import ChromeUtils
+
 
 class Wordle:
     def __init__(self):
         # define variables
+        base_path = os.path.join(r"\pythonCode", "Automation", "Wordle")
         self.allWords = [
-            i.strip().upper() for i in open("wordleDictionary.txt", "r").readlines()
+            i.strip().upper()
+            for i in open(
+                os.path.join(base_path, "wordleDictionary.txt"), "r"
+            ).readlines()
         ]
         print("Dictionary Loaded...")
         self.rank = self.frequency()
+        print("Frequency Calculated...")
         self.GREEN = [106, 170, 100, 255]
         self.YELLOW = [201, 180, 88, 255]
         self.GRAY = [120, 124, 126, 255]
@@ -27,26 +38,24 @@ class Wordle:
         self.BLACK = [0, 0, 0, 255]
         self.reset()
         # define options for Chromedriver and open URL
-        options = WebDriverOptions()
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--silent")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--windows-size=1920,1080")
-        # options.add_argument("--headless")
-        # options.add_argument("--incognito")
-        options.add_argument("--log-level=3")
-        options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        options.add_experimental_option("useAutomationExtension", False)
+        self.webd = ChromeUtils.init_driver(headless=False)
         web_url = "https://www.nytimes.com/games/wordle/index.html"
-        chromedriver_uri = (
-            "C:\pythonCode\chromedriver.exe"
-            if "Windows" in platform.uname().system
-            else "/usr/bin/chromedriver"
-        )
-        self.webd = webdriver.Chrome(service=Service(chromedriver_uri), options=options)
         self.webd.get(web_url)
         self.login()
+        print("Logging in completed")
+        time.sleep(7)
         # load virtual keyboard dictionary of elements
+
+        f = self.webd.find_elements(By.XPATH, "//*")
+
+        for i in f:
+            print("TEXT", i.text)
+            print("-----")
+            print("CLASS", i.get_attribute("class"))
+            print("-----")
+            print(i)
+            print("****************")
+
         self.keys = {
             i: j
             for i, j in zip(
@@ -56,73 +65,6 @@ class Wordle:
         }
         # load list of row elements
         self.rows = self.webd.find_elements(By.CLASS_NAME, "Row-module_row__pwpBq")
-
-    def login(self):
-        time.sleep(3)
-
-        # Press "Log In"
-        button = None
-        while not button:
-            print("Waiting to Log In...")
-            button = self.webd.find_elements(By.XPATH, "//button")
-            time.sleep(0.5)
-        button[1].click()
-
-        # Press Continue
-        button = None
-        while not button:
-            print("Sign-in with Google")
-            button = self.webd.find_elements(By.XPATH, "//button")
-            time.sleep(0.5)
-        button[1].click()
-
-        # Enter email address
-        """
-        email = None
-        while not email:
-            print("Entering email")
-            email = self.webd.find_elements(By.ID, "email")
-            time.sleep(0.5)
-        email[0].send_keys("gabfre@gmail.com")
-        """
-        # Switch to pop-up window
-        windows = "."
-        while len(windows) < 2:
-            windows = self.webd.window_handles
-        self.webd.switch_to.window(windows[1])
-
-        # Enter email address
-        email = None
-        while not email:
-            email = self.webd.find_elements(By.XPATH, "//input")
-            time.sleep(0.5)
-            print("1------", email)
-        email[0].send_keys("gabfre")
-        email[0].send_keys(Keys.ENTER)
-
-        time.sleep(10)
-
-        # Enter password
-        passwd = None
-        while not passwd:
-            passwd = self.webd.find_elements(By.XPATH, "//input")
-            time.sleep(0.5)
-        passwd[1].send_keys("Holiday21*!")
-        passwd[1].send_keys(Keys.ENTER)
-
-        # Switch back to main window
-        self.webd.switch_to.window(windows[0])
-
-        # Clear instruction pop-up
-        button = None
-        while not button:
-            button = self.webd.find_elements(
-                By.CLASS_NAME, "Modal-module_closeIcon__TcEKb"
-            )
-            time.sleep(0.5)
-        button[0].click()
-
-        time.sleep(3)
 
     def frequency(self):
         count = [[chr(i), 0] for i in range(65, 91)]
@@ -140,7 +82,52 @@ class Wordle:
             set(),
             set(),
         )
-        self.tryWord = "STRIP"
+        self.tryWord = random.choice(
+            ["AROSE", "REACT", "ADIEU", "LATER", "SIRED", "TEARS", "ALONE"]
+        )
+
+    def slow_key_sender(self, element, text, return_key=False):
+        for key in text:
+            time.sleep(random.randint(1, 10) / 10)
+            element.send_keys(key)
+        if return_key:
+            time.sleep(0.4)
+            element.send_keys(Keys.RETURN)
+
+    def clicker(self, webdriver, type, element, timeout=20, fatal_error=False):
+        try:
+            WebDriverWait(webdriver, timeout).until(
+                EC.element_to_be_clickable((type, element))
+            ).click()
+        except TimeoutException:
+            if fatal_error:
+                print("Webpage failed to load.")
+                quit()
+
+    def login(self):
+        email = "gabfre@gmail.com"
+        password = "A4Dh$yta#n#iDr_"
+
+        wait = WebDriverWait(self.webd, 100)
+
+        # click on ACCEPT cookies
+        self.clicker(self.webd, By.ID, element="pz-gdpr-btn-accept", fatal_error=False)
+        time.sleep(3)
+        # click on Log In button
+        button = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "/html/body/div/div/div/div/div[3]/a/button")
+            )
+        )
+        button.click()
+        time.sleep(3)
+        # enter email
+        input = wait.until(EC.presence_of_element_located((By.ID, "email")))
+        self.slow_key_sender(input, email, return_key=True)
+        # enter password
+        input = wait.until(EC.presence_of_element_located((By.ID, "password")))
+        self.slow_key_sender(input, password, return_key=True)
+        time.sleep(2)
 
     def write(self, word, enter=True):
         for letter in word:
@@ -157,7 +144,7 @@ class Wordle:
             )
         )
 
-        self.rows[active_row].screenshot(f"img_{active_row}.png")
+        # self.rows[active_row].screenshot(f"img_{active_row}.png")
 
         for position in range(5):
             pixel = img[46][25 + 62 * position]
@@ -169,21 +156,18 @@ class Wordle:
                 self.gray_letter(position)
 
     def green_letter(self, position):
-        print("Green")
         letter = self.tryWord[position]
         self.solvedWord[position] = letter
         self.presentLetters.update(letter)
         self.solvedLetters.update(letter)
 
     def yellow_letter(self, position):
-        print("Yellow")
         letter = self.tryWord[position]
         if letter in self.solvedWord[position]:
             self.solvedWord[position].remove(letter)
             self.presentLetters.update(letter)
 
     def gray_letter(self, position):
-        print("Gray")
         letter = self.tryWord[position]
         for pos, _ in enumerate(self.solvedWord):
             if letter in self.solvedWord[pos]:
@@ -226,17 +210,18 @@ class Wordle:
 def main():
     start = time.perf_counter()
     WORDLE = Wordle()
+
     turn = 0
     while turn <= 5:
         print(f"\nTurn: {turn}. Trying {WORDLE.tryWord}")
-        try:
-            WORDLE.write(WORDLE.tryWord)
-        except:
+        # try:
+        WORDLE.write(WORDLE.tryWord)
+        """except:
             print(
                 f"Found {WORDLE.tryWord} in {turn} tries ({time.perf_counter()-start:.1f} seconds)."
             )
-            return
-        time.sleep(5)
+            return"""
+        time.sleep(3)
         WORDLE.process_colors(turn)
         possible_words = [i for i in WORDLE.allWords if WORDLE.word_possible(i)]
         WORDLE.get_next_best_word(possible_words)

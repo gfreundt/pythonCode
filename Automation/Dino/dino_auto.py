@@ -1,38 +1,9 @@
 import keyboard
 import time
 import sys
-
-# from selenium import webdriver
-# from selenium.webdriver.chrome.options import Options as WebDriverOptions
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.chrome.service import Service
 import pyautogui as pyag
 import threading
 import uuid
-
-
-def load_webdriver():
-    """Define options for Chromedriver"""
-    options = WebDriverOptions()
-    options.add_argument("--window-size=800,400")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--silent")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--incognito")
-    options.add_argument("--log-level=3")
-    options.add_experimental_option("excludeSwitches", ["enable-logging"])
-    options.add_experimental_option("useAutomationExtension", False)
-    return webdriver.Chrome(
-        service=Service("C:\pythonCode\chromedriver.exe"), options=options
-    )
-
-
-# open browser and navigate
-# webdriver = load_webdriver()
-# url = "chrome://dino/"
-# webdriver.set_window_position(4000, 0, windowHandle="current")
-# webdriver.get(url)
-# //*[@id="main-frame-error"]/div[4]/canvas
 
 
 class Dino:
