@@ -11,7 +11,7 @@ import keyboard
 def load_webdriver():
     """Define options for Chromedriver"""
     options = WebDriverOptions()
-    # options.add_argument("--window-size=1920,1080")
+    # options.add_argument("--headless")
     options.add_argument("--silent")
     options.add_argument("--disable-notifications")
     options.add_argument("--incognito")
@@ -28,7 +28,7 @@ def approve(solped):
 
 
 def login():
-    time.sleep(5)
+    time.sleep(3)
     keyboard.write("gfreundt")
     keyboard.press_and_release("tab")
     keyboard.write("Subaru21")
@@ -42,6 +42,7 @@ webd.get(url)
 login()
 
 counter = 0
+list_of_approvals = []
 
 while True:
     WebDriverWait(webd, 10).until(
@@ -49,11 +50,18 @@ while True:
     )
     webd.switch_to.frame("TaskListFrame")
     solpeds = webd.find_elements(By.ID, "GridView1$ctl02_table")
-    print("elements:", solpeds, len(solpeds))
-    print("-------------------")
     if solpeds:
+        details = solpeds[0].text
         counter += 1
-        solpeds[0].click()
+        if "SOLPED" not in details:
+            solpeds[0].click()
+            time.sleep(2)
+            second_click = webd.find_element(
+                By.XPATH, '//*[@id="SVMenuOperation_0"]/tbody/tr/td[2]'
+            )
+            second_click.click()
+        else:
+            solpeds[0].click()
     else:
         webd.quit()
         break
@@ -64,6 +72,12 @@ while True:
         EC.presence_of_element_located((By.ID, "Approve"))
     )
     button.click()
+    list_of_approvals.append(details)
     time.sleep(10)
 
-print(f"Completo con {counter} aprobaciones.")
+if list_of_approvals:
+    print(f"Completo con {counter} aprobaciones:")
+    for a in list_of_approvals:
+        print(a)
+else:
+    print("Nada que aprobar.")
