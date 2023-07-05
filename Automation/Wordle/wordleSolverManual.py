@@ -148,5 +148,3 @@ def main():
 
 
 main()
-# W = Wordle()
-# W.process_colors(0)
