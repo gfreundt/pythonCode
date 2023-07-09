@@ -5,15 +5,21 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 import pygame
 from pygame.locals import *
-from gtts import gTTS
+
+# from gtts import gTTS
 
 
 pygame.init()
 
 
 # TODO: when landing, intercept heading first
-# TODO: pause
 
+# TODO: split arrival and departures into cols
+# TODO: help
+# TODO: confirm exit when ESC
+# TODO: complete audio
+# TODO: intro menu to select airspace and level
+# TODO: score in table
 # TODO: expedite
 
 # TODO: color for text when score +1 or -1
@@ -21,10 +27,11 @@ pygame.init()
 # TODO: multi-command line
 # TODO: priority departure
 # TODO: emergency landing
+# TODO: clear tags F key
+# TODO: fix collision
 
 
 class Environment:
-
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
@@ -32,21 +39,51 @@ class Environment:
     BG = (25, 72, 80)
     BG_CONTROLS = (0, 102, 102)
     INV_COLORS = [(44, 93, 118), (74, 148, 186)]
+    RESOURCES_PATH = os.path.join("D:", r"\pythonCode", "Resources", "Fonts")
 
-    FONT9 = pygame.font.Font("seguisym.ttf", 9)
-    FONT12 = pygame.font.Font("seguisym.ttf", 12)
-    FONT14 = pygame.font.Font("seguisym.ttf", 14)
-    FONT20 = pygame.font.Font("roboto.ttf", 20)
+    FONT9 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 9)
+    FONT12 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 12)
+    FONT14 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 14)
+    FONT20 = pygame.font.Font(os.path.join(RESOURCES_PATH, "roboto.ttf"), 20)
     SCALE = 90
     SPEED = 1
     FPS = 60
+    NUMPAD_KEYS = {
+        K_KP0: "0",
+        K_KP1: "1",
+        K_KP2: "2",
+        K_KP3: "3",
+        K_KP4: "4",
+        K_KP5: "5",
+        K_KP6: "6",
+        K_KP7: "7",
+        K_KP8: "8",
+        K_KP9: "9",
+    }
+    FUNCTION_KEYS = {
+        K_F1: "F1",
+        K_F2: "F2",
+        K_F3: "F3",
+        K_F4: "F4",
+        K_F5: "F5",
+        K_F6: "F6",
+        K_F7: "F7",
+        K_F8: "F8",
+        K_F9: "F9",
+        K_F10: "F10",
+        K_F11: "F11",
+        K_F12: "F12",
+    }
 
     MAX_AIRPLANES = 9
+    with open("atc-airplanes.json", mode="r") as json_file:
+        airplaneData = json.loads(json_file.read())
     MESSAGE_DISPLAY_TIME = 20  # seconds
     ILS_ANGLE = 20  # degrees
     ILS_HEADING = 30  # degrees
     MIN_V_SEPARATION = 1000
     MIN_H_SEPARATION = 60
+
     ERRORS = [
         "*VOID*",
         "Last Command not Understood",
@@ -64,18 +101,21 @@ class Environment:
         "goArounds": 0,
         "total": 0,
     }
-    simTimeBegin = dt.now()
+    simTime = dt.now() - dt.now()
+    simTimeSplit = dt.now()
 
     # random wind speed and direction
     windSpeed = random.randint(0, 30)
     windDirection = random.randint(0, 360)
 
+    # general display variables
+    tagActive = True
+
 
 class Airspace:
     def __init__(self, *args) -> None:
         # load plane tech spec data from json file
-        with open("atc-airplanes.json", mode="r") as json_file:
-            self.airplaneData = json.loads(json_file.read())
+
         self.activeAirplanes = []
         self.lastCallSign = ""
         self.init_pygame()
@@ -88,8 +128,8 @@ class Airspace:
         self.displaySurface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.DISPLAY_WIDTH = pygame.display.Info().current_w
         self.DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.07
-        print(self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT)
-        print(pygame.display.get_desktop_sizes())
+        # print(self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT)
+        # print(pygame.display.get_desktop_sizes())
         self.RADAR_WIDTH = int(self.DISPLAY_WIDTH * 0.75)
         self.RADAR_HEIGHT = self.DISPLAY_HEIGHT
         self.CONTROLS_WIDTH = int(self.DISPLAY_WIDTH * 0.25)
@@ -274,7 +314,7 @@ class Airspace:
             ],
         ]
 
-    def load_new_plane(self, selected, inbound):
+    def load_new_plane(self, model, inbound):
         callSign = random.choice(ATC.airspaceInfo["callsigns"]) + str(
             random.randint(1000, 9999)
         )
@@ -298,7 +338,7 @@ class Airspace:
                 ATC.airspaceInfo["runways"][0]["headL"]["x"],
                 ATC.airspaceInfo["runways"][0]["headL"]["y"],
             ) + random.randint(-30, 30)
-            altitude = random.randint(5000, 20000)
+            altitude = random.randint(5000, 8000)
             speed = random.randint(180, 300)
             isGround = False
             finalDestination = {"x": 0, "y": 0}
@@ -323,9 +363,9 @@ class Airspace:
             # time to wait till ordered to head and getting there
         # add airplane instance to active planes
         _p = Airplane(
-            aircraft=selected,
+            aircraft=model,
             callSign=callSign,
-            fixedInfo=self.airplaneData[selected],
+            fixedInfo=ENV.airplaneData[model],
             x=x,
             y=y,
             heading=heading,
@@ -459,7 +499,7 @@ class Airspace:
 
             # recalculate descent rate if plane is landing
             if plane.isLanding and not plane.isGround:
-                s = math.sqrt(
+                _s = math.sqrt(
                     (plane.x - plane.goToFixed[0]) ** 2
                     + (plane.y - plane.goToFixed[1]) ** 2
                 )
@@ -468,7 +508,7 @@ class Airspace:
                 plane.descentRate = max(
                     plane.descentRate,
                     -(plane.altitude - plane.altitudeTo)
-                    / (s / (plane.speed / ENV.SCALE)),
+                    / (_s / (plane.speed / ENV.SCALE)),
                 )
 
                 # check if touchdown (safe or go-around)
@@ -601,6 +641,10 @@ class Airspace:
                     "",
                 )
 
+        # process timer
+        ENV.simTime += dt.now() - ENV.simTimeSplit
+        ENV.simTimeSplit = dt.now()
+
     def check_collision(self, plane):
         for other_plane in ATC.activeAirplanes:
             if (
@@ -631,6 +675,14 @@ class Airspace:
                     return
                 else:
                     plane.tagColor = ENV.WHITE
+
+    def quit_game(self):
+        # TODO: pause and wait for key
+        quit()
+
+    def display_help(self):
+        print("Help!")
+        # TODO: create help screen
 
 
 class Airplane(pygame.sprite.Sprite):
@@ -713,17 +765,28 @@ def process_click(pos):
 
 def process_keydown(key):
     if key == 27:
-        quit()
+        ATC.quit_game()
     if ATC.commandText in ENV.ERRORS:
         ATC.commandText = ""
     if 97 <= key <= 122 or 48 <= key <= 57 or key == K_SPACE:  # A - Z + 0 - 9
         ATC.commandText += chr(key).upper()
+    if key in ENV.NUMPAD_KEYS:
+        ATC.commandText += ENV.NUMPAD_KEYS[key]
     elif key == K_BACKSPACE:
         ATC.commandText = ATC.commandText[:-1]
     elif key in (K_KP_ENTER, K_RETURN):
         process_command()
     elif key in (K_LCTRL, K_RCTRL):
         ATC.commandText = ATC.lastCallSign
+    elif key in ENV.FUNCTION_KEYS:
+        fkey = ENV.FUNCTION_KEYS[key]
+        if fkey == "F1":
+            pause_game(action="HELP")
+        if fkey == "F2":
+            ENV.tagActive = False if ENV.tagActive == True else True
+        if fkey == "F5":
+            pause_game(action=None)
+
     elif key == K_TAB:  # testing only
         ENV.SPEED = 5 if ENV.SPEED == 1 else 1
 
@@ -895,8 +958,9 @@ def update_pygame_display():
             pygame.draw.line(
                 ATC.radarSurface, ENV.RED, entity.tailPosition0, entity.tailPosition1
             )
-            ATC.radarSurface.blit(source=entity.tagText0, dest=entity.tagPosition0)
-            ATC.radarSurface.blit(source=entity.tagText1, dest=entity.tagPosition1)
+            if ENV.tagActive:
+                ATC.radarSurface.blit(source=entity.tagText0, dest=entity.tagPosition0)
+                ATC.radarSurface.blit(source=entity.tagText1, dest=entity.tagPosition1)
         ATC.inventorySurface.blit(
             source=entity.inventoryText, dest=entity.inventoryPosition
         )
@@ -925,7 +989,7 @@ def update_pygame_display():
     text = [
         f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}",
         f"Wind: {ENV.windSpeed} knots @ {ENV.windDirection:03}°.",
-        f"Simulation Time: {str(dt.now()-ENV.simTimeBegin)[:-5]}.",
+        f"Simulation Time: {str(ENV.simTime)[:-7]}.",
     ]
     render_text(
         surface=ATC.weatherSurface,
@@ -966,6 +1030,18 @@ def update_pygame_display():
     pygame.display.update()
 
 
+def pause_game(action):
+    print("Game Paused")
+    if action == "HELP":
+        print("Display HELP")
+    while True:
+        for event in pygame.event.get():
+            if event.type == KEYDOWN and event.key == K_F5:
+                print("Unpaused")
+                ENV.simTimeSplit = dt.now()
+                return
+
+
 def main():
     clock = pygame.time.Clock()
     delay = ENV.FPS // ENV.SPEED
@@ -985,18 +1061,17 @@ def main():
         if delay == 0:
             ATC.next_frame()
             delay = ENV.FPS // ENV.SPEED
-            # chance of loading new plane
+            # chance of loading new plane up to max allowed
             if (
                 random.randint(0, 100) <= 15
                 and len(ATC.activeAirplanes) < ENV.MAX_AIRPLANES
             ):
                 ATC.load_new_plane(
-                    selected="B747",
+                    model=random.choice(list(ENV.airplaneData.keys())),
                     inbound=True if random.randint(0, 1) <= 0.8 else False,
                 )
 
 
 ENV = Environment()
 ATC = Airspace()
-
 main()
