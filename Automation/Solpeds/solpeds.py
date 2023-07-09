@@ -36,12 +36,7 @@ def load_webdriver():
 
 
 def login(webd):
-    iframe = webd.find_element(By.CSS_SELECTOR, "#modal > iframe")
-    print(iframe)
-    print(webd.window_handles)
-    time.sleep(3)
-    print(webd.window_handles)
-    return
+    time.sleep(4)
     keyboard.write("gfreundt")
     keyboard.press_and_release("tab")
     keyboard.write("Subaru21")
@@ -86,7 +81,7 @@ def approve(webd):
     if list_of_approvals:
         output = f"Completo con {counter} aprobaciones:"
         for a in list_of_approvals:
-            output += f"{a}/n"
+            output += f"{a}\n"
     else:
         output = "Nada que aprobar"
 
@@ -99,7 +94,6 @@ def main():
     webd.get(url)
 
     login(webd)
-    return
     output = approve(webd)
 
     print(output)
