@@ -2,6 +2,7 @@ import os
 import platform
 import time
 import random
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as WebDriverOptions
@@ -52,7 +53,9 @@ class ChromeUtils:
         """
 
         _path = (
-            os.path.join("D:\pythonCode", "Resources", "chromedriver.exe")
+            os.path.join(
+                f"{Path.home().drive}\pythonCode", "Resources", "chromedriver.exe"
+            )
             if "Windows" in platform.uname().system
             else "/usr/bin/chromedriver"
         )
