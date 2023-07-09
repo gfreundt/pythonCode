@@ -50,7 +50,12 @@ class Wordle:
         )
 
     def write_word(self):
+        time.sleep(1)
+        keyboard.press_and_release("e")
+        time.sleep(1)
+        keyboard.press_and_release("backspace")
         for letter in self.tryWord:
+            time.sleep(1)
             keyboard.press_and_release(letter)
             time.sleep(random.randint(5, 12) / 10)
         keyboard.press_and_release("enter")
@@ -62,14 +67,20 @@ class Wordle:
         box = 92
         gap = 11
 
+        total_green = 0
+
         for position in range(5):
             pixel = img[y0 + row * (box + gap) + 5][x0 + position * (box + gap) + 5]
             if np.array_equal(pixel, self.GREEN):
                 self.green_letter(position)
+                total_green += 1
             elif np.array_equal(pixel, self.YELLOW):
                 self.yellow_letter(position)
             elif np.array_equal(pixel, self.GRAY):
                 self.gray_letter(position)
+
+        if total_green == 5:
+            return True
 
     def green_letter(self, position):
         letter = self.tryWord[position]
@@ -131,15 +142,10 @@ def main():
     turn = 0
     while turn <= 5:
         print(f"Turn: {turn}. Trying {WORDLE.tryWord}")
-        # try:
         WORDLE.write_word()
-        """except:
-            print(
-                f"Found {WORDLE.tryWord} in {turn} tries ({time.perf_counter()-start:.1f} seconds)."
-            )
-            return"""
         time.sleep(5)
-        WORDLE.process_colors(turn)
+        if WORDLE.process_colors(turn):
+            return
         possible_words = [i for i in WORDLE.allWords if WORDLE.word_possible(i)]
         WORDLE.get_next_best_word(possible_words)
         turn += 1
@@ -148,5 +154,3 @@ def main():
 
 
 main()
-# W = Wordle()
-# W.process_colors(0)
