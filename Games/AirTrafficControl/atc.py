@@ -347,11 +347,11 @@ class Airspace:
             # select random runway
             runway = random.choice(ATC.airspaceInfo["runways"])
             # select random head (later update with wind direction)
-            heads = [runway["headL"], runway["headR"]]
-            random.shuffle(heads)
-            x, y = (heads[0]["x"], heads[0]["y"])
-            heading = self.calc_heading(x, y, heads[1]["x"], heads[1]["y"])
-            runwayDeparture = heads[0]["tag"]["text"]
+            _head = runway["headL"] if ENV.windDirection < 180 else runway["headR"]
+            _tail = runway["headR"] if ENV.windDirection < 180 else runway["headL"]
+            x, y = (_head["x"], _head["y"])
+            heading = self.calc_heading(x, y, _tail["x"], _tail["y"])
+            runwayDeparture = _head["tag"]["text"]
             # altitude
             altitude = ATC.airspaceInfo["altitudes"]["groundLevel"]
             # speed
@@ -454,7 +454,7 @@ class Airspace:
                 )
             # only change altitude and heading if plane is airborne
             left_right = "="
-            if not plane.isTakeoff and plane.onRadar and not plane.isGround:
+            if plane.onRadar and not plane.isTakeoff and not plane.isGround:
                 # altitude change
                 if plane.altitude < plane.altitudeTo:
                     plane.altitude = int(
@@ -557,7 +557,7 @@ class Airspace:
                 plane.callSign, True, plane.tagColor, ENV.BG
             )
             plane.tagText1 = ENV.FONT12.render(
-                f"{(plane.altitude // 100):03}{up_down}{plane.speed//10}",
+                f"{(plane.altitude // 100):03}{up_down}{int(plane.speed/10)}",
                 True,
                 plane.tagColor,
                 ENV.BG,
@@ -943,8 +943,8 @@ def process_command():
 
 def render_text(surface, font, text, fgColor, bgColor, x0, y0, dy=0):
     for deltay, line in enumerate(text):
-        t = font.render(line, True, fgColor, bgColor)
-        surface.blit(source=t, dest=(x0, y0 + deltay * dy))
+        _t = font.render(line, True, fgColor, bgColor)
+        surface.blit(source=_t, dest=(x0, y0 + deltay * dy))
 
 
 def update_pygame_display():
@@ -1066,10 +1066,9 @@ def main():
                 random.randint(0, 100) <= 15
                 and len(ATC.activeAirplanes) < ENV.MAX_AIRPLANES
             ):
-                ATC.load_new_plane(
-                    model=random.choice(list(ENV.airplaneData.keys())),
-                    inbound=True if random.randint(0, 1) <= 0.8 else False,
-                )
+                _model = random.choice(list(ENV.airplaneData.keys()))
+                _in = True if random.randint(0, 1) <= 0.8 else False
+                ATC.load_new_plane(model=_model, inbound=_in)
 
 
 ENV = Environment()
