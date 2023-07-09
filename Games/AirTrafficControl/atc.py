@@ -127,12 +127,13 @@ class Airspace:
         # os.environ["SDL_VIDEO_WINDOW_POS"] = "7, 28"
         self.displaySurface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.DISPLAY_WIDTH = pygame.display.Info().current_w
-        self.DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.07
+        self.DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
         # print(self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT)
         # print(pygame.display.get_desktop_sizes())
         self.RADAR_WIDTH = int(self.DISPLAY_WIDTH * 0.75)
         self.RADAR_HEIGHT = self.DISPLAY_HEIGHT
         self.CONTROLS_WIDTH = int(self.DISPLAY_WIDTH * 0.25)
+
         self.MESSAGE_HEIGHT = int(self.DISPLAY_HEIGHT * 0.1)
         self.INVENTORY_HEIGHT = int(self.DISPLAY_HEIGHT * 0.45)
         self.INPUT_HEIGHT = int(self.DISPLAY_HEIGHT * 0.05)
@@ -202,12 +203,20 @@ class Airspace:
         self.messageSurface.fill((ENV.BLACK))
         self.messageText = []
 
-        # add Controls - Inventory background
-        self.inventorySurface = pygame.Surface(
-            (self.CONTROLS_WIDTH, self.INVENTORY_HEIGHT - 2)
+        # add Controls - Inventory background, split columns for Arrivals and Departures
+        self.inventoryArrivalsSurface = pygame.Surface(
+            (self.CONTROLS_WIDTH // 2, self.INVENTORY_HEIGHT - 2)
         )
-        self.inventorySurface.fill(ENV.BLACK)
-        self.inventoryBG = pygame.Surface.copy(self.inventorySurface)
+        self.inventoryArrivalsSurface.fill(ENV.BLACK)
+        self.inventoryArrivalsBG = pygame.Surface.copy(self.inventoryArrivalsSurface)
+
+        self.inventoryDeparturesSurface = pygame.Surface(
+            (self.CONTROLS_WIDTH // 2, self.INVENTORY_HEIGHT - 2)
+        )
+        self.inventoryDeparturesSurface.fill(ENV.BLACK)
+        self.inventoryDeparturesBG = pygame.Surface.copy(
+            self.inventoryDeparturesSurface
+        )
 
         # add Controls - Input Command background
         self.inputSurface = pygame.Surface(
@@ -230,8 +239,8 @@ class Airspace:
         self.consoleSurface = pygame.Surface(
             (self.CONTROLS_WIDTH, self.CONSOLE_HEIGHT - 2)
         )
-        self.consoleSurface.fill((ENV.BG_CONTROLS))
-        self.consoleBG = pygame.Surface.copy(self.inventorySurface)
+        self.consoleSurface.fill((ENV.BLACK))
+        self.consoleBG = pygame.Surface.copy(self.consoleSurface)
         render_text(
             surface=self.consoleBG,
             font=ENV.FONT12,
@@ -283,9 +292,14 @@ class Airspace:
             [self.radarSurface, self.radarBG, (0, 0)],
             [self.messageSurface, self.messageBG, (self.RADAR_WIDTH + 5, 0)],
             [
-                self.inventorySurface,
-                self.inventoryBG,
+                self.inventoryArrivalsSurface,
+                self.inventoryArrivalsBG,
                 (self.RADAR_WIDTH + 5, self.MESSAGE_HEIGHT + 2),
+            ],
+            [
+                self.inventoryDeparturesSurface,
+                self.inventoryDeparturesBG,
+                (self.RADAR_WIDTH + self.CONTROLS_WIDTH // 2, self.MESSAGE_HEIGHT + 2),
             ],
             [
                 self.inputSurface,
@@ -426,6 +440,7 @@ class Airspace:
             ATC.messageText.pop(0)
 
         # process planes
+        seqArrival = seqDeparture = 1
         for seq, plane in enumerate(self.activeAirplanes):
             self.check_collision(plane)
             # sequential number
@@ -568,7 +583,7 @@ class Airspace:
                 plane.tagPosition0[0], plane.tagPosition0[1], 42, 26
             )
             # update inventory item
-            plane.inventoryText = pygame.Surface((ATC.CONTROLS_WIDTH - 15, 40))
+            plane.inventoryText = pygame.Surface((ATC.CONTROLS_WIDTH // 2 - 7, 37))
             color = ENV.INV_COLORS[0 if plane.isInbound else 1]
             plane.inventoryText.fill(color)
             accel = (
@@ -596,10 +611,17 @@ class Airspace:
                 ),
                 dest=(5, 20),
             )
-            plane.inventoryPosition = (5, seq * 42 + 2)
+            if plane.isInbound:
+                _seq = seqArrival
+                seqArrival += 1
+            else:
+                _seq = seqDeparture
+                seqDeparture += 1
+            plane.inventoryPosition = (5, _seq * 42 + 2)
+
             plane.inventoryClickArea = pygame.Rect(
                 self.RADAR_WIDTH,
-                self.MESSAGE_HEIGHT + seq * 42 + 2,
+                self.MESSAGE_HEIGHT + _seq * 42 + 2,
                 self.CONTROLS_WIDTH,
                 40,
             )
@@ -948,7 +970,7 @@ def render_text(surface, font, text, fgColor, bgColor, x0, y0, dy=0):
 
 
 def update_pygame_display():
-    # load all level-2 background surfaces
+    # load all level-2 background surfaces to reset screen
     for surfaces in ATC.allLevel2Surfaces:
         surfaces[0].blit(source=surfaces[1], dest=(0, 0))
     # load Radar main surface + Inventory main surface
@@ -961,9 +983,14 @@ def update_pygame_display():
             if ENV.tagActive:
                 ATC.radarSurface.blit(source=entity.tagText0, dest=entity.tagPosition0)
                 ATC.radarSurface.blit(source=entity.tagText1, dest=entity.tagPosition1)
-        ATC.inventorySurface.blit(
-            source=entity.inventoryText, dest=entity.inventoryPosition
-        )
+        if entity.isInbound:
+            ATC.inventoryArrivalsSurface.blit(
+                source=entity.inventoryText, dest=entity.inventoryPosition
+            )
+        else:
+            ATC.inventoryDeparturesSurface.blit(
+                source=entity.inventoryText, dest=entity.inventoryPosition
+            )
     # load Message main surface
     render_text(
         surface=ATC.messageSurface,
