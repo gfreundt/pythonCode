@@ -1,0 +1,265 @@
+#:kivy 2.1.0
+
+WindowManager:
+        MainLayout:
+        EditProperties:
+        AddNewFile:
+
+
+<MainLayout>:
+        name: "main_layout"
+
+        BoxLayout:
+                orientation: 'vertical'
+                background_color: 0.5,0.2,0.3,1
+
+                BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 15
+                        padding: ('10dp', '0dp', '10dp', '10dp')
+                        size_hint: (1, 0.5)
+                        background_color: 0.5,0.2,0.3,1
+                        
+                        MDLabel:
+                                markup:True,
+                                text:"[b]Active[/b]"
+                                font_size: '30dp'
+                                size_hint:(0.75, 0.1)
+                                halign:"center"
+                                
+                        BoxLayout:
+                                orientation:"horizontal"
+                                spacing:5
+                                padding:(5, 5, 5, 5)
+                                size_hint:(1, 0.8)
+
+                                AnchorLayout:
+                                        id: table_active
+                                        size_hint: (0.75, 1)
+                                Image:
+                                        id: image_preview
+                                        source: r"C:\pythonCode\rollerAds\media\thumbnails\preview_placeholder.png"
+                                        size_hint: (0.25, 1)
+                
+                        BoxLayout:
+                                orientation:"horizontal"
+                                spacing:5
+                                size_hint:(1, 0.1)
+
+                                MDRoundFlatButton:
+                                        text:"Edit"
+                                        on_press: root.edit_active()
+
+                                MDRoundFlatButton:
+                                        text:"Move Up"
+                                        on_press: root.move_up()
+
+                                MDRoundFlatButton:
+                                        text:"Move Down"
+                                        on_press: root.move_down()
+
+                                MDRoundFlatButton:
+                                        text:"DeActivate"
+                                        on_press: root.deactivate()
+                                
+
+
+                BoxLayout:
+                        orientation: 'vertical'
+                        spacing: 15
+                        padding: ('10dp', '0dp', '10dp', '10dp')
+                        size_hint:(1, 0.5)
+
+                        MDLabel:
+                                markup: True,
+                                text:"[b]InActive[/b]"
+                                font_size: '30dp'
+                                size_hint:(0.75, 0.1)
+                                halign:"center"
+
+                        BoxLayout:
+                                orientation:"horizontal"
+                                spacing:5
+                                size_hint:(1, 0.8)
+
+                                AnchorLayout:
+                                        id: table_inactive
+                                        size_hint: (0.75, 1)
+                                
+                                BoxLayout:
+                                        orientation: 'vertical'
+                                        size_hint: (0.25, 1)
+                
+                                        MDRoundFlatButton:
+                                                text: "Save"
+                                                on_press: root.save()
+                                        MDRoundFlatButton:
+                                                text: "Reset"
+                                                on_press: root.reset()
+                                        MDRoundFlatButton:
+                                                text: "Load New File"
+                                                on_press: root.load_new_file()
+                                
+                        BoxLayout:
+                                orientation:"horizontal"
+                                spacing:5
+                                padding:(5, 5, 5, 5)
+                                size_hint:(1, 0.1)
+
+                                MDRoundFlatButton:
+                                        text:"Edit"
+                                        on_press: root.edit_inactive()
+
+                                MDRoundFlatButton:
+                                        text:"Activate"
+                                        on_press: root.activate()
+
+                                MDRoundFlatButton:
+                                        text:"UnLoad"
+                                        on_press: root.unload()
+
+                        
+<EditProperties>:
+        name: "edit_properties"
+        auto_dismiss: False
+        title: "Edit Properties"
+        size_hint: (0.4,0.4)
+        pos_hint: {'center_x': 0.5,'center_y': 0.5}
+        BoxLayout:
+                orientation: 'vertical'
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "Name"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: aka
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "File Name"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: file_name
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "Type"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: type
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "Format"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: format
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "Duration"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: duration
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "Begin"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: begin
+                                size_hint: 0.8, 1
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.2
+                        MDLabel:
+                                text: "End"
+                                size_hint: 0.2, 1
+                        MDTextFieldRect:
+                                id: end
+                                size_hint: 0.8, 1
+
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1,0.3
+                        MDRoundFlatButton:
+                                text: "Save"
+                                on_press: root.save()
+                        MDRoundFlatButton:
+                                text: "Cancel"
+                                on_press: root.cancel()
+                                
+
+<AddNewFile>:
+        name: "add_new_file"
+        # Try MDFileManager
+        auto_dismiss: False
+        title: "Select File to Add"
+        size_hint: (0.65,0.9)
+        pos_hint: {'right': 0.95,'center_y': 0.5}
+        BoxLayout:
+                id: box
+                orientation: 'vertical'
+                ScrollView:
+                        size_hint: 1, 0.7
+                        MDList:
+                                id: new_file_list
+
+                BoxLayout:
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.25
+                        padding: ('0dp', '5dp', '0dp', '10dp')
+
+                        Image:
+                                id: selected_file_image
+                                size_hint: 0.2, 1
+                                source: r"C:\pythonCode\rollerAds\media\thumbnails\preview_placeholder.png"
+                        
+                        BoxLayout:
+                                orientation: 'vertical'
+                                size_hint: 0.8, 1
+                                pos_hint: {'left': 0.1}
+                                                
+                                MDLabel:
+                                        id: selected_file_name
+                                        size_hint: 1, 0.33
+                                        text: "Selected File:"
+                                        markup: True
+                                
+                                MDLabel:
+                                        id: selected_file_size
+                                        size_hint: 1,0.33
+                                        text: "File Size:"
+                                        markup: True
+
+                                MDLabel:
+                                        id: selected_file_created
+                                        size_hint: 1,0.33
+                                        text: "Created on:"
+                                        markup: True
+
+                BoxLayout:
+                        id: buttons
+                        orientation: 'horizontal'
+                        size_hint: 1, 0.05
+                        MDRoundFlatButton:
+                                text: "Add File"
+                                on_press: root.add()
+                        MDRoundFlatButton:
+                                text: "Cancel"
+                                on_press: root.cancel()
+                
+
+

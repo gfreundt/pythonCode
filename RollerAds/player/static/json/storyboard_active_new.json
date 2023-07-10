@@ -1,0 +1,78 @@
+{
+    "active": [
+        {
+            "aka": "Droplet",
+            "file_name": "drop.avi",
+            "type": "Video",
+            "format": "AVI",
+            "audio": true,
+            "cycle_duration": 1.0,
+            "datetime_start_num": 1666488750,
+            "datetime_end_num": 1666488790,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        },
+        {
+            "aka": "Birds",
+            "file_name": "bird.jpg",
+            "type": "Video",
+            "format": "JPEG",
+            "audio": false,
+            "cycle_duration": 7.0,
+            "datetime_start_num": 1666482750,
+            "datetime_end_num": 1666482920,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        },
+        {
+            "aka": "Big Tree",
+            "file_name": "big_tree.jfif",
+            "type": "Video",
+            "format": "JPEG",
+            "audio": false,
+            "cycle_duration": 3.3,
+            "datetime_start_num": 1666482700,
+            "datetime_end_num": 1666483250,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        },
+        {
+            "aka": "Rotating Earth",
+            "file_name": "earth.avi",
+            "type": "Video",
+            "format": "AVI",
+            "audio": false,
+            "cycle_duration": 2.44,
+            "datetime_start_num": 1666486750,
+            "datetime_end_num": 1666489750,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        }
+    ],
+    "inactive": [
+        {
+            "aka": "WW2 clip",
+            "file_name": "ww2.mp4",
+            "type": "Video",
+            "format": "MP4",
+            "audio": false,
+            "cycle_duration": 8.4,
+            "datetime_start_num": 1666488750,
+            "datetime_end_num": 1666489950,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        },
+        {
+            "aka": "Linues in Hawaii",
+            "file_name": "hawaii_linux.png",
+            "type": "Video",
+            "format": "PNG",
+            "audio": false,
+            "cycle_duration": 6.55,
+            "datetime_start_num": 1666482700,
+            "datetime_end_num": 1666489950,
+            "datetime_start_str": "03:45:12 12/09/2021",
+            "datetime_end_str": "09:55:18 14/09/2021"
+        }
+    ]
+}

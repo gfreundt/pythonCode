@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>dolarpe.com</title>
+        <link rel="stylesheet" href="/static/layout-style.css">
+        <meta http-equiv="refresh" content="450">
+        <meta name="a.validate.01" content="8807a919b0089ba5d7fbbb58155dd71b2a73" />
+    </head>
+
+    <body>
+        <script type="text/javascript" data-adel="atag" src="//acscdn.com/script/atg.js" czid="cuinq1qa"></script>
+        <div class="container">
+
+            <header>
+                <a href="https://dolarpe.com">
+                    Dólar<span>Perú</span>
+                </a>
+            </header>
+
+            <nav>
+                <a href="/compra">Compra</a>
+                <a href="/venta">Venta</a>
+                <a href="/acercade">Acerca</a>
+                <!-- Suspended
+        <a href="#">Canales Oficiales</a>
+        <a href="#">Noticias</a>
+        <a href="#">Calculadora</a>
+        -->
+            </nav>
+
+            <main>
+                <div class="title">
+                    {% block title %}{% endblock title %}
+                </div>
+                <div class="actualizado">
+                    Actualizado: {{ head.hora }}
+                    [{{ head.fecha }}]
+                </div>
+                <div class="resumen">
+                    <div class="promedio">
+                        Promedio<br>
+                        {{ head.promedio }}
+                    </div>
+                    <div class="mediano">
+                        Mediana<br>
+                        {{ head.mediana }}
+                    </div>
+                    <div class="mejor">
+                        Mejor<br>
+                        {{ head.mejor }}
+                    </div>
+                    <div class="consultas">
+                        Consultas<br>
+                        {{ head.consultas }}
+                    </div>
+                </div>
+                <div class="graphs">
+                    {% block graphs %}{% endblock graphs %}
+                    <div class="title-intraday">Intradía</div>
+                    <div class="title-last-5-days">Última Semana</div>
+                    <div class="title-last-30-days">Últimos 100 días</div>
+                </div>
+                <div class="main-info">
+                    <div class="quote-box-left">
+                        {% for detail in details1 %}
+                        <p class="quotes-left">
+                            <a href=fintech/{{detail.id}}>
+                                <img class="logos" src="{{ url_for('static', filename='images/'+detail.image) }}">
+                                {{ detail.value }}
+                            </a>
+                        </p>
+                        {%endfor%}
+                    </div>
+                    <div class="quote-box-right">
+                        {% for detail in details2 %}
+                        <p class="quotes-right">
+                            <a href=fintech/{{detail.id}}>
+                                {{ detail.value }}
+                                <img class="logos" src="{{ url_for('static', filename='images/'+detail.image) }}">
+                            </a>
+                        </p>
+                        {%endfor%}
+                    </div>
+                </div>
+            </main>
+            <footer>
+                <div class="contact">contacto: gabriel@dolarpe.com</div>
+                <div class="derechos">Derechos Reservados (2021)</div>
+            </footer>
+
+        </div>
+    </body>
+
+</html>

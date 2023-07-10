@@ -1,0 +1,118 @@
+{
+    "loaded_media": [
+        {
+            "id": "b8a05562acd54a9788d6982db502f995",
+            "active": true,
+            "position": 2,
+            "thumbnail": "d34f.png",
+            "playback": {
+                "aka": "Droplet",
+                "file_name": "drop.avi",
+                "type": "Video",
+                "format": "AVI",
+                "duration": 1.0,
+                "datetime_start_num": 1666488750,
+                "datetime_end_num": 1666488790,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 13 Nov 2021",
+                "date_end": "Sat, 11 Ene 2024"
+            }
+        },
+        {
+            "id": "165159677bb54f70a13ef1d79af4a8e9",
+            "active": true,
+            "position": 1,
+            "thumbnail": "d14f.png",
+            "playback": {
+                "aka": "Birds",
+                "file_name": "bird.jpg",
+                "type": "Image",
+                "format": "JPEG",
+                "duration": 7.0,
+                "datetime_start_num": 1666482750,
+                "datetime_end_num": 1666482920,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 18 Oct 2022",
+                "date_end": "Sat, 31 Dec 2024"
+            }
+        },
+        {
+            "id": "4618e91a06624e12a4258d8486a889af",
+            "active": true,
+            "position": 1,
+            "thumbnail": "d24f.png",
+            "playback": {
+                "aka": "Big Tree",
+                "file_name": "big_tree.jfif",
+                "type": "Image",
+                "format": "JPEG",
+                "duration": 3.3,
+                "datetime_start_num": 1666482700,
+                "datetime_end_num": 1666483250,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 22 Mar 2019",
+                "date_end": "Sat, 31 Dec 2028"
+            }
+        },
+        {
+            "id": "2b691f3109e1438f80fde53df8e8c7c2",
+            "active": true,
+            "position": 3,
+            "thumbnail": "d44f.png",
+            "playback": {
+                "aka": "Rotating Earth",
+                "file_name": "earth.avi",
+                "type": "Video",
+                "format": "AVI",
+                "duration": 2.4,
+                "datetime_start_num": 1666486750,
+                "datetime_end_num": 1666489750,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 18 Oct 2022",
+                "date_end": "Sat, 31 Dec 2024"
+            }
+        },
+        {
+            "id": "9e15ad007ebf4ebfbee8b65ec8dbd997",
+            "active": false,
+            "position": 2,
+            "thumbnail": "d54f.png",
+            "playback": {
+                "aka": "WW2 clip",
+                "file_name": "ww2.mp4",
+                "type": "Video",
+                "format": "MP4",
+                "duration": 8.4,
+                "datetime_start_num": 1666488750,
+                "datetime_end_num": 1666489650,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 18 Oct 2022",
+                "date_end": "Sat, 31 Dec 2024"
+            }
+        },
+        {
+            "id": "5a76308e6fe54eccbacbae54e2732713",
+            "active": true,
+            "position": 4,
+            "thumbnail": "d64f.png",
+            "playback": {
+                "aka": "Linues in Hawaii",
+                "file_name": "hawaii_linux.png",
+                "type": "Video",
+                "format": "PNG",
+                "duration": 6.5,
+                "datetime_start_num": 1666482700,
+                "datetime_end_num": 1666489950,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021",
+                "date_start": "Fri, 18 Oct 2022",
+                "date_end": "Sat, 31 Dec 2024"
+            }
+        }
+    ]
+}

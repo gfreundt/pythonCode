@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;550;700;900&family=Raleway:wght@400;600;800;900&display=swap");
+:root {
+  --primary-color: #667AF3;
+}
+
+body {
+  background-color: #96d8e0;
+  margin: 0;
+  font-family: 'Poppins';
+}
+
+body .title {
+  padding-top: 25px;
+  color: gray;
+  font-size: 35px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-left: 10px;
+}
+
+body .hora-fecha {
+  color: #493636;
+  font-size: 15px;
+  font-weight: 650;
+  margin-left: 10px;
+}
+
+body .hora-fecha span {
+  font-style: italic;
+}
+
+.table_scraper_results, th, td {
+  margin-top: 15px;
+  background-color: #eef4f5;
+  margin-left: 10px;
+  font-size: 10px;
+  border: 1px solid black;
+  border-collapse: collapse;
+  text-align: center;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.table_scraper_results .bad, th .bad, td .bad {
+  color: red;
+}
+
+.table_scraper_results .good, th .good, td .good {
+  color: green;
+}
+
+.table_scraper_results .symbol-header, th .symbol-header, td .symbol-header {
+  width: 15px;
+}
+
+.table_scraper_results .symbol-row, th .symbol-row, td .symbol-row {
+  color: blue;
+}
+/*# sourceMappingURL=stats-style.css.map */

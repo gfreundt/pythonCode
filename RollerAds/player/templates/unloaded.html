@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<table class="content-table">
+    <thead>
+        <tr>
+            <th colspan="7" class="content-table-title">Files</th>
+        </tr>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Media File Name</th>
+            <th scope="col" style="text-align: center;">Media Type</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for file_name in data.unloaded %}
+        <tr>
+            <th scope="row">{{loop.index}}</th>
+            <td>{{file_name}}</td>
+            <td style="text-align: center;">TBD</td>
+            <td><img class="content-table-icon" src="static/load_icon.png" title="Load Media"></td>
+        </tr>
+        {% endfor %}
+        <tr>
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+#:kivy 1.10.0
+
+<Clock>:
+    orientation: "vertical"
+    Label:
+        font_size: self.width/6
+        font_name: "static/fonts/digital-7.ttf"
+        text: root.strCount
+        size_hint: 1, .8
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint: 1,.2
+        Button:
+            text: "Add"
+            on_press: root.add()
+        Button:
+            text: "Substract"
+            on_press: root.substract()
+        Button:
+            text: "Reset"
+            on_press: root.reset()

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="tables">
+    <table class="content-table" >
+        <thead>
+            <tr>
+                <th colspan="9" class="content-table-title">Active</th>
+            </tr>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Media Name</th>
+                <th scope="col">Media File</th>
+                <th scope="col" style="text-align: center;">Media Type</th>
+                <th scope="col" style="text-align: center;">Duration</th>
+                <th scope="col" style="text-align: center;">Start</th>
+                <th scope="col" style="text-align: center;">End</th>
+                <th scope="col" style="text-align: center;"></th>
+                <th scope="col" style="text-align: center;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.active %}
+            <tr draggable="true">
+                <th scope="row">{{loop.index0}}</th>
+                <td>{{item["aka"]}}</td>
+                <td>{{item["file_name"]}}</td>
+                <td style="text-align: center;">{{item["format"]}}</td>
+                <td style="text-align: center;">{{item["cycle_duration"]}} s</td>
+                <td style="text-align: center;">{{item["datetime_start_str"]}}</td>
+                <td style="text-align: center;">{{item["datetime_end_str"]}}</td>
+                <td><img class="content-table-icon deactivate-btn ae{{loop.index0}}"
+                        src="static/images/edit_icon.png" title="Change to Inactive"></td>
+                <td><img class="content-table-icon unload-btn au{{loop.index0}}" src="static/images/unload_icon.png"
+                        title="Unload"></td>
+            </tr>
+            {% endfor %}
+            <tr>
+        </tbody>
+    </table>
+
+    <table class="content-table">
+        <thead>
+            <tr>
+                <th colspan="9" class="content-table-title">Inactive</th>
+            </tr>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Media Name</th>
+                <th scope="col">Media File</th>
+                <th scope="col" style="text-align: center;">Media Type</th>
+                <th scope="col" style="text-align: center;">Duration</th>
+                <th scope="col" style="text-align: center;">Start</th>
+                <th scope="col" style="text-align: center;">End</th>
+                <th scope="col" style="text-align: center;"></th>
+                <th scope="col" style="text-align: center;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.inactive %}
+            <tr draggable="true">
+                <th scope="row">{{loop.index0}}</th>
+                <td>{{item["aka"]}}</td>
+                <td>{{item["file_name"]}}</td>
+                <td style="text-align: center;">{{item["format"]}}</td>
+                <td style="text-align: center;">{{item["cycle_duration"]}} s</td>
+                <td style="text-align: center;">{{item["datetime_start_str"]}}</td>
+                <td style="text-align: center;">{{item["datetime_end_str"]}}</td>
+                <td><img class="content-table-icon activate-btn ie{{loop.index0}}" src="static/images/edit_icon.png"
+                        title="Change to Active"></td>
+                <td><img class="content-table-icon unload-btn iu{{loop.index0}}" src="static/images/unload_icon.png"
+                        title="Unload"></td>
+            </tr>
+            {% endfor %}
+            <tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

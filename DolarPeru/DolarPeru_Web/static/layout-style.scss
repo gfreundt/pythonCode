@@ -1,0 +1,243 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;550;700;900&family=Raleway:wght@400;600;800;900&display=swap');
+
+:root {
+    --primary-color: #667AF3;
+}
+  
+body {
+    background-color: #F2F2F2;
+    margin: 0;
+    font-family: 'Poppins';
+}
+
+.container {
+    background-color: #F2F2F2;
+    width: 1024px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header {
+    font-size: 40px;
+    font-weight: 700;
+    margin-top: 5px;
+    padding-top:10px;
+
+    span {
+        color: var(--primary-color);
+    }
+}
+
+nav {
+    background-color: lightgray;
+    text-align: center;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-radius: 25px;
+    
+
+    a {
+        color: var(--primary-color);
+        font-size: 20px;
+        font-weight: 600;
+        text-decoration: none;  
+        padding-left: 45px;
+        padding-right: 45px;      
+    }
+}
+
+main {
+    text-align: center;
+    
+    .title {
+        padding-top: 25px;
+        color: gray;
+        font-size: 35px;
+        font-weight: 800;
+        text-transform: uppercase;
+        
+        span {
+            color: green;
+        }
+    }
+
+    .actualizado {
+        margin-top: -10px;
+        color: gray;
+        font-size:15px;
+        font-weight: 700;
+    }
+
+    .resumen {
+        color: black;
+        background-color: rgb(223, 227, 231);
+        padding-top: 8px;
+        padding-bottom: 80px;
+        font-size: 25px;
+        font-weight: 700;
+
+        .promedio {
+            width: 25%;
+            float: left;
+        }
+
+        .mediano {
+            width: 25%;
+            float: left;
+        }
+
+        .mejor {
+            width: 25%;
+            float: left;
+        }
+
+        .consultas {
+            width: 25%;
+            float: left;
+        }
+    }
+
+    .graphs {
+        background-color: rgb(218, 235, 236);
+        text-align: left;
+        padding-bottom: 35px;
+        margin-bottom: 0px;
+
+        .intraday {
+            padding-left: 25px;
+            padding-right: 20px;
+            padding-top: 15px;
+            padding-bottom: 10px;
+            height: 180px;
+            width: 280px;
+        }
+
+        .last-5-days {
+            padding-left: 25px;
+            padding-right: 20px;
+            padding-top: 15px;
+            padding-bottom: 10px;
+            height: 180px;
+            width: 280px;
+        }
+
+        .last-30-days {
+            padding-left: 25px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 10px;
+            height: 180px;
+        }
+
+        .title-intraday {
+            font-weight: bold;
+            width:33%;
+            float: left;
+            text-align: center;
+        }
+
+        .title-last-5-days {
+            font-weight: bold;
+            width:33%;
+            float: left;
+            text-align: center;
+        }
+
+        .title-last-30-days {
+            font-weight: bold;
+            width:33%;
+            float: left;
+            text-align: center;
+        }
+
+    }
+    
+    
+
+    .main-info {
+
+        background-color: rgb(223, 227, 231);
+        text-decoration: none;
+  
+        .quote-box-left {
+            width: 480px;
+            padding-top: 10px;
+            padding-left: 20px;
+            padding-bottom: 10px;
+            text-align: left;
+            float:left;
+            text-decoration: none;
+
+            .quotes-left {
+                height: 30px;
+                color:black;
+                font-size: 25px;
+                font-weight: bold;
+                line-height: 30px;
+                text-align: right;
+                padding-right: 20px;
+                
+                a {
+                    color: black;
+                    text-decoration: none;  
+                }
+            }
+        }
+
+        .quote-box-right {
+            margin-left: 502px;
+            width: 480px;
+            padding-top: 10px;
+            padding-right: 20px;
+            padding-bottom: 10px;
+            text-align: left;
+            text-decoration: none;
+            
+            .quotes-right {
+                height: 30px;
+                color:black;
+                font-size: 25px;
+                font-weight: bold;
+                line-height: 30px;
+                text-align: left;
+                padding-left: 20px;
+
+                a {
+                    color: black;
+                    text-decoration: none;
+                } 
+            }
+        }
+        
+        .logos {
+            height: 30px;
+            padding-right: 30px;
+            padding-left: 30px;
+        }
+
+        
+    }
+
+}
+
+footer {
+    background-color: yellowgreen;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: 10px;
+    padding-right: 5px ;
+
+    .contact {
+        padding-left: 25px;
+        text-align: left;
+        font-weight: bolder;
+        float: left;
+    }
+
+    .derechos {
+        padding-right: 25px;
+        text-align: right;
+    }
+}
+
+
