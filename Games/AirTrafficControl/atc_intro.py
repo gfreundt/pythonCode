@@ -1,4 +1,5 @@
 import pygame
+import os
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -7,7 +8,10 @@ clock = pygame.time.Clock()
 class Main:
     def __init__(self, box_x0, box_y0, x_margin, x_width) -> None:
         self.display = pygame.display.set_mode()
-        self.font = pygame.font.Font("montserrat.ttf", 80, bold=True)
+        self.font = pygame.font.Font(
+            os.path.join("D:", "\pythonCode", "Resources", "Fonts", "montserrat.ttf"),
+            80,
+        )
         self.font_size = self.font.get_ascent()
         self.box_x0, self.box_y0, self.x_margin, self.x_width = (
             box_x0,
@@ -74,7 +78,7 @@ def update_display(display, t0, t_width, phraseScrollSurface, phraseFixedSurface
 def main():
     global main
     main = Main(box_x0=200, box_y0=200, x_margin=20, x_width=900)
-    build_text(["AIR", "TRAFFIC", "CONTROL", "SIMULATOR"])
+    build_text(["AIR TRAFFIC CONTROL SIMULATOR"])
 
 
 if __name__ == "__main__":
