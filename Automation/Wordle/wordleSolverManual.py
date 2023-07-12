@@ -3,10 +3,8 @@ import os
 import random
 import keyboard
 
-import base64
 import numpy as np
-from PIL import Image, ImageGrab
-from io import BytesIO
+from PIL import ImageGrab
 
 
 class Wordle:
@@ -52,21 +50,19 @@ class Wordle:
     def write_word(self):
         time.sleep(1)
         keyboard.press_and_release("e")
-        time.sleep(1)
+        time.sleep(0.6)
         keyboard.press_and_release("backspace")
         for letter in self.tryWord:
-            time.sleep(1)
+            time.sleep(0.5)
             keyboard.press_and_release(letter)
             time.sleep(random.randint(5, 12) / 10)
         keyboard.press_and_release("enter")
 
     def process_colors(self, row):
         img = np.asarray(ImageGrab.grab())
-
         x0, y0 = 3203, 1023
         box = 92
         gap = 11
-
         total_green = 0
 
         for position in range(5):
@@ -140,17 +136,17 @@ def main():
 
     WORDLE = Wordle()
     turn = 0
-    while turn <= 5:
+    for turn in range(5):
         print(f"Turn: {turn}. Trying {WORDLE.tryWord}")
         WORDLE.write_word()
-        time.sleep(5)
+        time.sleep(3)
         if WORDLE.process_colors(turn):
-            return
+            return True
         possible_words = [i for i in WORDLE.allWords if WORDLE.word_possible(i)]
         WORDLE.get_next_best_word(possible_words)
-        turn += 1
-
-    print("Chances Exhausted")
 
 
-main()
+if main():
+    print("Success!")
+else:
+    print("Chances exhausted...")

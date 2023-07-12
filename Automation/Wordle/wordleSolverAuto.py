@@ -1,4 +1,4 @@
-import time
+aimport time
 import random
 import sys, os
 from selenium.webdriver.support.wait import WebDriverWait
