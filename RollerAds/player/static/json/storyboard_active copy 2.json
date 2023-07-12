@@ -1,0 +1,112 @@
+{
+    "supported_formats": [
+        "jpg",
+        "jfif",
+        "png",
+        "bmp",
+        "aiff",
+        "asf",
+        "avi",
+        "flv",
+        "mov",
+        "mp4",
+        "ogg",
+        "mkv",
+        "mpg",
+        "mpeg",
+        "raw",
+        "wav"
+    ],
+    "loaded_media": [
+        {
+            "active": true,
+            "position": 0,
+            "playback": {
+                "aka": "Birds",
+                "file_name": "bird.jpg",
+                "format": "JPEG",
+                "audio": false,
+                "cycle_duration": 7.00,
+                "datetime_start_num": 1666482750,
+                "datetime_end_num": 1666482920,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        },
+        {
+            "active": true,
+            "position": 1,
+            "playback": {
+                "aka": "Big Tree",
+                "file_name": "big_tree.jfif",
+                "format": "JPEG",
+                "audio": false,
+                "cycle_duration": 3.30,
+                "datetime_start_num": 1666482700,
+                "datetime_end_num": 1666483250,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        },
+        {
+            "active": true,
+            "position": 2,
+            "playback": {
+                "aka": "WW2 clip",
+                "file_name": "ww2.mp4",
+                "format": "MP4",
+                "audio": false,
+                "cycle_duration": 8.40,
+                "datetime_start_num": 1666488750,
+                "datetime_end_num": 1666489950,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        },
+        {
+            "active": false,
+            "position": 0,
+            "playback": {
+                "aka": "Droplet",
+                "file_name": "drop.avi",
+                "format": "AVI",
+                "audio": true,
+                "cycle_duration": 3.32,
+                "datetime_start_num": 1666488750,
+                "datetime_end_num": 1666488790,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        },
+        {
+            "active": true,
+            "position": 4,
+            "playback": {
+                "aka": "Rotating Earth",
+                "file_name": "earth.avi",
+                "format": "AVI",
+                "audio": false,
+                "cycle_duration": 2.44,
+                "datetime_start_num": 1666486750,
+                "datetime_end_num": 1666489750,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        },
+        {
+            "active": true,
+            "position": 3,
+            "playback": {
+                "aka": "Linues in Hawaii",
+                "file_name": "hawaii_linux.png",
+                "format": "PNG",
+                "audio": false,
+                "cycle_duration": 6.55,
+                "datetime_start_num": 1666482700,
+                "datetime_end_num": 1666489950,
+                "datetime_start_str": "03:45:12 12/09/2021",
+                "datetime_end_str": "09:55:18 14/09/2021"
+            }
+        }
+    ]
+}

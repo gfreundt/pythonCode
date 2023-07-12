@@ -1,0 +1,68 @@
+#:kivy 2.1.0
+
+<TitleLabel@Label>:
+    font_size: 14
+    halign: "center"
+
+<rollerAdsLayout>:
+    orientation:"vertical"
+
+    Screen:
+
+    MDBoxLayout:
+        orientation:"vertical"
+        BoxLayout:
+            orientation: 'horizontal'
+            TitleLabel:
+                size_hint: 0.05,1
+                text:'#'
+            TitleLabel:
+                size_hint: 0.1,1
+                text:'Name'
+            TitleLabel:
+                size_hint: 0.15,1
+                text:'Filename'
+            TitleLabel:
+                size_hint: 0.05,1
+                text:'Type'
+            TitleLabel:
+                size_hint: 0.1,1
+                text:'Format'
+            TitleLabel:
+                size_hint: 0.05,1
+                text:'Audio'
+            TitleLabel:
+                size_hint: 0.1,1
+                text:'Duration'
+            TitleLabel:
+                size_hint: 0.2,1
+                text:'Start Date'
+            TitleLabel:
+                size_hint: 0.2,1
+                text:'End Date'
+        Label:
+            text:'placeholder'
+    BoxLayout:
+        orientation:"vertical"
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                text:'Position'
+            Label:
+                text:'Name'
+            Label:
+                text:'Filename'
+            Label:
+                text:'Type'
+            Label:
+                text:'Format'
+            Label:
+                text:'Audio'
+            Label:
+                text:'Duration'
+            Label:
+                text:'Start Date'
+            Label:
+                text:'End Date'
+        Label:
+            text:'placeholder'

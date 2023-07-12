@@ -1,0 +1,427 @@
+#:import FallOutTransition kivy.uix.screenmanager.FallOutTransition
+#:import FadeTransition kivy.uix.screenmanager.FadeTransition
+#:import NoTransition kivy.uix.screenmanager.NoTransition
+#:import Factory kivy.factory.Factory
+
+
+
+WindowManager:
+    MainMenu:
+    LoadedMedia:
+    EditProperties:
+    AddNewFile:
+
+<MainMenu>:
+    name: "mainMenu"
+
+    BoxLayout:
+        orientation:'vertical'
+        background_color: (0.5, 0.4, 0.3)
+        MDLabel:
+            markup: True
+            text: "Main Menu"
+            font_size: "45dp"
+            size_hint: (1,0.2)
+            halign: "center"
+        MDRoundFlatIconButton:
+            pos_hint: {"center_x":0.5}
+            icon: "play-outline"
+            text: "Play Storyboard"
+            on_press: 
+                root.manager.transition = FallOutTransition()
+                root.play()
+        MDRoundFlatIconButton:
+            pos_hint: {"center_x":0.5}
+            icon: "playlist-edit"
+            text: "Edit Storyboard"
+            on_press: 
+                root.manager.transition = FallOutTransition()
+                root.edit()
+        MDRoundFlatIconButton:
+            pos_hint: {"center_x":0.5}
+            icon: "cogs"
+            text: "Settings"
+            on_press: 
+                root.manager.transition = FallOutTransition()
+                root.settings()
+        MDRoundFlatIconButton:
+            pos_hint: {"center_x":0.5}
+            icon: "exit-to-app"
+            text: "Quit"
+            on_press: 
+                root.manager.transition = FallOutTransition()
+                root.quit()
+
+
+<LoadedMedia>:
+    name: "loadedMedia"
+
+    BoxLayout:
+        orientation: 'vertical'
+        background_color: 0.5,0.2,0.3,1
+
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 12
+            padding: ('5dp', '5dp', '5dp', '5dp')
+            size_hint: (1, 0.5)
+            background_color: 0.5,0.2,0.3,1
+            
+            MDLabel:
+                markup:True,
+                text:"[b]Active[/b]"
+                font_size: '30dp'
+                size_hint:(0.75, 0.04)
+                halign:"center"
+                    
+            BoxLayout:
+                orientation:"horizontal"
+                size_hint:(1, 0.89)
+
+                Table:
+                    id: table_active
+                    size_hint: (0.75, 1)
+                    column_data: root.column_data
+                    row_data: root.active_data_formatted
+                Image:
+                    id: image_preview
+                    source: r"C:\pythonCode\rollerAds\media\thumbnails\preview_placeholder.png"
+                    size_hint: (0.25, 1)
+    
+            BoxLayout:
+                orientation:"horizontal"
+                spacing:"15dp"
+                size_hint:(1, 0.07)
+
+                MDRoundFlatIconButton:
+                    icon: "application-edit-outline"
+                    text: "Edit"
+                    on_press: 
+                        root.manager.transition = FallOutTransition()
+                        root.edit()
+
+                MDRoundFlatIconButton:
+                    icon: "arrow-up-thick"
+                    text:"Move Up"
+                    on_press: root.move_up()
+
+                MDRoundFlatIconButton:
+                    icon: "arrow-down-thick"
+                    text:"Move Down"
+                    on_press: root.move_down()
+
+                MDRoundFlatIconButton:
+                    icon: "clipboard-arrow-down-outline"
+                    text:"DeActivate"
+                    on_press: root.deactivate()
+
+        BoxLayout:
+            orientation: 'vertical'
+            padding: ('10dp', '0dp', '10dp', '10dp')
+            size_hint:(1, 0.5)
+
+            MDLabel:
+                markup: True,
+                text:"[b]InActive[/b]"
+                font_size: '30dp'
+                size_hint:(0.75, 0.1)
+                halign:"center"
+
+            BoxLayout:
+                orientation:"horizontal"
+                size_hint:(1, 0.8)
+
+                Table:
+                    size_hint: (0.75, 1)
+                    id: table_inactive
+                    column_data: root.column_data
+                    row_data: root.inactive_data_formatted
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    spacing:"20dp"
+                    size_hint: (0.25, 1)
+
+                    MDRoundFlatIconButton:
+                        icon: "content-save-outline"
+                        text: "Save"
+                        on_press: root.save()
+                    MDRoundFlatIconButton:
+                        icon: "reload"
+                        text: "Reset"
+                        on_press: root.reset()
+                    MDRoundFlatIconButton:
+                        icon: "upload-outline"
+                        text: "Load New File"
+                        on_press: 
+                            root.manager.transition = NoTransition()
+                            root.manager.current = "addNewFile"
+                    MDRoundFlatIconButton:
+                        icon: "content-save-outline"
+                        text: "Return to Main Manu"
+                        on_press:
+                            root.manager.current = "mainMenu"
+
+
+            BoxLayout:
+                orientation:"horizontal"
+                spacing: "20dp"
+                padding:(5, 5, 5, 5)
+                size_hint:(1, 0.1)
+
+                # MDRoundFlatIconButton:
+                #     icon: "application-edit-outline"
+                #     text:"Edit"
+                #     on_press: 
+                #         root.manager.transition = FallOutTransition()
+                #         root.edit()
+
+                MDRoundFlatIconButton:
+                    text:"Activate"
+                    icon: "clipboard-arrow-up-outline"
+                    on_press: root.activate()
+
+                MDRoundFlatIconButton:
+                    icon: "download-outline"
+                    text:"UnLoad"
+                    on_press: root.unload()
+
+            
+
+<EditProperties>:
+    aka: aka
+    file_name: file_name
+    type: type
+    format: format
+    duration: duration
+    begin: begin
+    end:end
+    name: "editProperties"
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: (0.4,0.4)
+        pos_hint: {'center_x': 0.5,'center_y': 0.5}
+        MDLabel:
+            size_hint: (1,0.1)
+            text: "Edit File Properties"
+            halign: "center"
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: (1,0.7)
+            background_normal: ""
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                MDLabel:
+                    text: "Name"
+                    size_hint: 0.2, 1
+                MDTextFieldRect:
+                    id: aka
+                    size_hint: 0.8, 1
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                MDLabel:
+                    text: "File Name"
+                    size_hint: 0.2, 1
+                MDLabel:
+                    id: file_name
+                    size_hint: 0.8, 1
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                MDLabel:
+                    text: "Type"
+                    size_hint: 0.2, 1
+                Spinner:
+                    id: type
+                    color: 0,0,0,1
+                    values: root.type_values
+                    size_hint: 0.8, 1
+                    sync_height: True
+                    background_normal: ''
+                    background_color: (1, 1, 1, 1)
+                    option_cls: Factory.spinner
+                    on_text: root.on_selected_type()
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                MDLabel:
+                    text: "Format"
+                    size_hint: 0.2, 1
+                Spinner:
+                    id: format
+                    color: 0,0,0,1
+                    values: root.format_values
+                    size_hint: 0.8, 1
+                    sync_height: True
+                    background_normal: ''
+                    background_color: (1, 1, 1, 1)
+                    option_cls: Factory.spinner
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.2
+                MDLabel:
+                    text: "Duration"
+                    size_hint: 0.2, 1
+                MDTextFieldRect:
+                    id: duration
+                    size_hint: 0.8, 1
+                    input_filter: "float"
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint: 1, 0.4
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: 0.22, 1
+                    MDLabel:
+                        text: "Begin"
+                    MDLabel:
+                        text: "End"
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: 0.7, 1
+                    MDLabel:
+                        id: begin
+                    MDLabel:
+                        id: end
+                MDRaisedButton:
+                    text: "select\ndates"
+                    id: begin_btn
+                    size_hint: 0.1, 1
+                    on_release: root.date_picker()
+                        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1,0.2)
+            MDRoundFlatIconButton:
+                icon: "content-save-outline"
+                text: "Save"
+                on_press:
+                    # root.manager.transition = FallOutTransition()
+                    # root.manager.current = "loadedMedia"
+                    root.edit_save()
+            MDRoundFlatIconButton:
+                icon: "close-thick"
+                text: "Cancel"
+                on_press:
+                    root.manager.transition = FallOutTransition()
+                    root.manager.current = "loadedMedia"
+                    # root.edit_active()
+
+<AddNewFile>:
+    name: "addNewFile"
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: (0.65,0.9)
+        pos_hint: {'right': 0.95,'center_y': 0.5}
+
+        MDLabel:
+            size_hint: 1, 0.2
+            text: "Select File to Load"
+            halign: "center"
+
+        FileChooserListView:
+            id: file_viewer
+            path: r"C:\pythonCode\rollerAds\media"
+            size_hint: 1, 0.8
+            canvas.before:
+                Color:
+                    rgb: .4, .5, .5
+                Rectangle:
+                    size: self.size
+            on_selection: root.on_selection(*args)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, 0.3
+            padding: ('0dp', '5dp', '0dp', '10dp')
+
+            Image:
+                id: selected_file_image
+                size_hint: 0.2, 1
+                source: r"C:\pythonCode\rollerAds\media\thumbnails\preview_placeholder.png"
+                
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 0.8, 1
+                pos_hint: {'left': 0.1}
+                                
+                MDLabel:
+                    id: selected_file_name
+                    size_hint: 1, 0.25
+                    text: "File Name:"
+                    markup: True
+                
+                MDLabel:
+                    id: selected_file_path
+                    size_hint: 1, 0.25
+                    text: "File Path:"
+                    markup: True
+
+                MDLabel:
+                    id: selected_file_size
+                    size_hint: 1,0.25
+                    text: "File Size:"
+                    markup: True
+
+                MDLabel:
+                    id: selected_file_created
+                    size_hint: 1,0.25
+                    text: "Created on:"
+                    markup: True
+
+        BoxLayout:
+            id: buttons
+            orientation: 'horizontal'
+            size_hint: 1, 0.05
+            MDRoundFlatButton:
+                text: "Add File"
+                on_press: root.add_file()
+            MDRoundFlatButton:
+                text: "Cancel"
+                on_press: root.cancel()
+            
+
+<AlertPopup>:
+    size_hint: 0.4, 0.4
+    pos_hint: {'center_x': 0.5,'center_y': 0.5}
+    title: "Please Validate Information"
+    BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+            id: error_message
+            size_hint: 1, 0.9
+        MDRoundFlatButton:
+            size_hint: 1, 0.1
+            text: "Ok"
+            on_press: root.dismiss()
+
+# <TableColumnTitles>:
+#     canvas.before:
+#         Color:
+#             rgba: self.color
+#         Rectangle:
+#             pos: self.pos
+#             size: self.size
+
+
+# <TableRow>:
+#     canvas.before:
+#         Color: 
+#             rgba: self.color
+#         Rectangle:
+#             pos: self.pos
+#             size: self.size
+#         Color:
+#             rgba: (0.4,0.4,0.4,1)
+#         Line:
+#             points: (self.x, self.y, self.width, self.y)
+            
+
+
+<spinner@SpinnerOption>:
+    color: (1, 1, 1, 1)
+    # font_name: TBD
+    background_color: (0.3, 0.3, 0.3, 1)

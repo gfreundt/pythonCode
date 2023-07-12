@@ -1,0 +1,4408 @@
+{
+   "fintechs": [
+      {
+         "id": 1,
+         "online": true,
+         "stats": true,
+         "name": "A Como",
+         "url": "https://acomo.com.pe/",
+         "link": "https://acomo.com.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": ">Compra</span><br><span class=\"fs-20\" id=\"current_bid\">S/ ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": ">Venta</span><br><span class=\"fs-20\" id=\"current_offer\">S/ ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            }
+         },
+         "image": "acomo.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@acomo.com.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": "01937-2019"
+      },
+      {
+         "id": 2,
+         "online": true,
+         "stats": true,
+         "name": "MidpointFX",
+         "url": "https://www.midpointfx.com/",
+         "link": "https://www.midpointfx.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/div[1]/div[2]/div/div[6]/h1/span/span/span/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/div[1]/div[2]/div/div[7]/h1/span/span/span/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "midpointfx.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "hola@midpointfx.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 3,
+         "online": true,
+         "stats": true,
+         "name": "Billex",
+         "url": "https://www.billex.pe/",
+         "link": "https://www.billex.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/div[2]/main/div/section/div/div/div[1]/div/div[1]/div/div/div[2]/div/div/div[1]/span[1]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/div[2]/main/div/section/div/div/div[1]/div/div[1]/div/div/div[2]/div/div/div[1]/span[2]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "billex.jpg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "servicioalcliente@billex.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 4,
+         "online": true,
+         "stats": true,
+         "name": "TKambio",
+         "url": "https://tkambio.com",
+         "link": "https://tkambio.com",
+         "bench": "tkambio",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[2]/div/span[2]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[2]/div/span[4]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "tkambio.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@tkambio.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": "03054-2017"
+      },
+      {
+         "id": 5,
+         "online": true,
+         "stats": true,
+         "name": "Rextie",
+         "url": "https://rextie.com",
+         "link": "https://rextie.com",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/div/div/app-side-nav/mat-sidenav-container/mat-sidenav-content/app-home/app-save-money-partial/div/div/div[1]/div[2]/div/app-fx-rates/div/div/div[1]/div/div[1]/div[2]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/div/div/app-side-nav/mat-sidenav-container/mat-sidenav-content/app-home/app-save-money-partial/div/div/div[1]/div[2]/div/app-fx-rates/div/div/div[1]/div/div[2]/div[2]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "rextie.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@rextie.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 6,
+         "online": true,
+         "stats": true,
+         "name": "Kambista",
+         "url": "https://kambista.com",
+         "link": "https://kambista.com",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div/main/div/div/div/article/div/div[1]/div[3]/div/div/div[2]/div[1]/strong[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div/main/div/div/div/article/div/div[1]/div[3]/div/div/div[2]/div[1]/strong[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "kambista.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@kambista.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 7,
+         "online": true,
+         "stats": true,
+         "name": "Securex",
+         "url": "https://securex.pe",
+         "link": "https://securex.pe",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[4]/div/div[1]/section[1]/div/div/div[2]/form/div[1]/h4[1]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[4]/div/div[1]/section[1]/div/div/div[2]/form/div[1]/h4[2]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "securex.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "hola@securex.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 8,
+         "online": true,
+         "stats": true,
+         "name": "Tu Cambista",
+         "url": "https://tucambista.pe",
+         "link": "https://tucambista.pe",
+         "bench": "tucambista",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section[1]/div[3]/div/div[4]/div/div[1]/div/div/div/div/div[2]/div[1]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section[1]/div[3]/div/div[4]/div/div[1]/div/div/div/div/div[2]/div[2]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "tucambista.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@tucambista.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 9,
+         "online": true,
+         "stats": true,
+         "name": "Cocos y Lucas",
+         "url": "https://cocosylucasbcp.com",
+         "link": "https://cocosylucasbcp.com",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "Compra:",
+                  "borra": "</span><div _ngcontent-agm-c83=",
+                  "instance": 1,
+                  "extract_start": 177
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "Venta:",
+                  "instance": 142,
+                  "extract_start": 177
+               }
+            }
+         },
+         "image": "cocosylucas.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "cocosylucas@bcp.com.pe",
+            "telefono": ""
+         },
+         "ruc": "20100047218",
+         "app_iOS": "https://apps.apple.com/us/app/cocos-y-lucas/id1532776169",
+         "app_Android": "https://play.google.com/store/apps/details?id=com.bcp.innovacxion.cylmprod",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 10,
+         "online": true,
+         "stats": true,
+         "name": "Cambio Seguro",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://cambioseguro.com/",
+         "bench": "cambioseguro",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[2]/div[1]/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[2]/div[1]/div[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "cambio_seguro.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@cambioseguro.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 11,
+         "online": true,
+         "stats": true,
+         "name": "CambiaFX",
+         "url": "https://cambiafx.pe/",
+         "link": "https://cambiafx.pe/",
+         "bench": "cambiafx",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/header/div[2]/div/div[2]/div/button[1]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 3,
+                  "extract_end": 9
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/header/div[2]/div/div[2]/div/button[2]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 3,
+                  "extract_end": 9
+               }
+            }
+         },
+         "image": "cambiafx.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "hola@cambiafx.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 12,
+         "online": true,
+         "stats": true,
+         "name": "Cambista Inka",
+         "url": "https://www.cambistainka.com/",
+         "link": "https://www.cambistainka.com/",
+         "bench": "cambistainka",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[1]/div/div/div[2]/div/div[2]/form/div[1]/div[1]/span/strong",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[1]/div/div/div[2]/div/div[2]/form/div[1]/div[2]/span/strong",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "cambistainka.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@cambistainka.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 13,
+         "online": true,
+         "stats": true,
+         "name": "InstaKash",
+         "url": "https://instakash.net/",
+         "link": "https://instakash.net/",
+         "bench": "instakash",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/div/main/section[1]/div/div/section/div[2]/div/div[1]/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 4,
+                  "extract_end": 9
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/div/main/section[1]/div/div/section/div[2]/div/div[2]/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 4,
+                  "extract_end": 9
+               }
+            }
+         },
+         "image": "instakash.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@instakash.net",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 14,
+         "online": true,
+         "stats": true,
+         "name": "Cambio Mundial",
+         "url": "https://www.cambiomundial.com/",
+         "link": "https://www.cambiomundial.com/",
+         "bench": "cambiomundial",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/section[1]/div/div[2]/form/div[1]/div[1]/span[1]/span[2]/label",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/section[1]/div/div[2]/form/div[1]/div[1]/span[2]/span[2]/label",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "cambio_mundial.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "clientes@cambiomundial.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 15,
+         "online": true,
+         "stats": true,
+         "name": "Peru Dolar",
+         "url": "https://perudolar.pe/",
+         "link": "https://perudolar.pe/",
+         "bench": "perudolar",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/div[2]/div[1]/div/div/div/div[4]/div[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 14,
+                  "extract_end": 19
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/div[2]/div[1]/div/div/div/div[4]/div[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 29,
+                  "extract_end": 35
+               }
+            }
+         },
+         "image": "perudolar.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@perudolar.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 16,
+         "online": true,
+         "stats": true,
+         "name": "TerraCash",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://terracash.pe/",
+         "bench": "terracash",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[2]/div[8]/div[1]/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[2]/div[8]/div[1]/div[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "terracash.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "estherventas@terracash.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 17,
+         "online": true,
+         "stats": true,
+         "name": "Cambi.pe",
+         "url": "http://cambi.pe/",
+         "link": "http://cambi.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/div/section[1]/div/div[2]/div/div/div[2]/div[2]/div[1]/span[3]/strong",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/section[1]/div/div[2]/div/div/div[2]/div[2]/div[1]/span[4]/strong",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "cambipe.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "operaciones@cambi.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 18,
+         "online": true,
+         "stats": true,
+         "name": "Roblex",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://roblex.pe/",
+         "bench": "roblex",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[7]/div[1]/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 12
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[7]/div[1]/div[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 12
+               }
+            }
+         },
+         "image": "roblex.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@roblex.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 19,
+         "online": true,
+         "stats": true,
+         "name": "NonCash",
+         "url": "https://noncash.pe",
+         "link": "https://noncash.pe",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[1]/div[2]/div/div/div[2]/div[2]/div[1]/p[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[1]/div[2]/div/div/div[2]/div[2]/div[1]/p[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 23,
+                  "extract_end": 28
+               }
+            }
+         },
+         "image": "noncash.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@noncash.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 20,
+         "online": true,
+         "stats": true,
+         "name": "Cambix",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://cambix.com.pe/home",
+         "bench": "cambix",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[2]/div[2]/div[1]/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[2]/div[2]/div[1]/div[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "cambix.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "cambix_info@bancomercio.com.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 21,
+         "online": true,
+         "stats": true,
+         "name": "Western Union",
+         "url": "https://www.westernunionperu.pe/cambiodemoneda",
+         "link": "https://www.westernunionperu.pe/cambiodemoneda",
+         "bench": "westernunionperu",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section/div/form/div[1]/div[2]/p/button[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section/div/form/div[1]/div[2]/p/button[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "western_union.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "01 422 0014",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 22,
+         "online": true,
+         "stats": true,
+         "name": "El Alfarero",
+         "url": "https://www.casadecambioelalfarero.com/",
+         "link": "https://www.casadecambioelalfarero.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/form/main/section[1]/div/div/div[2]/div[2]/div[2]/label[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/form/main/section[1]/div/div/div[2]/div[2]/div[1]/label[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "el_alfarero.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "ventas@casadecambioelalfarero.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 23,
+         "online": true,
+         "stats": true,
+         "name": "CambioX",
+         "url": "https://www.cambiox.pe/",
+         "link": "https://www.cambiox.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section[1]/div/div/div/div[2]/center/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section[1]/div/div/div/div[2]/center/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 23,
+                  "extract_end": 28
+               }
+            }
+         },
+         "image": "cambiox.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "consultas@cambiox.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 24,
+         "online": false,
+         "stats": false,
+         "name": "Fintuu",
+         "url": "https://www.fintuu.com/",
+         "link": "https://www.fintuu.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div[1]/section[3]/div/div[3]/div[1]/div/div[1]/div[1]/div/h6",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 11,
+                  "extract_end": 16
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div[1]/section[3]/div/div[3]/div[1]/div/div[1]/div[2]/div/h6",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 10,
+                  "extract_end": 17
+               }
+            }
+         },
+         "image": "fintuu.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "N/A",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 25,
+         "online": true,
+         "stats": true,
+         "name": "Safex",
+         "url": "https://www.safex.pe/",
+         "link": "https://www.safex.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[2]/div/div/form/div/div[1]/div[2]/div/span/strong/h3",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/section[2]/div/div/form/div/div[1]/div[2]/div/span/strong/h3",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 23,
+                  "extract_end": 28
+               }
+            }
+         },
+         "image": "safex.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "978-830-054",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 26,
+         "online": true,
+         "stats": true,
+         "name": "Efectibit",
+         "url": "https://www.efectibit.com/",
+         "link": "https://www.efectibit.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[2]/main/div/div/div/div/div/div[2]/div/form/div/div[1]/h4/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[2]/main/div/div/div/div/div/div[2]/div/form/div/div[1]/h4/span",
+                  "click": true,
+                  "click_xpath": "/html/body/div[2]/div[2]/main/div/div/div/div/div/div[2]/div/form/div/div[3]/button",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "efectibit.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "915-097-744",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 27,
+         "online": true,
+         "stats": true,
+         "name": "Dollar House",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://dollarhouse.pe/",
+         "bench": "dollarhouse",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div/div/form/div[1]/div/p[1]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div/div/form/div[1]/div/p[2]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "dollar_house.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@dollarhouse.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 28,
+         "online": true,
+         "stats": true,
+         "name": "Cambista",
+         "url": "https://cambista.online/",
+         "link": "https://cambista.online/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>dollar>price_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>dollar>price_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "cambista.png",
+         "bancos": {
+            "inmediatos": [
+               "BCP",
+               "BBVA"
+            ],
+            "interbancario": [
+               "Scotiabank"
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@cambista.com",
+            "telefono": "970782603"
+         },
+         "ruc": "20568700831",
+         "app_iOS": null,
+         "app_Android": null,
+         "horario": "Lunes a Sábado de 9 am a 7 pm",
+         "redes_sociales": {
+            "facebook": "https://www.facebook.com/cambistaperu",
+            "twitter": "",
+            "instagram": "https://www.instagram.com/cambistaperu/",
+            "linkedin": "",
+            "youtube": "https://www.youtube.com/channel/UCjIV0wAlzpV_Hyo0EQ1GlQw"
+         },
+         "login_para_ver": false,
+         "login_para_ejecutar": false,
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "Casa de cambio online. Cambiamos sus soles y dólares rápidamente y con seguridad. Atención a todo Lima y provincias. Estamos registrados ante la SBS.",
+         "registro_SBS": "40657-2018"
+      },
+      {
+         "id": 29,
+         "online": true,
+         "stats": true,
+         "name": "A$$e$$or",
+         "url": "https://www.assessorperu.com/",
+         "link": "https://www.assessorperu.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "montosoles",
+                  "instance": 1,
+                  "extract_start": 10
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "montodolar",
+                  "instance": 1,
+                  "extract_start": 29
+               }
+            }
+         },
+         "image": "a$$e$$or.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@assessorperu.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 30,
+         "online": true,
+         "stats": true,
+         "name": "X-Cambio",
+         "url": "https://x-cambio.com/",
+         "link": "https://x-cambio.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "data-compra",
+                  "instance": 1,
+                  "extract_start": 3
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "data-venta",
+                  "instance": 1,
+                  "extract_start": 3
+               }
+            }
+         },
+         "image": "x-cambio.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@x-cambio.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 31,
+         "online": true,
+         "stats": true,
+         "name": "KeyEx",
+         "url": "https://www.keyex.pe/",
+         "link": "https://www.keyex.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/header/div/div[1]/div[2]/div[2]/div/div[1]/div[1]/div[1]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/header/div/div[1]/div[2]/div[2]/div/div[1]/div[1]/div[2]/span[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 6
+               }
+            }
+         },
+         "image": "keyex.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "soporte@keyex.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 32,
+         "online": true,
+         "stats": true,
+         "name": "DinersFX",
+         "url": "https://www.dinersfx.pe/",
+         "link": "https://www.dinersfx.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/app-home/app-first-section/div/div[1]/div/div[2]/div[1]/div[2]/div/div/div[1]/p[1]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 3,
+                  "extract_end": 9
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/app-home/app-first-section/div/div[1]/div/div[2]/div[1]/div[2]/div/div/div[1]/p[2]/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 3,
+                  "extract_end": 9
+               }
+            }
+         },
+         "image": "dinersfx.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "01-615-1111p2",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 33,
+         "online": true,
+         "stats": true,
+         "name": "DL$Money",
+         "url": "https://cuantoestaeldolar.pe/",
+         "link": "https://dlsmoney.com/",
+         "bench": "dlsmoney",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[8]/div[1]/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[3]/section/div[1]/div[4]/div[1]/div[3]/div[8]/div[1]/div[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "dls-money.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "operaciones@dlsmoney.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 34,
+         "online": true,
+         "stats": true,
+         "name": "HIR Power",
+         "url": "https://hirpower.com/",
+         "link": "https://hirpower.com/",
+         "bench": "hirpower",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[1]/div[3]/div[2]/div[1]/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[1]/div[3]/div[2]/div[2]/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            }
+         },
+         "image": "hir_power.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@hirpower.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 35,
+         "online": true,
+         "stats": true,
+         "name": "Yanki",
+         "url": "https://yanki.pe/",
+         "link": "https://yanki.pe/",
+         "bench": "yanki",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[4]/div/div/ul/div[1]/div/div/div[2]/div/div[2]/div[1]/div[1]/b/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[4]/div/div/ul/div[1]/div/div/div[2]/div/div[2]/div[1]/div[3]/b/b/span",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "yanki.svg",
+         "bancos": {
+            "inmediatos": [
+               "BCP",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "BBVA",
+               "BanBif",
+               "Scotiabank"
+            ]
+         },
+         "contacto": {
+            "correo": "+51 980-020-052",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 36,
+         "online": true,
+         "stats": true,
+         "name": "Tintercambio",
+         "url": "https://tintercambio.com/",
+         "link": "https://tintercambio.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div[1]/div/div/div/div/div/div/div[3]/div[1]/div[1]/span[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/main/div[1]/div/div/div/div/div/div/div[3]/div[1]/div[2]/span[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "tintercambio.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 37,
+         "online": true,
+         "stats": true,
+         "name": "DolarSol",
+         "url": "https://dolarsol.com/",
+         "link": "https://dolarsol.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 375,
+                  "y0": 345,
+                  "x1": 450,
+                  "y1": 370
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 535,
+                  "y0": 345,
+                  "x1": 605,
+                  "y1": 370
+               }
+            }
+         },
+         "image": "dolarsol.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "+51 959-370-922",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 38,
+         "online": true,
+         "stats": true,
+         "name": "JetCash",
+         "url": "http://www.jetperu.com.pe/casa-de-cambio",
+         "link": "http://www.jetperu.com.pe/casa-de-cambio",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[7]/div/div/div/div[1]/div/div[1]/div/div[4]/div/div/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 24,
+                  "extract_end": 30
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[7]/div/div/div/div[1]/div/div[1]/div/div[4]/div/div/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 40,
+                  "extract_end": 46
+               }
+            }
+         },
+         "image": "jet_peru.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "N/A",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 39,
+         "online": true,
+         "stats": true,
+         "name": "PeruDollar",
+         "url": "www.perudollar.pe",
+         "link": "www.perudollar.pe",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 298,
+                  "y0": 392,
+                  "x1": 345,
+                  "y1": 412
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 405,
+                  "y0": 392,
+                  "x1": 455,
+                  "y1": 412
+               }
+            }
+         },
+         "image": "perudollar.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "divisas@perudollar.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 40,
+         "online": true,
+         "stats": true,
+         "name": "Monnety",
+         "url": "https://www.monnety.com/",
+         "link": "https://www.monnety.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[1]/div/div/div/div[2]/div[1]/label[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 12
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[1]/div/div/div/div[2]/div[1]/label[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 7,
+                  "extract_end": 11
+               }
+            }
+         },
+         "image": "monnety.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "comunicaciones@monnety.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 41,
+         "online": true,
+         "stats": true,
+         "name": "CambiosJP",
+         "url": "https://cambiosjp.com/",
+         "link": "https://cambiosjp.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div[2]/div[1]/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div[2]/div[2]/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 7,
+                  "extract_end": 12
+               }
+            }
+         },
+         "image": "cambios_jp.jpg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contactos@cambiosjp.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 42,
+         "online": true,
+         "stats": true,
+         "name": "Money King",
+         "url": "https://www.moneyking.pe/",
+         "link": "https://www.moneyking.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section[1]/div/div/div[2]/form/div[1]/div[1]/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 10,
+                  "extract_end": 15
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/section[1]/div/div/div[2]/form/div[1]/div[2]/p",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 13
+               }
+            }
+         },
+         "image": "moneyking.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "moneyking.pe@gmail.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 43,
+         "online": true,
+         "stats": true,
+         "name": "Yomimoka",
+         "url": "https://yomimoka.com/",
+         "link": "https://yomimoka.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[3]/div/div/div/main/article/div/div/div/div/section[1]/div[2]/div/div/div/div/section[1]/div/div/div[3]/div/div/div[2]/div/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 32,
+                  "extract_end": 37
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[2]/div[3]/div/div/div/main/article/div/div/div/div/section[1]/div[2]/div/div/div/div/section[1]/div/div/div[3]/div/div/div[2]/div/div",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 45,
+                  "extract_end": 50
+               }
+            }
+         },
+         "image": "yomimoka.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@yomimoka.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 44,
+         "online": true,
+         "stats": true,
+         "name": "iMoney",
+         "url": "https://imoney.pe/",
+         "link": "https://imoney.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 790,
+                  "y0": 240,
+                  "x1": 880,
+                  "y1": 270
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 1055,
+                  "y0": 240,
+                  "x1": 1145,
+                  "y1": 270
+               }
+            }
+         },
+         "image": "imoney.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "982-273-702",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 45,
+         "online": true,
+         "stats": true,
+         "name": "Buenkambio",
+         "url": "https://buenkambio.com/index.php",
+         "link": "https://buenkambio.com/index.php",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "T/C: Compra: ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "| Venta: ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            }
+         },
+         "image": "buenkambio.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@buenkambio.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 46,
+         "online": false,
+         "stats": false,
+         "name": "Dolartec",
+         "url": "http://190.119.236.76:8090/",
+         "link": "http://190.119.236.76:8090/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "imagen-generica.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "servicioalcliente@billex.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 47,
+         "online": true,
+         "stats": true,
+         "name": "Fortune Online",
+         "url": "https://www.fortuneonline.com.pe/",
+         "link": "https://www.fortuneonline.com.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "\"tipoCompra",
+                  "instance": 1,
+                  "extract_start": 3
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "\"tipoVenta",
+                  "instance": 1,
+                  "extract_start": 3
+               }
+            }
+         },
+         "image": "fortune_online.jpg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "cambios@fortuneonline.com.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 48,
+         "online": true,
+         "stats": true,
+         "name": "La Casa del Dolar",
+         "url": "https://lacasadeldolar.pe/",
+         "link": "https://lacasadeldolar.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": ">COMPRA: ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": ">VENTA:  ",
+                  "instance": 1,
+                  "extract_start": 0
+               }
+            }
+         },
+         "image": "la_casa_del_dolar.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "informes@lacasadeldolar.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 49,
+         "online": false,
+         "stats": false,
+         "name": "FTB",
+         "url": "https://ftb.pe/",
+         "link": "https://ftb.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": null,
+               "parameters": null
+            },
+            "venta": {
+               "method": null,
+               "parameters": null
+            }
+         },
+         "image": "imagen-generica.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@ftb.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 50,
+         "online": true,
+         "stats": true,
+         "name": "Dolarvip",
+         "url": "https://www.dolarvip.com/",
+         "link": "https://www.dolarvip.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[2]/div/div/main/article/div/div/div/div/section[1]/div[2]/div/div[2]/div/div/div[2]/div/div/strong[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 4
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div[2]/div/div/main/article/div/div/div/div/section[1]/div[2]/div/div[2]/div/div/div[2]/div/div/strong[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 4
+               }
+            }
+         },
+         "image": "dolar_vip.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@dolarvip.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 51,
+         "online": true,
+         "stats": true,
+         "name": "Cambialo",
+         "url": "https://www.cambialo.pe/",
+         "link": "https://www.cambialo.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 880,
+                  "y0": 220,
+                  "x1": 930,
+                  "y1": 245
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 1060,
+                  "y0": 220,
+                  "x1": 1110,
+                  "y1": 245
+               }
+            }
+         },
+         "image": "cambialo.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "admin@cambialo.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 52,
+         "online": true,
+         "stats": true,
+         "name": "Decamoney",
+         "url": "https://decamoney.com/",
+         "link": "https://decamoney.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/app-landing/section[1]/div/div/div[2]/div[1]/div[1]/h5/span[1]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 8,
+                  "extract_end": 14
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/app-root/app-landing/section[1]/div/div/div[2]/div[1]/div[1]/h5/span[3]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 7,
+                  "extract_end": 13
+               }
+            }
+         },
+         "image": "decamoney.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@decamoney.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 53,
+         "online": true,
+         "stats": true,
+         "name": "Tica",
+         "url": "https://www.tica.pe/",
+         "link": "https://www.tica.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 535,
+                  "y0": 235,
+                  "x1": 600,
+                  "y1": 260
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 835,
+                  "y0": 235,
+                  "x1": 900,
+                  "y1": 260
+               }
+            }
+         },
+         "image": "tica.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@tica.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 54,
+         "online": false,
+         "stats": false,
+         "name": "Intispot",
+         "url": "www.intispot.com",
+         "link": "www.intispot.com",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": null,
+               "parameters": null
+            },
+            "venta": {
+               "method": null,
+               "parameters": null
+            }
+         },
+         "image": "imagen-generica.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": null,
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 55,
+         "online": true,
+         "stats": true,
+         "name": "Prex",
+         "url": "https://www.prex.com.pe/",
+         "link": "https://www.prex.com.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "Compra</p>",
+                  "instance": 1,
+                  "extract_start": 34
+               }
+            },
+            "venta": {
+               "method": "PAGESOURCE",
+               "parameters": {
+                  "loc_text": "Venta</p>",
+                  "instance": 1,
+                  "extract_start": 47
+               }
+            }
+         },
+         "image": "prex.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "info@prex.com.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 56,
+         "online": true,
+         "stats": true,
+         "name": "Zona Dolar",
+         "url": "https://zonadolar.pe/",
+         "link": "https://zonadolar.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/header/div/div/div[2]/div/div[1]/div[2]/ul/li[2]/a",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 26,
+                  "extract_end": 32
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div/header/div/div/div[2]/div/div[1]/div[2]/ul/li[1]/a",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 22,
+                  "extract_end": 28
+               }
+            }
+         },
+         "image": "zona_dolar.jpg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "jayala@zonadolar.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 57,
+         "online": false,
+         "stats": false,
+         "name": "Amaz FX",
+         "url": "https://amazfx.pe/",
+         "link": "https://amazfx.pe/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": null,
+               "parameters": {}
+            },
+            "venta": {
+               "method": null,
+               "parameters": {}
+            }
+         },
+         "image": "imagen-generica.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@amazfx.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 58,
+         "online": true,
+         "stats": true,
+         "name": "Buenbit",
+         "url": "https://www.buenbit.com/es-PE/comprar-dolares-en-peru",
+         "link": "https://www.buenbit.com/es-PE/comprar-dolares-en-peru",
+         "bench": "buenbit",
+         "scraper": {
+            "compra": {
+               "method": null,
+               "parameters": null
+            },
+            "venta": {
+               "method": null,
+               "parameters": null
+            }
+         },
+         "image": "buenbit.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "soporte@buenbit.pe",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": ""
+      },
+      {
+         "id": 59,
+         "online": true,
+         "stats": true,
+         "name": "Tu Cambio Total",
+         "url": "https://tucambiototal.com/",
+         "link": "https://tucambiototal.com/",
+         "bench": "tucambiototal",
+         "scraper": {
+            "compra": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 923,
+                  "y0": 155,
+                  "x1": 975,
+                  "y1": 175
+               }
+            },
+            "venta": {
+               "method": "OCR",
+               "parameters": {
+                  "x0": 1033,
+                  "y0": 155,
+                  "x1": 1085,
+                  "y1": 175
+               }
+            }
+         },
+         "image": "tu_cambio_total.png",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "contacto@tucambiototal.com",
+            "telefono": ""
+         },
+         "ruc": "20607581275",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": "01989-2021"
+      },
+      {
+         "id": 60,
+         "online": true,
+         "stats": true,
+         "name": "Firbid",
+         "url": "https://www.firbid.com/",
+         "link": "https://www.firbid.com/",
+         "bench": "",
+         "scraper": {
+            "compra": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/div/div[2]/div[1]/div[1]/div/div/div[2]/div[2]/div/div[2]/div[1]/div/div[1]/div/div[2]/div/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            },
+            "venta": {
+               "method": "XPATH",
+               "parameters": {
+                  "xpath": "/html/body/div[1]/div/div/div[2]/div[1]/div[1]/div/div/div[2]/div[2]/div/div[2]/div[1]/div/div[1]/div/div[3]/div/div[2]",
+                  "click": false,
+                  "click_xpath": "",
+                  "extract_start": 0,
+                  "extract_end": 5
+               }
+            }
+         },
+         "image": "firbid.svg",
+         "bancos": {
+            "inmediatos": [
+               "",
+               "",
+               ""
+            ],
+            "interbancario": [
+               "",
+               "",
+               ""
+            ]
+         },
+         "contacto": {
+            "correo": "soporte@firbid.com",
+            "telefono": ""
+         },
+         "ruc": "",
+         "app_iOS": "",
+         "app_Android": "",
+         "horario": "",
+         "redes_sociales": {
+            "facebook": "",
+            "twitter": "",
+            "instagram": "",
+            "linkedin": "",
+            "youtube": ""
+         },
+         "login_para_ver": "",
+         "login_para_ejecutar": "",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": "",
+         "texto_libre": "",
+         "registro_SBS": "01989-2021"
+      }
+   ],
+   "bancos": [
+      {
+         "id": 1,
+         "online": true,
+         "stats": true,
+         "name": "BCP",
+         "url": "https://bcp.com.pe/",
+         "link": "https://bcp.com.pe/",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_bcp_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_bcp_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "bcp.png",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": ""
+      },
+      {
+         "id": 2,
+         "online": true,
+         "stats": true,
+         "name": "BBVA",
+         "url": "https://bbva.com.pe/",
+         "link": "https://bbva.com.pe/",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_bbva_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_bbva_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "bbva.png",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": ""
+      },
+      {
+         "id": 3,
+         "online": true,
+         "stats": true,
+         "name": "Interbank",
+         "url": "https://interbank.com.pe/",
+         "link": "https://interbank.com.pe/",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>interbank_bcp_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_interbank_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "interbank.png",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": ""
+      },
+      {
+         "id": 4,
+         "online": true,
+         "stats": true,
+         "name": "Scotiabank",
+         "url": "https://scotiabank.com.pe/",
+         "link": "https://scotiabank.com.pe/",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_scotiabank_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_scotiabank_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "scotiabank.png",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": ""
+      },
+      {
+         "id": 5,
+         "online": true,
+         "stats": true,
+         "name": "Banco de la Nación",
+         "url": "https://bn.com.pe/",
+         "link": "https://bn.com.pe/",
+         "scraper": {
+            "compra": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_nacion_c",
+                  "post-process": null
+               }
+            },
+            "venta": {
+               "method": "API",
+               "parameters": {
+                  "url": "https://cambista.com/api-rest/js/calc.json",
+                  "path": "site>Interbank>price_nacion_v",
+                  "post-process": null
+               }
+            }
+         },
+         "image": "bn.png",
+         "reserved7": "",
+         "reserved8": "",
+         "reserved9": "",
+         "reserved10": "",
+         "reserved11": "",
+         "reserved12": "",
+         "reserved13": "",
+         "reserved14": "",
+         "reserved15": ""
+      }
+   ]
+}

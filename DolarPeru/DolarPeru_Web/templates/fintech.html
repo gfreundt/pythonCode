@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tipo de Cambio</title>
+        <link rel="stylesheet" href="/static/fintech-style.css">
+        <meta http-equiv="refresh" content="450">
+    </head>
+
+    <body>
+        <header>
+            Dólar<span>Perú</span>
+        </header>
+        <div class="logo-container">
+            <img class="logos" src="{{ url_for('static', filename='images/'+datos.image) }}">
+        </div>
+        <div class="ultima-container">
+            <div class="l1">{{datos.name}}</div>
+            <div class="line2">Actualizado: {{ultima.hora}} [{{ultima.fecha}}]</div>
+            <div class="compraventa">
+                <div class="compra">
+                    Compra: {{ultima.compra}}
+                </div>
+                <div class="venta">
+                    Venta: {{ultima.venta}}
+                </div>
+            </div>
+        </div>
+        <div class="graficos-compra">
+            <img class="intraday"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-intraday.png">
+            <img class="last-7-days"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-7days.png">
+            <img class="last-100-days"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-100days.png">
+            <div class="title-intraday">Intradía</div>
+            <div class="title-last-7-days">Semana Pasada</div>
+            <div class="title-last-100-days">Últimos 100 días</div>
+        </div>
+        <div class="graficos-venta">
+            <img class="intraday"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-intraday.png">
+            <img class="last-7-days"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-7days.png">
+            <img class="last-100-days"
+                src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-{{id}}-venta-100days.png">
+        </div>
+        <div class="datos-container">
+            <div class="section-title">Información General</div>
+            <table>
+                <tr>
+                    <td class="left-col">Nombre Comercial</td>
+                    <td class="right-col">{{datos.name}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Marketing</td>
+                    <td class="right-col">{{datos.texto_libre}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">RUC</td>
+                    <td class="right-col">{{datos.ruc}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Registro SBS</td>
+                    <td class="right-col">{{datos.registro_SBS}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Contacto</td>
+                    <td class="right-col">{{datos.contacto_correo}</td>
+                    <td class="right-col">{{datos.contacto_telefono}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Página Web</td>
+                    <td class="right-col">{{datos.link}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Transferencias Inmediatas</td>
+                    <td class="right-col">{{datos.bancos_inmediato}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Transferencias Interbancarias</td>
+                    <td class="right-col">{{datos.bancos_interbancario}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Horario</td>
+                    <td class="right-col">{{datos.horario}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Apps</td>
+                    <td class="right-col">{{datos.app_iOS}}</td>
+                    <td class="right-col">{{datos.app_Android}}</td>
+                </tr>
+                <tr>
+                    <td class="left-col">Redes Sociales</td>
+                    <td class="right-col">{{datos.facebook}}</td>
+                    <td class="right-col">{{datos.twitter}}</td>
+                    <td class="right-col">{{datos.instagram}}</td>
+                    <td class="right-col">{{datos.linkedin}}</td>
+                    <td class="right-col">{{datos.youtube}}</td>
+                </tr>
+            </table>
+        </div>
+        <!--- 
+        <div class="historicas">
+            <div class="section-title">
+                Cotizaciones Históricas
+            </div>
+            <table class="tabla">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Compra</th>
+                    <th>Venta</th>
+                </tr>
+                {% for quote in antiguas %}
+                <tr>
+                    <td>fecha</td>
+                    <td>hora</td>
+                    <td>{{quote.compra}}</td>
+                    <td>{{quote.venta}}</td>
+                </tr>
+                {%endfor%}
+            </table>
+        </div>
+        --->
+
+    </body>
+
+</html>

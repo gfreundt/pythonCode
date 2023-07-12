@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<img src="/static/test/{{media}}" style: width="200" />
+
+
+<form action="#" method="post">
+    <div class="form-input">
+        Name:
+        <input type="text" name="name" value={{defaults["name"]}}>
+    </div>
+    <div class="form-input">
+        Duration:
+        <input type="number" name="duration" value={{defaults["duration"]}}>
+    </div>
+    <div class="form-input">
+        Start Date:
+        <input type="date" name="start_date" value={{defaults["start_date"]}}>
+        Start Time:
+        <input type="time" name="start_time" value={{defaults["start_time"]}}>
+    </div>
+    <div class="form-input">
+        End Date:
+        <input type="date" name="end_date" value={{defaults["end_date"]}}>
+        End Time:
+        <input type="time" name="end_time" value={{defaults["end_time"]}}>
+    </div>
+    <div class="submit-button">
+        <input type="submit" value="LOAD">
+        <input type="reset" value="Clear">
+    </div>
+</form>
+
+
+{% endblock content %}

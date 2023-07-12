@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}
+Tipo de Cambio <span>Venta</span>
+{% endblock title %}
+
+{% block graphs %}
+<img class="intraday"
+    src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-000-venta-intraday.png">
+<img class="last-5-days"
+    src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-000-venta-7days.png">
+<img class="last-30-days"
+    src="https://storage.googleapis.com/data-bucket-gft//DolarPeru_data/graphs/graph-000-venta-100days.png">
+{% endblock graphs %}

@@ -1,0 +1,55 @@
+{
+    "Image": [
+        "dwg/vnd.dwg",
+        "xcf/x-xcf",
+        "jpg/jpeg",
+        "jpx/jpx",
+        "png/png",
+        "apng/apng",
+        "gif/gif",
+        "webp/webp",
+        "cr2/x-canon-cr2",
+        "tif/tiff",
+        "bmp/bmp",
+        "jxr/vnd.ms-photo",
+        "psd/vnd.adobe.photoshop",
+        "ico/x-icon",
+        "heic/heic",
+        "avif/avif"
+    ],
+    "Video": [
+        "3gp/3gpp",
+        "mp4/mp4",
+        "m4v/x-m4v",
+        "mkv/x-matroska",
+        "webm/webm",
+        "mov/quicktime",
+        "avi/x-msvideo",
+        "wmv/x-ms-wmv",
+        "mpg/mpeg",
+        "flv/x-flv"
+    ],
+    "Audio": [
+        "aac/aac",
+        "mid/midi",
+        "mp3/mpeg",
+        "m4a/mp4",
+        "ogg/ogg",
+        "flac/x-flac",
+        "wav/x-wav",
+        "amr/amr",
+        "aiff/x-aiff"
+    ],
+    "Document": [
+        "doc/msword",
+        "docx/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "odt/vnd.oasis.opendocument.text",
+        "xls/vnd.ms-excel",
+        "xlsx/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "ods/vnd.oasis.opendocument.spreadsheet",
+        "pdf/post.document.format",
+        "ppt/vnd.ms-powerpoint",
+        "pptx/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "odp/vnd.oasis.opendocument.presentation"
+    ]
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Content Administration</title>
+        <link rel="stylesheet" href="static/css/main.css">
+    </head>
+
+    <body>
+        <div class="topnav">
+            <a class="active" href="#">Loaded Media</a>
+            <a href="#">Unloaded Media</a>
+            <a href="#">Unsupported Media</a>
+            <a href="#">Settings</a>
+        </div>
+
+        LOADED MEDIA
+        {% for table in (active, inactive) %}
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th colspan="7" class="content-table-title">{{header["table_titles"][loop.index0]}}</th>
+                </tr>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Media Name</th>
+                    <th scope="col">Media File</th>
+                    <th scope="col" style="text-align: center;">Media Type</th>
+                    <th scope="col" style="text-align: center;">Duration</th>
+                    <th scope="col" style="text-align: center;">Start</th>
+                    <th scope="col" style="text-align: center;">End</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in table %}
+                <tr>
+                    <th scope="row">{{loop.index}}</th>
+                    <td>{{item["aka_name"]}}</td>
+                    <td>{{item["file_name"]}}</td>
+                    <td style="text-align: center;">{{item["file_type"]}}</td>
+                    <td style="text-align: center;">{{item["cycle_duration"]}} s</td>
+                    <td style="text-align: center;">{{item["datetime_start_str"]}}</td>
+                    <td style="text-align: center;">{{item["datetime_end_str"]}}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+            </tbody>
+        </table>
+        {% endfor %}
+
+        UNLOADED MEDIA
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th colspan="7" class="content-table-title">Files</th>
+                </tr>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Media File Name</th>
+                    <th scope="col" style="text-align: center;">Media Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file_name in other_media %}
+                <tr>
+                    <th scope="row">{{loop.index}}</th>
+                    <td>{{file_name}}</td>
+                    <td style="text-align: center;">TBD</td>
+                </tr>
+                {% endfor %}
+                <tr>
+            </tbody>
+        </table>
+
+    </body>
+
+</html>
