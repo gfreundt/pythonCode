@@ -11,35 +11,38 @@ from pygame.locals import *
 
 pygame.init()
 
-
 # TODO: when landing, intercept heading first
 
-# TODO: split arrival and departures into cols
 # TODO: help
-# TODO: confirm exit when ESC
 # TODO: complete audio
 # TODO: intro menu to select airspace and level
 # TODO: score in table
 # TODO: expedite
-
-# TODO: color for text when score +1 or -1
+# TODO: pop-up changes height depending on content
+# TODO: color code tags: emergency = red
 
 # TODO: multi-command line
 # TODO: priority departure
 # TODO: emergency landing
-# TODO: clear tags F key
-# TODO: fix collision
+# TODO: fix collision on landing
+# TODO: fix right left arrow
+# TODO: finish guidelines
 
 
 class Environment:
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
+    GREEN = (0, 102, 0)
+    BROWN = (102, 51, 0)
+    BLUE = (0, 0, 153)
     BG = (25, 72, 80)
     BG_CONTROLS = (0, 102, 102)
     INV_COLORS = [(44, 93, 118), (74, 148, 186)]
     RESOURCES_PATH = os.path.join("D:", r"\pythonCode", "Resources", "Fonts")
+
+    DISPLAY_WIDTH = pygame.display.Info().current_w
+    DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
 
     FONT9 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 9)
     FONT12 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 12)
@@ -110,6 +113,7 @@ class Environment:
 
     # general display variables
     tagActive = True
+    guidelineActive = False
 
 
 class Airspace:
@@ -124,21 +128,19 @@ class Airspace:
 
     def init_pygame(self):
         # pygame init
-        # os.environ["SDL_VIDEO_WINDOW_POS"] = "7, 28"
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "1, 1"
         self.displaySurface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        self.DISPLAY_WIDTH = pygame.display.Info().current_w
-        self.DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
         # print(self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT)
         # print(pygame.display.get_desktop_sizes())
-        self.RADAR_WIDTH = int(self.DISPLAY_WIDTH * 0.75)
-        self.RADAR_HEIGHT = self.DISPLAY_HEIGHT
-        self.CONTROLS_WIDTH = int(self.DISPLAY_WIDTH * 0.25)
+        self.RADAR_WIDTH = int(ENV.DISPLAY_WIDTH * 0.75)
+        self.RADAR_HEIGHT = ENV.DISPLAY_HEIGHT
+        self.CONTROLS_WIDTH = int(ENV.DISPLAY_WIDTH * 0.25)
 
-        self.MESSAGE_HEIGHT = int(self.DISPLAY_HEIGHT * 0.1)
-        self.INVENTORY_HEIGHT = int(self.DISPLAY_HEIGHT * 0.45)
-        self.INPUT_HEIGHT = int(self.DISPLAY_HEIGHT * 0.05)
-        self.CONSOLE_HEIGHT = int(self.DISPLAY_HEIGHT * 0.2)
-        self.WEATHER_HEIGHT = int(self.DISPLAY_HEIGHT * 0.2)
+        self.MESSAGE_HEIGHT = int(ENV.DISPLAY_HEIGHT * 0.1)
+        self.INVENTORY_HEIGHT = int(ENV.DISPLAY_HEIGHT * 0.45)
+        self.INPUT_HEIGHT = int(ENV.DISPLAY_HEIGHT * 0.05)
+        self.CONSOLE_HEIGHT = int(ENV.DISPLAY_HEIGHT * 0.2)
+        self.WEATHER_HEIGHT = int(ENV.DISPLAY_HEIGHT * 0.2)
 
         pygame.display.set_caption("ATC Simulator")
 
@@ -160,7 +162,7 @@ class Airspace:
         symbols = {"TRIANGLE": triangle, "CIRCLES": circles, "STAR": star}
 
         # create Radar main and background surfaces
-        self.radarSurface = pygame.Surface((self.DISPLAY_WIDTH, self.DISPLAY_HEIGHT))
+        self.radarSurface = pygame.Surface((ENV.DISPLAY_WIDTH, ENV.DISPLAY_HEIGHT))
         self.radarSurface.fill(ENV.BG)
         self.radarBG = pygame.Surface.copy(self.radarSurface)
         # add VOR entities to Radar background surface
@@ -208,12 +210,31 @@ class Airspace:
             (self.CONTROLS_WIDTH // 2, self.INVENTORY_HEIGHT - 2)
         )
         self.inventoryArrivalsSurface.fill(ENV.BLACK)
+        render_text(
+            surface=self.inventoryArrivalsSurface,
+            font=ENV.FONT20,
+            text=[("ARRIVALS", ENV.BLACK)],
+            fgColor=ENV.WHITE,
+            x0=115,
+            y0=10,
+            dy=0,
+        )
+
         self.inventoryArrivalsBG = pygame.Surface.copy(self.inventoryArrivalsSurface)
 
         self.inventoryDeparturesSurface = pygame.Surface(
             (self.CONTROLS_WIDTH // 2, self.INVENTORY_HEIGHT - 2)
         )
         self.inventoryDeparturesSurface.fill(ENV.BLACK)
+        render_text(
+            surface=self.inventoryDeparturesSurface,
+            font=ENV.FONT20,
+            text=[("DEPARTURES", ENV.BLACK)],
+            fgColor=ENV.WHITE,
+            x0=105,
+            y0=10,
+            dy=0,
+        )
         self.inventoryDeparturesBG = pygame.Surface.copy(
             self.inventoryDeparturesSurface
         )
@@ -227,9 +248,8 @@ class Airspace:
         render_text(
             surface=self.inputBG,
             font=ENV.FONT9,
-            text=["Enter New Command"],
+            text=[("Enter New Command", ENV.WHITE)],
             fgColor=ENV.BLACK,
-            bgColor=ENV.WHITE,
             x0=2,
             y0=2,
         )
@@ -244,9 +264,8 @@ class Airspace:
         render_text(
             surface=self.consoleBG,
             font=ENV.FONT12,
-            text=["Score"],
-            fgColor=ENV.WHITE,
-            bgColor=ENV.BLACK,
+            text=[("Score", ENV.WHITE)],
+            fgColor=ENV.BLACK,
             x0=2,
             y0=2,
         )
@@ -335,7 +354,7 @@ class Airspace:
         if inbound:
             # coordinates -- must appear from edge of airspace
             _h = float(random.randint(5, self.RADAR_WIDTH - 5))
-            _v = float(random.randint(5, self.DISPLAY_HEIGHT - 5))
+            _v = float(random.randint(5, ENV.DISPLAY_HEIGHT - 5))
             if random.randint(0, 1) < 0.5:
                 x, y = (
                     _h,
@@ -357,6 +376,7 @@ class Airspace:
             isGround = False
             finalDestination = {"x": 0, "y": 0}
             runwayDeparture = "00"
+            inventoryColor = ENV.GREEN
         else:
             # select random runway
             runway = random.choice(ATC.airspaceInfo["runways"])
@@ -374,12 +394,13 @@ class Airspace:
             isGround = True
             # random destination
             finalDestination = random.choice(ATC.airspaceInfo["VOR"])
-            # time to wait till ordered to head and getting there
+            inventoryColor = ENV.BROWN
         # add airplane instance to active planes
         _p = Airplane(
             aircraft=model,
             callSign=callSign,
             fixedInfo=ENV.airplaneData[model],
+            inventoryColor=inventoryColor,
             x=x,
             y=y,
             heading=heading,
@@ -396,7 +417,7 @@ class Airspace:
         self.activeAirplanes.append(_p)
         # announce new plane in message box
         text = f"{callSign} {'Arriving' if inbound else f'Departing from Runway {runwayDeparture} to '+finalDestination['name']}"
-        self.new_message(text, text)
+        self.new_message(text=text, bgcolor=ENV.BLACK, audio=text)
 
     def calc_heading(self, x0, y0, x1, y1):
         a = abs(math.degrees(math.atan((y1 - y0) / (x1 - x0))))
@@ -409,13 +430,10 @@ class Airspace:
         else:
             return int(90 - a)
 
-    def new_message(self, text, audio):
+    def new_message(self, text, bgcolor, audio):
         # written message
         self.messageText.append(
-            (
-                f"| {dt.strftime(dt.now(), '%H:%M:%S')} | {text}",
-                dt.now(),
-            )
+            (f"| {dt.strftime(dt.now(), '%H:%M:%S')} | {text}", dt.now(), bgcolor)
         )
         # audio message
         if ENV.audioOn == False:
@@ -511,6 +529,7 @@ class Airspace:
             if plane.isTakeoff and plane.speed >= plane.speedTakeoff:
                 plane.isTakeoff = False
                 plane.isGround = False
+                plane.inventoryColor = ENV.GREEN
 
             # recalculate descent rate if plane is landing
             if plane.isLanding and not plane.isGround:
@@ -544,12 +563,18 @@ class Airspace:
                         plane.heading = plane.runwayHeading
                         plane.speedTo = 0
                         plane.isGround = True
-                    else:
-                        plane.altitudeTo = plane.altitudeApproach
-                        plane.speedTo = plane.speedTakeoff
+                    else:  # go-around
+                        plane.altitudeTo = ATC.airspaceInfo["altitudes"]["goAround"]
+                        plane.speedTo = plane.speedCruise
+                        plane.goToFixed = False
                         plane.directionTo = plane.heading
                         plane.isLanding = False
-                        # TODO: message
+                        plane.inventoryColor = ENV.GREEN
+                        self.new_message(
+                            text=f"Unsafe Landing Conditions. Go Around. [-1 POINTS]",
+                            bgcolor=ENV.RED,
+                            audio="",
+                        )
                         ENV.score["goArounds"] -= 1
 
             # update pygame moving entities info - Radar screen
@@ -584,8 +609,7 @@ class Airspace:
             )
             # update inventory item
             plane.inventoryText = pygame.Surface((ATC.CONTROLS_WIDTH // 2 - 7, 37))
-            color = ENV.INV_COLORS[0 if plane.isInbound else 1]
-            plane.inventoryText.fill(color)
+            plane.inventoryText.fill(plane.inventoryColor)
             accel = (
                 chr(8593)
                 if plane.speed < plane.speedTo
@@ -598,7 +622,7 @@ class Airspace:
                     f"{plane.callSign}  {f'{plane.headingTo:03}°' if not plane.goToFixed else plane.goToFixedName}{left_right}  {plane.altitudeTo} {up_down}  {plane.speedTo} {accel}",
                     True,
                     ENV.WHITE,
-                    color,
+                    plane.inventoryColor,
                 ),
                 dest=(5, 5),
             )
@@ -607,7 +631,7 @@ class Airspace:
                     f"{plane.aircraft}  {'Arrival' if plane.isInbound else f'Departure from {plane.runwayDeparture}  --> ' + plane.finalDestination['name']}",
                     True,
                     ENV.WHITE,
-                    color,
+                    plane.inventoryColor,
                 ),
                 dest=(5, 20),
             )
@@ -620,12 +644,11 @@ class Airspace:
             plane.inventoryPosition = (5, _seq * 42 + 2)
 
             plane.inventoryClickArea = pygame.Rect(
-                self.RADAR_WIDTH,
+                self.RADAR_WIDTH + (0 if plane.isInbound else self.CONTROLS_WIDTH // 2),
                 self.MESSAGE_HEIGHT + _seq * 42 + 2,
-                self.CONTROLS_WIDTH,
+                self.CONTROLS_WIDTH // 2,
                 40,
             )
-            plane.inventoryColor = ENV.INV_COLORS[0 if plane.isInbound else 1]
 
             # check for safe landing
             x, y = plane.finalDestination["x"], plane.finalDestination["y"]
@@ -634,8 +657,9 @@ class Airspace:
                     ATC.activeAirplanes.remove(plane)
                     ENV.score["arrivals"] += 1
                     self.new_message(
-                        f"{plane.callSign} contact ground control at 132.5. Welcome. [+1 POINTS]",
-                        "",
+                        text=f"{plane.callSign} contact ground control at 132.5. Welcome. [+1 POINTS]",
+                        bgcolor=ENV.GREEN,
+                        audio="",
                     )
             # check for safe VOR arrival
             elif (
@@ -646,8 +670,9 @@ class Airspace:
                 ATC.activeAirplanes.remove(plane)
                 ENV.score["departures"] += 1
                 self.new_message(
-                    f"{plane.callSign} contact air control at 183.4. Goodbye. [+1 POINTS]",
-                    "",
+                    text=f"{plane.callSign} contact air control at 183.4. Goodbye. [+1 POINTS]",
+                    bgcolor=ENV.GREEN,
+                    audio="",
                 )
             # check for unsafe airspace exit
             if (
@@ -659,8 +684,9 @@ class Airspace:
                 ATC.activeAirplanes.remove(plane)
                 ENV.score["uncontrolledExits"] -= 1
                 self.new_message(
-                    f"{plane.callSign} uncontrolled exit from airspace. [-1 POINTS]",
-                    "",
+                    text=f"{plane.callSign} uncontrolled exit from airspace. [-1 POINTS]",
+                    bgcolor=ENV.RED,
+                    audio="",
                 )
 
         # process timer
@@ -678,7 +704,7 @@ class Airspace:
                 dist = math.sqrt(
                     (plane.x - other_plane.x) ** 2 + (plane.y - other_plane.y) ** 2
                 )
-                # full collision detection
+                # collision detection
                 if (
                     abs(plane.altitude - other_plane.altitude)
                     < ENV.MIN_V_SEPARATION * 0.2
@@ -698,14 +724,6 @@ class Airspace:
                 else:
                     plane.tagColor = ENV.WHITE
 
-    def quit_game(self):
-        # TODO: pause and wait for key
-        quit()
-
-    def display_help(self):
-        print("Help!")
-        # TODO: create help screen
-
 
 class Airplane(pygame.sprite.Sprite):
     def __init__(self, **kw):
@@ -713,6 +731,7 @@ class Airplane(pygame.sprite.Sprite):
         # airplance fixed characteristics
         self.aircraft = kw["aircraft"]
         self.callSign = kw["callSign"]
+        self.inventoryColor = kw["inventoryColor"]
         self.speedMin = kw["fixedInfo"]["speed"]["min"]
         self.speedMax = kw["fixedInfo"]["speed"]["max"]
         self.speedCruise = kw["fixedInfo"]["speed"]["cruising"]
@@ -759,8 +778,9 @@ class Airplane(pygame.sprite.Sprite):
         # create pygame entity - airplane tail
         self.tailPosition0 = (0, 0)
         self.tailPosition1 = (0, 0)
-        # create pygame entities (dummy data)
+        # default tag text color
         self.tagColor = ENV.WHITE
+        # create pygame entities (dummy data)
         self.tagText0 = self.tagText1 = self.inventoryText = ENV.FONT12.render(
             " ",
             True,
@@ -772,7 +792,6 @@ class Airplane(pygame.sprite.Sprite):
             self.y + 20,
         )
         self.tagClickArea = pygame.Rect(0, 0, 0, 0)
-        self.inventoryColor = (0, 0, 0)
         self.inventoryClickArea = pygame.Rect(0, 0, 0, 0)
 
 
@@ -787,7 +806,7 @@ def process_click(pos):
 
 def process_keydown(key):
     if key == 27:
-        ATC.quit_game()
+        pause_game(action="QUIT")
     if ATC.commandText in ENV.ERRORS:
         ATC.commandText = ""
     if 97 <= key <= 122 or 48 <= key <= 57 or key == K_SPACE:  # A - Z + 0 - 9
@@ -806,6 +825,8 @@ def process_keydown(key):
             pause_game(action="HELP")
         if fkey == "F2":
             ENV.tagActive = False if ENV.tagActive == True else True
+        if fkey == "F3":
+            ENV.guidelineActive = False if ENV.guidelineActive == True else True
         if fkey == "F5":
             pause_game(action=None)
 
@@ -947,6 +968,7 @@ def process_command():
                     # new altitude is runway head altitude
                     plane.altitudeTo = ATC.airspaceInfo["altitudes"]["groundLevel"]
                     text = f"{plane.callSign} Cleared to Land Runway {cmd[1]}"
+                    plane.inventoryColor = ENV.BLUE
                 else:
                     error = 2
             else:
@@ -959,13 +981,13 @@ def process_command():
     if error:
         ATC.commandText = ENV.ERRORS[error]
     else:
-        ATC.new_message(text, text)
+        ATC.new_message(text=text, bgcolor=ENV.BLACK, audio=text)
         ATC.commandText = ""
 
 
-def render_text(surface, font, text, fgColor, bgColor, x0, y0, dy=0):
+def render_text(surface, font, text, fgColor, x0, y0, dy=0):
     for deltay, line in enumerate(text):
-        _t = font.render(line, True, fgColor, bgColor)
+        _t = font.render(line[0], True, fgColor, line[1])
         surface.blit(source=_t, dest=(x0, y0 + deltay * dy))
 
 
@@ -995,9 +1017,8 @@ def update_pygame_display():
     render_text(
         surface=ATC.messageSurface,
         font=ENV.FONT12,
-        text=[i[0] for i in ATC.messageText],
+        text=[(i[0], i[2]) for i in ATC.messageText],
         fgColor=ENV.WHITE,
-        bgColor=ENV.BLACK,
         x0=5,
         y0=4,
         dy=15,
@@ -1006,24 +1027,22 @@ def update_pygame_display():
     render_text(
         surface=ATC.inputSurface,
         font=ENV.FONT20,
-        text=[ATC.commandText],
+        text=[(ATC.commandText, ENV.WHITE)],
         fgColor=ENV.BLACK,
-        bgColor=ENV.WHITE,
         x0=5,
         y0=20,
     )
     # load Weather main surface
     text = [
-        f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}",
-        f"Wind: {ENV.windSpeed} knots @ {ENV.windDirection:03}°.",
-        f"Simulation Time: {str(ENV.simTime)[:-7]}.",
+        (f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}", ENV.BG),
+        (f"Wind: {ENV.windSpeed} knots @ {ENV.windDirection:03}°.", ENV.BG),
+        (f"Simulation Time: {str(ENV.simTime)[:-7]}.", ENV.BG),
     ]
     render_text(
         surface=ATC.weatherSurface,
         font=ENV.FONT14,
         text=text,
-        fgColor=ENV.BLACK,
-        bgColor=ENV.BG_CONTROLS,
+        fgColor=ENV.WHITE,
         x0=10,
         y0=25,
         dy=30,
@@ -1038,14 +1057,14 @@ def update_pygame_display():
         + ENV.score["goArounds"]
     )
     text = [
-        f"{j.title()}: {str(i)}" for i, j in zip(ENV.score.values(), ENV.score.keys())
+        (f"{j.title()}: {str(i)}", ENV.BLACK)
+        for i, j in zip(ENV.score.values(), ENV.score.keys())
     ]
     render_text(
         surface=ATC.consoleSurface,
         font=ENV.FONT12,
         text=text,
         fgColor=ENV.WHITE,
-        bgColor=ENV.BLACK,
         x0=10,
         y0=25,
         dy=20,
@@ -1058,15 +1077,37 @@ def update_pygame_display():
 
 
 def pause_game(action):
-    print("Game Paused")
+    # define text that goes in popup
     if action == "HELP":
-        print("Display HELP")
+        message = ENV.FONT12.render("Help Text", True, ENV.BLACK, ENV.WHITE)
+    elif action == "QUIT":
+        message = ENV.FONT12.render(
+            "ESC to quit. Any othe key to continue", True, ENV.BLACK, ENV.WHITE
+        )
+    # create popup and display
+    popupSizex, popupSizey = 500, 100
+    popUpSurface = pygame.Surface((popupSizex, popupSizey))
+    popUpSurface.fill(ENV.WHITE)
+    title = ENV.FONT20.render("GAME PAUSED", True, ENV.RED, ENV.WHITE)
+    popUpSurface.blit(source=title, dest=((popupSizex - title.get_width()) // 2, 10))
+    popUpSurface.blit(
+        source=message, dest=((popupSizex - message.get_width()) // 2, 50)
+    )
+    ATC.displaySurface.blit(
+        source=popUpSurface,
+        dest=(ENV.DISPLAY_WIDTH // 2 - 250, ENV.DISPLAY_HEIGHT // 2 - 100),
+    )
+    pygame.display.update()
+    # take action when user presses key
     while True:
         for event in pygame.event.get():
-            if event.type == KEYDOWN and event.key == K_F5:
-                print("Unpaused")
-                ENV.simTimeSplit = dt.now()
-                return
+            if event.type == KEYDOWN:
+                if event.key == 27 and action == "QUIT":
+                    quit()
+                else:
+                    print("Unpaused")
+                    ENV.simTimeSplit = dt.now()
+                    return
 
 
 def main():
@@ -1094,7 +1135,7 @@ def main():
                 and len(ATC.activeAirplanes) < ENV.MAX_AIRPLANES
             ):
                 _model = random.choice(list(ENV.airplaneData.keys()))
-                _in = True if random.randint(0, 1) <= 0.8 else False
+                _in = True if random.randint(0, 1) <= 0.5 else False
                 ATC.load_new_plane(model=_model, inbound=_in)
 
 
