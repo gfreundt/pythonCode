@@ -4,6 +4,12 @@ import requests
 import json
 
 
+def target_drive():
+    for drive in ("C:", "D:"):
+        if os.path.exists(os.path.join(drive, "\pythonCode")):
+            return drive
+
+
 def check_chrome_version():
     result = subprocess.check_output(
         'reg query "HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon" /v version'
@@ -63,8 +69,9 @@ def main():
 
 
 GOOGLE_CHROMEDRIVER_API = "https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone-with-downloads.json"
-CURRENT_PATH = os.path.join(r"D:\pythonCode", "Resources", "chromedriver.exe")
-TARGET_PATH = os.path.join(r"D:\pythonCode", "Resources", "chromedriver.zip")
-UNZIPPED_PATH = os.path.join(r"D:\pythonCode", "Resources", "chromedriver-win64")
+BASE_PATH = os.path.join(rf"{target_drive()}\pythonCode", "Resources")
+CURRENT_PATH = os.path.join(BASE_PATH, "chromedriver.exe")
+TARGET_PATH = os.path.join(BASE_PATH, "chromedriver.zip")
+UNZIPPED_PATH = os.path.join(BASE_PATH, "chromedriver-win64")
 
 main()
