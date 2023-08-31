@@ -40,7 +40,7 @@ def download_chromedriver(target_version):
         os.remove(CURRENT_PATH)
 
     # unzip downloaded file contents into Resources folder
-    cmd = rf'Expand-Archive -Force -Path {TARGET_PATH} -DestinationPath "D:\pythonCode\Resources"'
+    cmd = rf'Expand-Archive -Force -Path {TARGET_PATH} -DestinationPath "{BASE_PATH}"'
     subprocess.run(["powershell", "-Command", cmd])
 
     # move chromedriver.exe to correct folder
