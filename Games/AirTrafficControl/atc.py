@@ -11,15 +11,15 @@ from pygame.locals import *
 
 pygame.init()
 
-# TODO: when landing, intercept heading first
 
+# TODO: score in table
+# TODO: expedite
+
+# TODO: unofy random of new plane and emergency
 # TODO: help
 # TODO: complete audio
 # TODO: intro menu to select airspace and level
-# TODO: score in table
-# TODO: expedite
 # TODO: pop-up changes height depending on content
-# TODO: color code tags: emergency = red
 
 # TODO: multi-command line
 # TODO: priority departure
@@ -82,10 +82,12 @@ class Environment:
     with open("atc-airplanes.json", mode="r") as json_file:
         airplaneData = json.loads(json_file.read())
     MESSAGE_DISPLAY_TIME = 20  # seconds
-    ILS_ANGLE = 20  # degrees
-    ILS_HEADING = 30  # degrees
+    ILS_ANGLE = 60  # degrees
+    ILS_HEADING = 60  # degrees
     MIN_V_SEPARATION = 1000
     MIN_H_SEPARATION = 60
+    EMERGENCY_CHANCE = 1
+    ARRIVALS_RATIO = 50
 
     ERRORS = [
         "*VOID*",
@@ -408,7 +410,6 @@ class Airspace:
             speed=speed,
             climb=0,
             turn=0,
-            isLanding=False,
             isInbound=inbound,
             isGround=isGround,
             runwayDeparture=runwayDeparture,
@@ -531,6 +532,20 @@ class Airspace:
                 plane.isGround = False
                 plane.inventoryColor = ENV.GREEN
 
+            # check if plane on ILS intercept course hits ILS glide scope and begin landing
+            if plane.ILSIntercept and int(
+                ATC.calc_heading(
+                    plane.x, plane.y, plane.ILSIntercept[0], plane.ILSIntercept[1]
+                )
+            ) == int(plane.ILSIntercept[2]):
+                plane.isLanding = True
+                # new heading to fixed point (runway head)
+                plane.goToFixed = (plane.ILSIntercept[0], plane.ILSIntercept[1])
+                # new speed set to landing speed
+                plane.speedTo = plane.speedLanding
+                # new altitude is runway head altitude
+                plane.altitudeTo = ATC.airspaceInfo["altitudes"]["groundLevel"]
+
             # recalculate descent rate if plane is landing
             if plane.isLanding and not plane.isGround:
                 _s = math.sqrt(
@@ -576,6 +591,11 @@ class Airspace:
                             audio="",
                         )
                         ENV.score["goArounds"] -= 1
+
+            # random if plane declares emergency
+            if random.randint(0, 100000) <= ENV.EMERGENCY_CHANCE:
+                plane.isPriority = True
+                plane.inventoryColor = ENV.RED
 
             # update pygame moving entities info - Radar screen
             plane.boxPosition = plane.boxSurface.get_rect(center=(plane.x, plane.y))
@@ -764,11 +784,13 @@ class Airplane(pygame.sprite.Sprite):
         self.goToFixed = False
         self.finalDestination = kw["finalDestination"]
         # airplane status
-        self.isLanding = kw["isLanding"]
+        self.isLanding = False
+        self.ILSIntercept = False
         self.isInbound = kw["isInbound"]
         self.isGround = kw["isGround"]
         self.onRadar = True if self.isInbound else False
         self.isTakeoff = False
+        self.isPriority = False
         self.runwayDeparture = kw["runwayDeparture"]
         self.taxiTime = 0
         # create pygame entity - airplane box
@@ -880,12 +902,25 @@ def process_command():
             else:
                 error = 2
 
+        elif cmd[0] == "Q" or cmd[0] == "ABORT":  # abort landing clearance
+            if plane.isLanding:
+                plane.speedTo = plane.speedCruise
+                plane.altitudeTo = ATC.airspaceInfo["altitudes"]["goAround"]
+                text = f"{plane.callSign} Landing Clearance Cancelled"
+            elif plane.ILSIntercept:
+                plane.ILSIntercept = False
+                text = f"{plane.callSign} Landing Clearance Cancelled"
+            else:
+                error = 1
+
         elif cmd[0] == "X":  # only for testing
-            plane.headingTo = 90
-            plane.turnDirection = "L"
+            plane.isPriority = True
+            plane.inventoryColor = ENV.RED
+            text = f"{plane.callSign} Declaring Emergency"
 
         else:
             error = 1
+
     elif len(cmd) > 1 and not plane.isLanding and not error:
         if cmd[0] == "C":  # change heading to fixed number or VOR
             if cmd[1].isdigit():  # chose fixed heading
@@ -925,14 +960,14 @@ def process_command():
                 error = 2
 
         elif cmd[0] == "L":
-            runways = []
+            _runways = []
             for i in ("headL", "headR"):
                 for s in ATC.airspaceInfo["runways"]:
-                    runways.append(s[i])
+                    _runways.append(s[i])
 
             selected_runway = [
                 ((i["x"], i["y"]), i["tag"]["heading"])
-                for i in runways
+                for i in _runways
                 if i["tag"]["text"] == cmd[1]
             ]
 
@@ -941,11 +976,13 @@ def process_command():
                 altitude_check = plane.altitude <= plane.altitudeApproach
                 # landing condition: must be heading within certain degress from runqay headinng
                 plane.runwayHeading = selected_runway[0][1]
+
                 delta_heading = abs(plane.heading - plane.runwayHeading)
                 delta_heading = (
                     360 - delta_heading if delta_heading > 180 else delta_heading
                 )
                 heading_check = delta_heading <= ENV.ILS_HEADING
+                """
                 # landing condition: must be inside ILS triangle (within angle of center line)
                 x, y = (selected_runway[0][0][0], selected_runway[0][0][1])
                 delta_heading = abs(
@@ -955,19 +992,18 @@ def process_command():
                     360 - delta_heading if delta_heading > 180 else delta_heading
                 )
                 ILSTriangle_check = delta_heading <= ENV.ILS_ANGLE
-
-                if all(
-                    [altitude_check, heading_check, ILSTriangle_check, plane.isInbound]
-                ):
-                    # new heading to fixed point (runway head)
-                    plane.goToFixed = (x, y)
+                """
+                if all([altitude_check, heading_check, plane.isInbound]):
+                    plane.ILSIntercept = (
+                        selected_runway[0][0][0],
+                        selected_runway[0][0][1],
+                        selected_runway[0][1],
+                    )
                     plane.goToFixedName = f"Runway {cmd[1]} "
-                    # new speed set to landing speed
-                    plane.speedTo = plane.speedLanding
-                    plane.isLanding = True
                     # new altitude is runway head altitude
-                    plane.altitudeTo = ATC.airspaceInfo["altitudes"]["groundLevel"]
-                    text = f"{plane.callSign} Cleared to Land Runway {cmd[1]}"
+                    text = (
+                        f"{plane.callSign} Cleared to Intercept ILS for Runway {cmd[1]}"
+                    )
                     plane.inventoryColor = ENV.BLUE
                 else:
                     error = 2
@@ -985,8 +1021,31 @@ def process_command():
         ATC.commandText = ""
 
 
-def render_text(surface, font, text, fgColor, x0, y0, dy=0):
+def render_table(surface, table_data):
+    width = 100
+    height = 100
+    rows = len(table_data)
+    cols = len(table_data[0])
+    cell_width = width // rows
+    cell_height = height // cols
+    print(f"{rows=}{cols=}")
+    for row, row_data in enumerate(table_data):
+        for col, col_data in enumerate(row_data):
+            print(f"{row=}{col=}{col_data=}")
+            table = pygame.Surface((cell_width, cell_height))
+            table.fill(ENV.BLUE)
+            render_text(
+                surface=table,
+                font=ENV.FONT12,
+                text=[(col_data)],
+                fgColor=ENV.WHITE,
+            )
+            surface.blit(source=table, dest=(cell_width * col, cell_height * row))
+
+
+def render_text(surface, font, text, fgColor, x0=0, y0=0, dy=0):
     for deltay, line in enumerate(text):
+        print("***********", fgColor, line[1])
         _t = font.render(line[0], True, fgColor, line[1])
         surface.blit(source=_t, dest=(x0, y0 + deltay * dy))
 
@@ -1057,9 +1116,11 @@ def update_pygame_display():
         + ENV.score["goArounds"]
     )
     text = [
-        (f"{j.title()}: {str(i)}", ENV.BLACK)
+        [(f"{j.title()}", ENV.BLACK), (f"{str(i)}", ENV.BLACK)]
         for i, j in zip(ENV.score.values(), ENV.score.keys())
     ]
+    print(text)
+    """
     render_text(
         surface=ATC.consoleSurface,
         font=ENV.FONT12,
@@ -1068,6 +1129,11 @@ def update_pygame_display():
         x0=10,
         y0=25,
         dy=20,
+    )
+    """
+    render_table(
+        surface=ATC.consoleSurface,
+        table_data=[text],
     )
     # load all level-2 main surfaces
     for surfaces in ATC.allLevel2Surfaces:
@@ -1135,7 +1201,7 @@ def main():
                 and len(ATC.activeAirplanes) < ENV.MAX_AIRPLANES
             ):
                 _model = random.choice(list(ENV.airplaneData.keys()))
-                _in = True if random.randint(0, 1) <= 0.5 else False
+                _in = True if random.randint(0, 100) <= ENV.ARRIVALS_RATIO else False
                 ATC.load_new_plane(model=_model, inbound=_in)
 
 
