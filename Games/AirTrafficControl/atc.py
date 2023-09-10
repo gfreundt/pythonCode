@@ -12,10 +12,6 @@ from pygame.locals import *
 pygame.init()
 
 
-# TODO: score in table
-# TODO: expedite
-
-# TODO: unofy random of new plane and emergency
 # TODO: help
 # TODO: complete audio
 # TODO: intro menu to select airspace and level
@@ -24,18 +20,17 @@ pygame.init()
 # TODO: multi-command line
 # TODO: priority departure
 # TODO: emergency landing
-# TODO: fix collision on landing
-# TODO: fix right left arrow
 # TODO: finish guidelines
 
 
 class Environment:
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    GREEN = (0, 102, 0)
+    RED = (171, 35, 40)
+    GREEN = (0, 110, 51)
     BROWN = (102, 51, 0)
     BLUE = (0, 0, 153)
+    LIGHT_BLUE = (51, 153, 255)
     BG = (25, 72, 80)
     BG_CONTROLS = (0, 102, 102)
     INV_COLORS = [(44, 93, 118), (74, 148, 186)]
@@ -43,7 +38,6 @@ class Environment:
 
     DISPLAY_WIDTH = pygame.display.Info().current_w
     DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
-
     FONT9 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 9)
     FONT12 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 12)
     FONT14 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 14)
@@ -78,7 +72,7 @@ class Environment:
         K_F12: "F12",
     }
 
-    MAX_AIRPLANES = 9
+    MAX_AIRPLANES = 10
     with open("atc-airplanes.json", mode="r") as json_file:
         airplaneData = json.loads(json_file.read())
     MESSAGE_DISPLAY_TIME = 20  # seconds
@@ -97,10 +91,19 @@ class Environment:
     ]
     collision = False
     audioOn = False
+    SCORE_TITLES = [
+        "Controlled Departures (+)",
+        "Controlled Arrivals (+)",
+        "Expedite Commands (-)",
+        "Uncontrolled Exits (-)",
+        "Warnings (-)",
+        "Go Arounds (-)",
+        "Total Score",
+    ]
     score = {
         "departures": 0,
         "arrivals": 0,
-        "expediteCommands": 0,
+        "expediteCommands": 0.0,
         "uncontrolledExits": 0,
         "warnings": 0.0,
         "goArounds": 0,
@@ -235,7 +238,6 @@ class Airspace:
             fgColor=ENV.WHITE,
             x0=105,
             y0=10,
-            dy=0,
         )
         self.inventoryDeparturesBG = pygame.Surface.copy(
             self.inventoryDeparturesSurface
@@ -265,11 +267,11 @@ class Airspace:
         self.consoleBG = pygame.Surface.copy(self.consoleSurface)
         render_text(
             surface=self.consoleBG,
-            font=ENV.FONT12,
-            text=[("Score", ENV.WHITE)],
-            fgColor=ENV.BLACK,
-            x0=2,
-            y0=2,
+            font=ENV.FONT20,
+            text=[("SCORE", ENV.BLACK)],
+            fgColor=ENV.WHITE,
+            x0=145,
+            y0=10,
         )
 
         # add Controls - Weather background
@@ -461,7 +463,7 @@ class Airspace:
         # process planes
         seqArrival = seqDeparture = 1
         for seq, plane in enumerate(self.activeAirplanes):
-            self.check_collision(plane)
+            self.check_proximity(plane)
             # sequential number
             plane.sequence = seq
             # calculate new x,y coordinates
@@ -492,12 +494,26 @@ class Airspace:
                 # altitude change
                 if plane.altitude < plane.altitudeTo:
                     plane.altitude = int(
-                        min((plane.altitude + plane.ascentRate), plane.altitudeTo)
+                        min(
+                            (
+                                plane.altitude
+                                + plane.ascentRate * plane.altitudeExpedite
+                            ),
+                            plane.altitudeTo,
+                        )
                     )
                 elif plane.altitude > plane.altitudeTo:
                     plane.altitude = int(
-                        max((plane.altitude + plane.descentRate), plane.altitudeTo)
+                        max(
+                            (
+                                plane.altitude
+                                + plane.descentRate * plane.altitudeExpedite
+                            ),
+                            plane.altitudeTo,
+                        )
                     )
+                elif plane.altitude == plane.altitudeTo:
+                    plane.altitudeExpedite = 1
                 # recalculate headingTo if fixed point as destination (VOR, runway head)
                 if plane.goToFixed:
                     plane.headingTo = ATC.calc_heading(
@@ -509,16 +525,24 @@ class Airspace:
                 if (
                     not plane.turnDirection and clockwise < anticlockwise
                 ) or plane.turnDirection == "R":  # clockwise turn
-                    plane.heading = (plane.heading + plane.turnRate + 360) % 360
+                    plane.heading = (
+                        plane.heading + plane.turnRate * plane.turnExpedite + 360
+                    ) % 360
                     left_right = ">"
                 elif (
                     not plane.turnDirection and anticlockwise <= clockwise
                 ) or plane.turnDirection == "L":  # anticlockwise turn
-                    plane.heading = (plane.heading - plane.turnRate + 360) % 360
+                    plane.heading = (
+                        plane.heading - plane.turnRate * plane.turnExpedite + 360
+                    ) % 360
                     left_right = "<"
-                if min(clockwise, anticlockwise) <= plane.turnRate:
+                if (
+                    min(clockwise, anticlockwise) <= plane.turnRate
+                ):  # end of turn (reached desired heading)
                     plane.heading = plane.headingTo
                     plane.turnDirection = None
+                    left_right = "="
+                    plane.turnExpedite = 1
 
             # check for ordered to head/takeoff and taxi time to get there
             if plane.taxiTime > 0:
@@ -545,6 +569,8 @@ class Airspace:
                 plane.speedTo = plane.speedLanding
                 # new altitude is runway head altitude
                 plane.altitudeTo = ATC.airspaceInfo["altitudes"]["groundLevel"]
+                # update invetory color
+                plane.inventoryColor = ENV.BLUE
 
             # recalculate descent rate if plane is landing
             if plane.isLanding and not plane.isGround:
@@ -592,7 +618,7 @@ class Airspace:
                         )
                         ENV.score["goArounds"] -= 1
 
-            # random if plane declares emergency
+            # random plane declares emergency
             if random.randint(0, 100000) <= ENV.EMERGENCY_CHANCE:
                 plane.isPriority = True
                 plane.inventoryColor = ENV.RED
@@ -713,33 +739,29 @@ class Airspace:
         ENV.simTime += dt.now() - ENV.simTimeSplit
         ENV.simTimeSplit = dt.now()
 
-    def check_collision(self, plane):
+    def check_proximity(self, plane):
         for other_plane in ATC.activeAirplanes:
-            if (
-                not plane == other_plane
-                and not plane.isGround
-                and not plane.isLanding
-                and other_plane.onRadar
-            ):
+            if not plane == other_plane and plane.onRadar and other_plane.onRadar:
                 dist = math.sqrt(
                     (plane.x - other_plane.x) ** 2 + (plane.y - other_plane.y) ** 2
                 )
                 # collision detection
                 if (
                     abs(plane.altitude - other_plane.altitude)
-                    < ENV.MIN_V_SEPARATION * 0.2
-                    and dist < ENV.MIN_H_SEPARATION * 0.2
+                    < ENV.MIN_V_SEPARATION * 0.15
+                    and dist < ENV.MIN_H_SEPARATION * 0.15
                 ):
                     ENV.collision = True
-                    ENV.score["collisions"] += 1
                     return
                 # warning detection
                 if (
                     abs(plane.altitude - other_plane.altitude) < ENV.MIN_V_SEPARATION
                     and dist < ENV.MIN_H_SEPARATION
+                    and not plane.isLanding
+                    and not other_plane.isLanding
                 ):
                     plane.tagColor = ENV.RED
-                    ENV.score["warnings"] = round(ENV.score["warnings"] - 0.01, 2)
+                    ENV.score["warnings"] = round(ENV.score["warnings"] - 0.1, 1)
                     return
                 else:
                     plane.tagColor = ENV.WHITE
@@ -793,6 +815,8 @@ class Airplane(pygame.sprite.Sprite):
         self.isPriority = False
         self.runwayDeparture = kw["runwayDeparture"]
         self.taxiTime = 0
+        self.turnExpedite = 1
+        self.altitudeExpedite = 1
         # create pygame entity - airplane box
         self.boxSurface = pygame.Surface((9, 9))
         pygame.draw.rect(self.boxSurface, ENV.WHITE, (0, 0, 8, 8), width=1)
@@ -876,6 +900,7 @@ def process_command():
         error = 3
 
     # check if format is right (2 or 3 blocks of commands)
+    bgcolor_text = ENV.BLACK
     if len(cmd) == 1 and not error:
         if cmd[0] == "H":
             # go to runway head
@@ -904,6 +929,7 @@ def process_command():
 
         elif cmd[0] == "Q" or cmd[0] == "ABORT":  # abort landing clearance
             if plane.isLanding:
+                plane.isLanding = False
                 plane.speedTo = plane.speedCruise
                 plane.altitudeTo = ATC.airspaceInfo["altitudes"]["goAround"]
                 text = f"{plane.callSign} Landing Clearance Cancelled"
@@ -918,29 +944,42 @@ def process_command():
             plane.inventoryColor = ENV.RED
             text = f"{plane.callSign} Declaring Emergency"
 
+        elif cmd[0] == "INFO":  # display plane model information
+            text = f"{plane.callSign} INFO - Min Speed: {plane.speedMin} - Max Soeed: {plane.speedMax}"
+
         else:
             error = 1
 
     elif len(cmd) > 1 and not plane.isLanding and not error:
         if cmd[0] == "C":  # change heading to fixed number or VOR
-            if cmd[1].isdigit():  # chose fixed heading
+            if cmd[1].isdigit() and 0 <= int(cmd[1]) <= 360:  # chose fixed heading
                 plane.headingTo = int(cmd[1])
                 plane.goToFixed = False
+                _cwise = (plane.headingTo - plane.heading + 360) % 360
+                _acwise = (plane.heading - plane.headingTo + 360) % 360
+                text = f'Turn {"left" if _cwise>=_acwise else "right"} to heading {int(cmd[1]):03d}°'
                 if len(cmd) > 2 and cmd[2] in ("R", "L"):
                     plane.turnDirection = cmd[2]
-                text = f"New heading {int(cmd[1])}"
-            else:  # chose VOR
-                if cmd[1] in [i["name"] for i in ATC.airspaceInfo["VOR"]]:
-                    VORxy = [
-                        (i["x"], i["y"])
-                        for i in ATC.airspaceInfo["VOR"]
-                        if i["name"] == cmd[1]
-                    ][0]
-                    plane.goToFixed = (VORxy[0], VORxy[1])
-                    plane.goToFixedName = cmd[1].strip()
-                    text = f"{plane.callSign} Head to {plane.goToFixedName}"
-                else:
-                    error = 2
+                    text = f'Turn {"left" if cmd[2]=="L" else "right"} to heading {int(cmd[1]):03d}°'
+                if len(cmd) > 2 and cmd[2] == "X":
+                    bgcolor_text, text = process_expedite(plane, text)
+            elif cmd[1].isalpha() and cmd[1] in [
+                i["name"] for i in ATC.airspaceInfo["VOR"]
+            ]:  # chose VOR
+                VORxy = [
+                    (i["x"], i["y"])
+                    for i in ATC.airspaceInfo["VOR"]
+                    if i["name"] == cmd[1]
+                ][0]
+                plane.goToFixed = (VORxy[0], VORxy[1])
+                plane.goToFixedName = cmd[1].strip()
+                text = f"{plane.callSign} Head to {plane.goToFixedName}"
+                if len(cmd) > 2 and cmd[2] in ("R", "L"):
+                    plane.turnDirection = cmd[2]
+                if len(cmd) > 2 and cmd[2] == "X":
+                    bgcolor_text, text = process_expedite(plane, text)
+            else:
+                error = 2
         elif cmd[0] == "A":  # change altitude
             new = int(cmd[1])
             if (
@@ -949,7 +988,9 @@ def process_command():
                 <= plane.altitudeMax
             ):
                 plane.altitudeTo = new * 1000
-                text = f"{plane.callSign} New altitude {new*1000}"
+                text = f"{plane.callSign} {'Climb' if plane.altitudeTo>plane.altitude else 'Descend'} and Maintain {new*1000:,} feet"
+                if len(cmd) > 2 and cmd[2] == "X":
+                    bgcolor_text, text = process_expedite(plane, text)
             else:
                 error = 2
         elif cmd[0] == "S":  # change speed
@@ -966,7 +1007,7 @@ def process_command():
                     _runways.append(s[i])
 
             selected_runway = [
-                ((i["x"], i["y"]), i["tag"]["heading"])
+                ((i["x"], i["y"]), i["heading"])
                 for i in _runways
                 if i["tag"]["text"] == cmd[1]
             ]
@@ -1000,11 +1041,11 @@ def process_command():
                         selected_runway[0][1],
                     )
                     plane.goToFixedName = f"Runway {cmd[1]} "
-                    # new altitude is runway head altitude
+                    # new altitude target is runway head altitude
                     text = (
                         f"{plane.callSign} Cleared to Intercept ILS for Runway {cmd[1]}"
                     )
-                    plane.inventoryColor = ENV.BLUE
+                    plane.inventoryColor = ENV.LIGHT_BLUE
                 else:
                     error = 2
             else:
@@ -1017,35 +1058,43 @@ def process_command():
     if error:
         ATC.commandText = ENV.ERRORS[error]
     else:
-        ATC.new_message(text=text, bgcolor=ENV.BLACK, audio=text)
+        ATC.new_message(text=text, bgcolor=bgcolor_text, audio=text)
         ATC.commandText = ""
 
 
-def render_table(surface, table_data):
-    width = 100
-    height = 100
+def process_expedite(plane, text):
+    text += ". Expedite!"
+    bgcolor_text = ENV.RED
+    ENV.score["expediteCommands"] = round(ENV.score["expediteCommands"] - 0.2, 1)
+    plane.altitudeExpedite = 2
+    return bgcolor_text, text
+
+
+def render_table(surface, table_data, width, height):
+    left_margin = 30
+    top_margin = 50
     rows = len(table_data)
     cols = len(table_data[0])
-    cell_width = width // rows
-    cell_height = height // cols
-    print(f"{rows=}{cols=}")
+    cell_width = (width - left_margin * 2) // cols
+    cell_height = (height - top_margin * 2) // rows
     for row, row_data in enumerate(table_data):
         for col, col_data in enumerate(row_data):
-            print(f"{row=}{col=}{col_data=}")
             table = pygame.Surface((cell_width, cell_height))
-            table.fill(ENV.BLUE)
+            table.fill(ENV.BLACK)
             render_text(
                 surface=table,
                 font=ENV.FONT12,
                 text=[(col_data)],
                 fgColor=ENV.WHITE,
             )
-            surface.blit(source=table, dest=(cell_width * col, cell_height * row))
+            surface.blit(
+                source=table,
+                dest=(cell_width * col + left_margin, cell_height * row + top_margin),
+            )
 
 
 def render_text(surface, font, text, fgColor, x0=0, y0=0, dy=0):
     for deltay, line in enumerate(text):
-        print("***********", fgColor, line[1])
         _t = font.render(line[0], True, fgColor, line[1])
         surface.blit(source=_t, dest=(x0, y0 + deltay * dy))
 
@@ -1054,6 +1103,30 @@ def update_pygame_display():
     # load all level-2 background surfaces to reset screen
     for surfaces in ATC.allLevel2Surfaces:
         surfaces[0].blit(source=surfaces[1], dest=(0, 0))
+    # load (optional) ILS projections
+    if ENV.guidelineActive:
+        for runway in ATC.airspaceInfo["runways"]:
+            pygame.draw.line(
+                ATC.radarSurface,
+                ENV.BLUE,
+                (runway["headL"]["x"], runway["headL"]["y"]),
+                (
+                    runway["headL"]["x"]
+                    * (
+                        1
+                        - ((math.cos(90 - runway["headL"]["heading"]) + 360) % 360)
+                        * 1000
+                    ),
+                    runway["headL"]["y"]
+                    * (
+                        1
+                        - ((math.sin(90 - runway["headL"]["heading"]) + 360) % 360)
+                        * 1000
+                    ),
+                ),
+                width=runway["width"],
+            )
+
     # load Radar main surface + Inventory main surface
     for entity in ATC.activeAirplanes:
         if entity.onRadar:
@@ -1108,18 +1181,22 @@ def update_pygame_display():
     )
 
     # load Console main surface
-    ENV.score["total"] = (
-        ENV.score["departures"]
-        + ENV.score["arrivals"]
-        + ENV.score["uncontrolledExits"]
-        + ENV.score["warnings"]
-        + ENV.score["goArounds"]
+    ENV.score["total"] = round(
+        (
+            ENV.score["departures"]
+            + ENV.score["arrivals"]
+            + ENV.score["expediteCommands"]
+            + ENV.score["uncontrolledExits"]
+            + ENV.score["warnings"]
+            + ENV.score["goArounds"]
+        ),
+        1,
     )
     text = [
         [(f"{j.title()}", ENV.BLACK), (f"{str(i)}", ENV.BLACK)]
-        for i, j in zip(ENV.score.values(), ENV.score.keys())
+        for i, j in zip(ENV.score.values(), ENV.SCORE_TITLES)
     ]
-    print(text)
+
     """
     render_text(
         surface=ATC.consoleSurface,
@@ -1133,7 +1210,9 @@ def update_pygame_display():
     """
     render_table(
         surface=ATC.consoleSurface,
-        table_data=[text],
+        table_data=text,
+        width=ATC.CONTROLS_WIDTH,
+        height=ATC.CONSOLE_HEIGHT,
     )
     # load all level-2 main surfaces
     for surfaces in ATC.allLevel2Surfaces:
@@ -1148,7 +1227,7 @@ def pause_game(action):
         message = ENV.FONT12.render("Help Text", True, ENV.BLACK, ENV.WHITE)
     elif action == "QUIT":
         message = ENV.FONT12.render(
-            "ESC to quit. Any othe key to continue", True, ENV.BLACK, ENV.WHITE
+            "ESC to quit. Any other key to continue", True, ENV.BLACK, ENV.WHITE
         )
     # create popup and display
     popupSizex, popupSizey = 500, 100
