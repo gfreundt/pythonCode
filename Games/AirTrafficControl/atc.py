@@ -32,7 +32,7 @@ class Environment:
     BG = (25, 72, 80)
     BG_CONTROLS = (0, 102, 102)
     INV_COLORS = [(44, 93, 118), (74, 148, 186)]
-    RESOURCES_PATH = os.path.join("D:", r"\pythonCode", "Resources", "Fonts")
+    RESOURCES_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Fonts")
 
     DISPLAY_WIDTH = pygame.display.Info().current_w
     DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
