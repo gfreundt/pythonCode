@@ -1,11 +1,10 @@
 import math
 import random
-import json, os
+import json, os, sys, time
 from datetime import datetime as dt
 from datetime import timedelta as td
 import pygame
 from pygame.locals import *
-
 from gtts import gTTS
 
 
@@ -13,14 +12,12 @@ pygame.init()
 
 
 # TODO: help
-# TODO: complete audio
 # TODO: intro menu to select airspace and level
 # TODO: pop-up changes height depending on content
+# TODO: penalty for too much time aircraft life
 
 # TODO: multi-command line
 # TODO: priority departure
-# TODO: emergency landing
-# TODO: finish guidelines
 
 
 class Environment:
@@ -84,6 +81,7 @@ class Environment:
     EMERGENCY_CHANCE = 1
     ARRIVALS_RATIO = 50
     DELAY_NEXT_PLANE = td(seconds=10)
+    PENALTY_LIFETIME = td(minutes=15)
 
     ERRORS = [
         "*VOID*",
@@ -92,7 +90,7 @@ class Environment:
         "Flight Number not Available",
     ]
     collision = False
-    audioOn = True
+    audioOn = False
     SCORE_TITLES = [
         "Controlled Departures (+)",
         "Controlled Arrivals (+)",
@@ -122,6 +120,15 @@ class Environment:
     # general display variables
     tagActive = True
     guidelineActive = False
+
+    def __init__(self, args):
+        # check for default overrides at command line
+        if "-D" in args:
+            self.ARRIVALS_RATIO = 0
+        if "-A" in args:
+            self.ARRIVALS_RATIO = 100
+        if "-M" in args:
+            self.MAX_AIRPLANES = int(args[args.index("-M") + 1])
 
 
 class Airspace:
@@ -367,17 +374,15 @@ class Airspace:
         )
         if inbound:
             # coordinates -- must appear from edge of airspace
-            _h = float(random.randint(5, self.RADAR_WIDTH - 5))
-            _v = float(random.randint(5, ENV.DISPLAY_HEIGHT - 5))
             if random.randint(0, 1) < 0.5:
                 x, y = (
-                    _h,
+                    float(random.randint(5, self.RADAR_WIDTH - 5)),
                     15.0 if random.randint(0, 1) < 0.5 else self.RADAR_HEIGHT - 15,
                 )
             else:
                 x, y = (
                     15.0 if random.randint(0, 1) < 0.5 else self.RADAR_WIDTH - 15,
-                    _v,
+                    float(random.randint(5, ENV.DISPLAY_HEIGHT - 5)),
                 )
             heading = ATC.calc_heading(
                 x,
@@ -394,21 +399,20 @@ class Airspace:
         else:
             # select random runway
             runway = random.choice(ATC.airspaceInfo["runways"])
-            # select random head (later update with wind direction)
+            # select random head
             _head = runway["headL"] if ENV.windDirection < 180 else runway["headR"]
             _tail = runway["headR"] if ENV.windDirection < 180 else runway["headL"]
             x, y = (_head["x"], _head["y"])
             heading = self.calc_heading(x, y, _tail["x"], _tail["y"])
             runwayDeparture = _head["tag"]["text"]
-            # altitude
+            # plane status
             altitude = ATC.airspaceInfo["altitudes"]["groundLevel"]
-            # speed
             speed = 0
-            # status
             isGround = True
+            inventoryColor = ENV.BROWN
             # random destination
             finalDestination = random.choice(ATC.airspaceInfo["VOR"])
-            inventoryColor = ENV.BROWN
+
         # add airplane instance to active planes
         _p = Airplane(
             aircraft=model,
@@ -870,7 +874,7 @@ def process_click(pos):
 
 def process_keydown(key):
     if key == 27:
-        pause_game(action="QUIT")
+        pop_up(action="QUIT", pause=0)
     if ATC.commandText in ENV.ERRORS:
         ATC.commandText = ""
     if 97 <= key <= 122 or 48 <= key <= 57 or key == K_SPACE:  # A - Z + 0 - 9
@@ -886,15 +890,18 @@ def process_keydown(key):
     elif key in ENV.FUNCTION_KEYS:
         fkey = ENV.FUNCTION_KEYS[key]
         if fkey == "F1":
-            pause_game(action="HELP")
+            pop_up(action="HELP", pause=1)
         if fkey == "F2":
             ENV.tagActive = False if ENV.tagActive == True else True
+            pop_up(action="TOGGLE", pause=1)
         if fkey == "F3":
             ENV.guidelineActive = False if ENV.guidelineActive == True else True
+            pop_up(action="TOGGLE", pause=1)
         if fkey == "F4":
             ENV.audioOn = False if ENV.audioOn == True else True
+            pop_up(action="TOGGLE", pause=1)
         if fkey == "F5":
-            pause_game(action=None)
+            pop_up(action=None, pause=0)
 
     elif key == K_TAB:  # testing only
         ENV.SPEED = 5 if ENV.SPEED == 1 else 1
@@ -920,6 +927,7 @@ def process_command():
         ATC.lastCallSign = plane.callSign + " "
     else:
         ATC.commandText = ""
+        cmd = ""
         error = 3
 
     # check if format is right (2 or 3 blocks of commands)
@@ -1003,7 +1011,7 @@ def process_command():
                     bgcolor_text, text = process_expedite(plane, text)
             else:
                 error = 2
-        elif cmd[0] == "A":  # change altitude
+        elif cmd[0] == "A" and cmd[1].isdigit():  # change altitude
             new = int(cmd[1])
             if (
                 ATC.airspaceInfo["altitudes"]["groundLevel"] + 500
@@ -1016,14 +1024,14 @@ def process_command():
                     bgcolor_text, text = process_expedite(plane, text)
             else:
                 error = 2
-        elif cmd[0] == "S":  # change speed
+        elif cmd[0] == "S" and cmd[1].isdigit():  # change speed
             if plane.speedMin <= int(cmd[1]) <= plane.speedMax:
                 plane.speedTo = int(cmd[1])
                 text = f"{plane.callSign} New speed {int(cmd[1])}"
             else:
                 error = 2
 
-        elif cmd[0] == "L":
+        elif cmd[0] == "L" and cmd[1].isdigit():
             _runways = []
             for i in ("headL", "headR"):
                 for s in ATC.airspaceInfo["runways"]:
@@ -1065,7 +1073,7 @@ def process_command():
         else:
             error = 1
     else:
-        error = 1
+        error = max(1, error)
 
     if error:
         ATC.commandText = ENV.ERRORS[error]
@@ -1171,15 +1179,24 @@ def update_pygame_display():
         y0=20,
     )
     # load Weather main surface
-    text = [
-        (f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}", ENV.BG),
-        (f"Wind: {ENV.windSpeed} knots @ {ENV.windDirection:03}°.", ENV.BG),
-        (f"Simulation Time: {str(ENV.simTime)[:-7]}.", ENV.BG),
+    _text = [
+        (f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}", ENV.BG_CONTROLS),
+        (f"Wind: {ENV.windSpeed} knots @ {ENV.windDirection:03}°.", ENV.BG_CONTROLS),
+        (f"Simulation Time: {str(ENV.simTime)[:-7]}.", ENV.BG_CONTROLS),
+        (f"Airspace Information:", ENV.BG_CONTROLS),
+        (
+            f"Ground Level: {ATC.airspaceInfo['altitudes']['groundLevel']} feet.",
+            ENV.BG_CONTROLS,
+        ),
+        (
+            f"Handoff Altitude: {ATC.airspaceInfo['altitudes']['handOff']} feet.",
+            ENV.BG_CONTROLS,
+        ),
     ]
     render_text(
         surface=ATC.weatherSurface,
         font=ENV.FONT14,
-        text=text,
+        text=_text,
         fgColor=ENV.WHITE,
         x0=10,
         y0=25,
@@ -1216,7 +1233,7 @@ def update_pygame_display():
     pygame.display.update()
 
 
-def pause_game(action):
+def pop_up(action, pause):
     # define text that goes in popup
     if action == "HELP":
         message = ENV.FONT12.render("Help Text", True, ENV.BLACK, ENV.WHITE)
@@ -1224,6 +1241,8 @@ def pause_game(action):
         message = ENV.FONT12.render(
             "ENTER to quit. Any other key to continue.", True, ENV.BLACK, ENV.WHITE
         )
+    elif action == "TOGGLE":
+        message = ENV.FONT20.render("TOGGLE", True, ENV.BLACK, ENV.WHITE)
     # create popup and display
     popupSizex, popupSizey = 500, 100
     popUpSurface = pygame.Surface((popupSizex, popupSizey))
@@ -1239,14 +1258,18 @@ def pause_game(action):
     )
     pygame.display.update()
     # take action when user presses key
-    while True:
-        for event in pygame.event.get():
-            if event.type == KEYDOWN:
-                if event.key == 13 and action == "QUIT":
-                    quit()
-                elif event.key == 27:
-                    ENV.simTimeSplit = dt.now()
-                    return
+    if pause > 0:
+        time.sleep(pause)
+        return
+    else:
+        while True:
+            for event in pygame.event.get():
+                if event.type == KEYDOWN:
+                    if event.key == 13 and action == "QUIT":
+                        quit()
+                    elif event.key == 27:
+                        ENV.simTimeSplit = dt.now()
+                        return
 
 
 def main():
@@ -1271,6 +1294,6 @@ def main():
             delay = ENV.FPS // ENV.SPEED
 
 
-ENV = Environment()
+ENV = Environment(sys.argv)
 ATC = Airspace()
 main()

@@ -30,11 +30,11 @@
         "brand": "Airbus",
         "model": "320",
         "speed": {
-            "min": 180,
-            "max": 456,
-            "cruising": 405,
-            "landing": 85,
-            "takeoff": 65
+            "min": 140,
+            "max": 500,
+            "cruising": 260,
+            "landing": 120,
+            "takeoff": 110
         },
         "altitude": {
             "ceiling": 55000,
