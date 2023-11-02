@@ -4,7 +4,6 @@
 from PIL import Image
 import sys
 
-import chess_board_score as cbs
 import gui_games_setup as setup
 
 import time
@@ -310,7 +309,6 @@ def grid_to_arithmetic(coord):
 
 
 def execute_move(origin, dest, piece, capture=False):
-
     # print(f"{origin=} {dest=}")
 
     move_details = {

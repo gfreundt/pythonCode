@@ -39,7 +39,7 @@ def login(webd):
     time.sleep(4)
     keyboard.write("gfreundt")
     keyboard.press_and_release("tab")
-    keyboard.write("Subaru21")
+    keyboard.write("Ahorra21")
     keyboard.press_and_release("enter")
 
 
