@@ -4,13 +4,15 @@ import time
 import random
 from pathlib import Path
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as WebDriverOptions
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.keys import Keys
+
 
 
 class ChromeUtils:
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options as WebDriverOptions
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.common.keys import Keys
+
     def init_driver(self=None, **kwargs):
         """Returns a ChromeDriver object with commonly used parameters allowing for some optional settings"""
 
@@ -82,3 +84,25 @@ class ChromeUtils:
             if fatal_error:
                 print("Webpage failed to load.")
                 quit()
+
+class PygameUtils:
+    def init_variables(self):
+        WHITE = (255, 255, 255)
+        BLACK = (0, 0, 0)
+        RED = (171, 35, 40)
+        GREEN = (0, 110, 51)
+        BROWN = (102, 51, 0)
+        BLUE = (0, 0, 153)
+        LIGHT_BLUE = (51, 153, 255)
+        GRAY = (120, 120, 120)
+        BG = (25, 72, 80)
+        BG_CONTROLS = (0, 102, 102)
+        INV_COLORS = [(44, 93, 118), (74, 148, 186)]
+        RESOURCES_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Fonts")
+
+        DISPLAY_WIDTH = pygame.display.Info().current_w
+        DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
+        FONT9 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 9)
+        FONT12 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 12)
+        FONT14 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 14)
+        FONT20 = pygame.font.Font(os.path.join(RESOURCES_PATH, "roboto.ttf"), 20)

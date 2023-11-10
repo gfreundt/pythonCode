@@ -582,7 +582,7 @@ class Airspace:
                 plane.speedTo = plane.speedLanding
                 # new altitude is runway head altitude
                 plane.altitudeTo = ATC.airspaceInfo["altitudes"]["groundLevel"]
-                # update invetory color
+                # update inventory color
                 plane.inventoryColor = ENV.BLUE
 
             # recalculate descent rate if plane is landing
