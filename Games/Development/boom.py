@@ -33,17 +33,22 @@ class Game:
         self.UNCOVERED_SQUARE.fill(self.BACKGROUND)
         self.FLAGGED_SQUARE = pygame.Surface((30, 30))
         self.FLAGGED_SQUARE.fill((200, 15, 12))
+        self.BOMB_SQUARE = pygame.Surface((30, 30))
+        self.BOMB_SQUARE.fill((80, 215, 112))
+        self.B1POS = (2000, 1100)
         # initial game parameters
         self.LEVEL_PRESETS = [
-            (5, 5, 20, True),
-            (12, 12, 25, True),
-            (25, 25, 30, False),
-            (40, 40, 40, False),
+            (5, 5, 10, True),
+            (12, 12, 15, True),
+            (25, 25, 20, False),
+            (40, 40, 30, False),
         ]
-        self.grid_x = 20
-        self.grid_y = 20
-        self.bomb_density = 30
-        self.uncover_one_at_start = True
+        (
+            self.grid_x,
+            self.grid_y,
+            self.bomb_density,
+            self.uncover_one_at_start,
+        ) = self.LEVEL_PRESETS[0]
 
     def setup(self):
         self.x0 = (self.PLAY_SURFACE.get_width() - 32 * self.grid_x) // 2
@@ -77,12 +82,16 @@ class Game:
                     self.uncover_blank_neighbors()
                     break
 
-        # create buttons
-        self.B1POS = (2000, 1100)
-        self.B1SFC = pygame.Surface((120, 80))
+        # create main game button
+        self.main_game_button(" QUIT ")
+
+    def main_game_button(self, text):
+        _text = self.FONTS["NUN40"].render(text, True, self.COLORS["BLACK"])
+        self.B1SFC = pygame.Surface((_text.get_width(), 80))
         self.B1SFC.fill((self.COLORS["LIGHT_BLUE"]))
-        _text = self.FONTS["NUN40"].render("QUIT", True, self.COLORS["BLACK"])
-        self.B1SFC.blit(source=_text, dest=_text.get_rect(center=(60, 40)))
+        self.B1SFC.blit(
+            source=_text, dest=_text.get_rect(center=(_text.get_width() // 2, 40))
+        )
 
     def calculate_number(self, y, x):
         bomb_count = 0
@@ -106,6 +115,8 @@ class Game:
                         _t, True, self.COLORS["BLUE"], self.BACKGROUND
                     )
                     square.blit(source=text, dest=text.get_rect(center=(15, 15)))
+                elif self.reveal and self.minefield_bombs[row][i]:
+                    square = self.BOMB_SQUARE.copy()
                 else:
                     if self.minefield_marked[row][i]:
                         square = self.FLAGGED_SQUARE.copy()
@@ -216,11 +227,20 @@ class Game:
     def wrap_up(self):
         match self.end_criteria:
             case 0:  # Bomb Exploded (Lost)
-                print("Boom!")
+                GAME.reveal = True
             case 1:  # Found all Bombs (Won)
                 print("You Win!")
             case 2:  # QUIT button pressed
                 print("Quitter...")
+
+        self.main_game_button(" CONTINUE ")
+        self.update_display()
+        while True:
+            for event in pygame.event.get():
+                if event.type == MOUSEBUTTONDOWN and pygame.Rect(
+                    self.B1SFC.get_rect(topleft=GAME.B1POS)
+                ).collidepoint(pygame.mouse.get_pos()):
+                    return
 
 
 def main_menu():
@@ -239,18 +259,115 @@ def main_menu():
     def start_game():
         GAME.stage = 1
 
-    def press_preset_level(level):
+    def press_preset_level():
         (
             GAME.grid_x,
             GAME.grid_y,
             GAME.bomb_density,
             GAME.uncover_one_at_start,
-        ) = GAME.LEVEL_PRESETS[level]
-        GAME.stage = 1
+        ) = GAME.LEVEL_PRESETS[int(menu.get_selected_widget()._id)]
+        # update widgets
+        GAME.widgets[0]._value = [GAME.grid_x, 0]
+        GAME.widgets[1]._value = [GAME.grid_y, 0]
+        GAME.widgets[2]._value = [GAME.bomb_density, 0]
+        GAME.widgets[3]._state = GAME.uncover_one_at_start
+
+    def draw_widgets():
+        # define top frame
+        frame1 = menu.add.frame_h(
+            height=100, width=600, align=pygame_menu.locals.ALIGN_CENTER
+        )
+        frame1.set_title(
+            " Preset Options",
+            title_font_color=((243, 245, 233)),
+            background_color=((68, 20, 225)),
+        )
+        button_selection = pygame_menu.widgets.SimpleSelection().set_background_color(
+            GAME.COLORS["RED"]
+        )
+        for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
+            b = menu.add.button(
+                text,
+                action=lambda: press_preset_level(),
+                padding=(15, 30),
+                align=pygame_menu.locals.ALIGN_CENTER,
+                button_id=str(level),
+            )
+
+            b.set_selection_effect(button_selection)
+            frame1.pack(b)
+
+        # define middle frame
+        frame2 = menu.add.frame_v(height=400, width=600)
+        frame2.set_title(
+            " Manual Options",
+            title_font_color=((243, 245, 233)),
+            background_color=((68, 20, 225)),
+        )
+
+        GAME.widgets = [
+            menu.add.range_slider(
+                f"{'Horizontal Size :':>27}",
+                range_values=(5, 40),
+                padding=(22, 0, 0, 1),
+                increment=1,
+                onchange=lambda i: set_game_parameters(i, 0),
+                default=GAME.grid_x,
+                value_format=lambda x: str(int(x)),
+            )
+        ]
+        GAME.widgets.append(
+            menu.add.range_slider(
+                "Vertical Size :",
+                range_values=(5, 40),
+                padding=(24, 0, 0, 121),
+                increment=1,
+                default=GAME.grid_y,
+                onchange=lambda i: set_game_parameters(i, 1),
+                value_format=lambda x: str(int(x)),
+            )
+        )
+        GAME.widgets.append(
+            (
+                menu.add.range_slider(
+                    "Bomb Density % :",
+                    range_values=(10, 30),
+                    padding=(24, 0, 0, 60),
+                    increment=1,
+                    default=GAME.bomb_density,
+                    onchange=lambda i: set_game_parameters(i, 2),
+                    value_format=lambda x: str(int(x)),
+                )
+            )
+        )
+        GAME.widgets.append(
+            (
+                menu.add.toggle_switch(
+                    "Open Blank :",
+                    padding=(30, 0, 0, 127),
+                    font_color=(20, 20, 200),
+                    state_color=((68, 20, 225), (255, 255, 255)),
+                    state_text_font_color=((255, 255, 255), (68, 20, 225)),
+                    state_text=("No", "Yes"),
+                    onchange=lambda i: set_game_parameters(i, 3),
+                    default=GAME.uncover_one_at_start,
+                )
+            )
+        )
+        for widget in GAME.widgets:
+            frame2.pack(widget)
+
+        menu.add.button(
+            "Play",
+            action=start_game,
+            font_size=60,
+            align=pygame_menu.locals.ALIGN_CENTER,
+        )
 
     MENU_THEME = pygame_menu.themes.THEME_SOLARIZED.copy()
     MENU_THEME.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_ADAPTIVE
     MENU_THEME.widget_selection_effect = pygame_menu.widgets.SimpleSelection()
+    MENU_THEME.selection_color = (50, 50, 50)
 
     menu = pygame_menu.Menu(
         "Boom",
@@ -261,86 +378,19 @@ def main_menu():
         onclose=pygame_menu.events.CLOSE,
     )
 
-    # define top frame
-    frame1 = menu.add.frame_h(
-        height=100, width=600, align=pygame_menu.locals.ALIGN_CENTER
-    )
-    frame1.set_title(" Preset Options")
-    button_selection = (
-        pygame_menu.widgets.SimpleSelection()
-        .set_background_color(GAME.COLORS["BLACK"])
-        .set_color(GAME.COLORS["BLUE"])
-    )
-    for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
-        b = menu.add.button(
-            text,
-            action=lambda: press_preset_level(level),
-            padding=(5, 30),
-            align=pygame_menu.locals.ALIGN_CENTER,
-        )
-
-        b.set_selection_effect(button_selection)
-        frame1.pack(b)
-
-    # define middle frame
-    frame2 = menu.add.frame_v(height=300, width=600)
-    frame2.set_title(" Manual Options")
-    frame2.pack(
-        menu.add.toggle_switch(
-            f"{'Open Blank :':>27}",
-            state_text=("No", "Yes"),
-            onchange=lambda i: set_game_parameters(i, 3),
-            default=GAME.uncover_one_at_start,
-        )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Horizontal Size :':>27}",
-            range_values=(5, 40),
-            increment=1,
-            onchange=lambda i: set_game_parameters(i, 0),
-            default=GAME.grid_x,
-            value_format=lambda x: str(int(x)),
-        )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Vertical Size :':>30}",
-            range_values=(5, 40),
-            increment=1,
-            default=GAME.grid_y,
-            onchange=lambda i: set_game_parameters(i, 1),
-            value_format=lambda x: str(int(x)),
-        )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Bomb Density % :':>23}",
-            range_values=(20, 40),
-            increment=1,
-            default=GAME.bomb_density,
-            onchange=lambda i: set_game_parameters(i, 2),
-            value_format=lambda x: str(int(x)),
-        )
-    )
-
-    frame3 = menu.add.frame_h(height=100, width=500)
-    frame3.pack(
-        menu.add.button("Play", action=start_game, padding=(5, 60), font_size=60)
-    )
-
+    draw_widgets()
     return menu
 
 
 def main():
-    mainmenu = main_menu()
     GAME.stage = 0
-
+    mainmenu = main_menu()
     while mainmenu.is_enabled():
         match GAME.stage:
             case 0:
                 mainmenu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
             case 1:
+                GAME.reveal = False
                 GAME.setup()
                 GAME.stage = 2
             case 2:
