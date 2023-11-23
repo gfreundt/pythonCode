@@ -14,6 +14,12 @@ class Game:
         # load general presets
         pygameUtils.__init__(self)
         self.BACKGROUND = self.COLORS["GRAY"]
+        # define pallette
+        self.COLOR1 = self.COLORS["CYBER_BLUE01"]
+        self.COLOR2 = self.COLORS["CYBER_BLUE02"]
+        self.COLOR3 = self.COLORS["CYBER_BLUE03"]
+        self.COLOR4 = self.COLORS["CYBER_BLUE04"]
+        self.COLOR5 = self.COLORS["CYBER_BLUE05"]
 
         # setup surfaces and sub-surfaces
         self.PLAY_SURFACE = pygame.Surface(
@@ -28,13 +34,13 @@ class Game:
 
         # setup entities
         self.COVERED_SQUARE = pygame.Surface((30, 30))
-        self.COVERED_SQUARE.fill((100, 100, 100))
+        self.COVERED_SQUARE.fill(self.COLOR2)
         self.UNCOVERED_SQUARE = pygame.Surface((30, 30))
-        self.UNCOVERED_SQUARE.fill(self.BACKGROUND)
+        self.UNCOVERED_SQUARE.fill(self.COLOR1)
         self.FLAGGED_SQUARE = pygame.Surface((30, 30))
-        self.FLAGGED_SQUARE.fill((200, 15, 12))
+        self.FLAGGED_SQUARE.fill(self.COLOR3)
         self.BOMB_SQUARE = pygame.Surface((30, 30))
-        self.BOMB_SQUARE.fill((80, 215, 112))
+        self.BOMB_SQUARE.fill(self.COLOR4)
         self.B1POS = (2000, 1100)
         # initial game parameters
         self.LEVEL_PRESETS = [
@@ -88,7 +94,7 @@ class Game:
     def main_game_button(self, text):
         _text = self.FONTS["NUN40"].render(text, True, self.COLORS["BLACK"])
         self.B1SFC = pygame.Surface((_text.get_width(), 80))
-        self.B1SFC.fill((self.COLORS["LIGHT_BLUE"]))
+        self.B1SFC.fill(self.COLOR3)
         self.B1SFC.blit(
             source=_text, dest=_text.get_rect(center=(_text.get_width() // 2, 40))
         )
@@ -103,7 +109,7 @@ class Game:
 
     def update_display(self):
         # update PLAY surface
-        self.PLAY_SURFACE.fill((50, 50, 50))
+        self.PLAY_SURFACE.fill(self.COLOR1)
         for row in range(self.grid_y):
             for i in range(self.grid_x):
                 _t = ""
@@ -112,7 +118,7 @@ class Game:
                     if self.minefield_numbers[row][i] > 0:
                         _t = str(self.minefield_numbers[row][i])
                     text = self.FONTS["NUN24"].render(
-                        _t, True, self.COLORS["BLUE"], self.BACKGROUND
+                        _t, True, self.COLORS["BLACK"], self.COLOR2
                     )
                     square.blit(source=text, dest=text.get_rect(center=(15, 15)))
                 elif self.reveal and self.minefield_bombs[row][i]:
@@ -129,7 +135,7 @@ class Game:
         self.MAIN_SURFACE.blit(source=self.PLAY_SURFACE, dest=(0, 0))
 
         # update INFO surface
-        self.INFO_SURFACE.fill((75, 75, 75))
+        self.INFO_SURFACE.fill(self.COLOR1)
         self.messages = [f"Total Squares: {self.grid_x * self.grid_y}"]
         self.messages.append(f"Total Bombs: {self.total_bombs}")
         self.messages.append(
@@ -283,13 +289,14 @@ def main_menu():
             background_color=((68, 20, 225)),
         )
         button_selection = pygame_menu.widgets.SimpleSelection().set_background_color(
-            GAME.COLORS["RED"]
+            GAME.COLOR1
         )
         for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
             b = menu.add.button(
                 text,
                 action=lambda: press_preset_level(),
                 padding=(15, 30),
+                font_color=GAME.COLOR3,
                 align=pygame_menu.locals.ALIGN_CENTER,
                 button_id=str(level),
             )
@@ -311,6 +318,7 @@ def main_menu():
                 range_values=(5, 40),
                 padding=(22, 0, 0, 1),
                 increment=1,
+                font_color=GAME.COLOR3,
                 onchange=lambda i: set_game_parameters(i, 0),
                 default=GAME.grid_x,
                 value_format=lambda x: str(int(x)),
@@ -322,6 +330,7 @@ def main_menu():
                 range_values=(5, 40),
                 padding=(24, 0, 0, 121),
                 increment=1,
+                font_color=GAME.COLOR3,
                 default=GAME.grid_y,
                 onchange=lambda i: set_game_parameters(i, 1),
                 value_format=lambda x: str(int(x)),
@@ -334,6 +343,7 @@ def main_menu():
                     range_values=(10, 30),
                     padding=(24, 0, 0, 60),
                     increment=1,
+                    font_color=GAME.COLOR3,
                     default=GAME.bomb_density,
                     onchange=lambda i: set_game_parameters(i, 2),
                     value_format=lambda x: str(int(x)),
@@ -343,14 +353,17 @@ def main_menu():
         GAME.widgets.append(
             (
                 menu.add.toggle_switch(
-                    "Open Blank :",
-                    padding=(30, 0, 0, 127),
-                    font_color=(20, 20, 200),
+                    "Open Blank at Start :",
+                    padding=(30, 0, 0, 100),
+                    font_color=GAME.COLOR3,
+                    selection_color=(20, 20, 200),
                     state_color=((68, 20, 225), (255, 255, 255)),
                     state_text_font_color=((255, 255, 255), (68, 20, 225)),
                     state_text=("No", "Yes"),
                     onchange=lambda i: set_game_parameters(i, 3),
                     default=GAME.uncover_one_at_start,
+                    width=70,
+                    slider_thickness=0,
                 )
             )
         )
@@ -358,7 +371,7 @@ def main_menu():
             frame2.pack(widget)
 
         menu.add.button(
-            "Play",
+            "PLAY",
             action=start_game,
             font_size=60,
             align=pygame_menu.locals.ALIGN_CENTER,
