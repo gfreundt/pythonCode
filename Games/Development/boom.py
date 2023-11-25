@@ -3,8 +3,12 @@ import pygame
 from pygame.locals import *
 import pygame_menu
 from copy import deepcopy
+import sys, os
+
+# import custom modules
+sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
 from gft_utils import pygameUtils
-import time
+import menus
 
 pygame.init()
 
@@ -13,14 +17,12 @@ class Game:
     def __init__(self):
         # load general presets
         pygameUtils.__init__(self)
-        self.BACKGROUND = self.COLORS["GRAY"]
         # define pallette
         self.COLOR1 = self.COLORS["CYBER_BLUE01"]
         self.COLOR2 = self.COLORS["CYBER_BLUE02"]
         self.COLOR3 = self.COLORS["CYBER_BLUE03"]
         self.COLOR4 = self.COLORS["CYBER_BLUE04"]
         self.COLOR5 = self.COLORS["CYBER_BLUE05"]
-
         # setup surfaces and sub-surfaces
         self.PLAY_SURFACE = pygame.Surface(
             (self.DISPLAY_WIDTH * 0.6, self.DISPLAY_HEIGHT)
@@ -31,30 +33,24 @@ class Game:
         self.MSG_SURFACE = pygame.Surface(
             (self.INFO_SURFACE.get_width() * 0.8, self.INFO_SURFACE.get_height() * 0.4)
         )
-
-        # setup entities
+        # create all possible squares
         self.COVERED_SQUARE = pygame.Surface((30, 30))
-        self.COVERED_SQUARE.fill(self.COLOR2)
-        self.UNCOVERED_SQUARE = pygame.Surface((30, 30))
+        self.COVERED_SQUARE.fill(self.COLOR3)
+        self.UNCOVERED_SQUARE = self.COVERED_SQUARE.copy()
         self.UNCOVERED_SQUARE.fill(self.COLOR1)
-        self.FLAGGED_SQUARE = pygame.Surface((30, 30))
-        self.FLAGGED_SQUARE.fill(self.COLOR3)
-        self.BOMB_SQUARE = pygame.Surface((30, 30))
-        self.BOMB_SQUARE.fill(self.COLOR4)
+        self.FLAGGED_SQUARE = self.COVERED_SQUARE.copy()
+        self.FLAGGED_SQUARE.fill(self.COLORS["MAROON"])
+        self.BOMB2_SQUARE = self.COVERED_SQUARE.copy()
+        self.BOMB2_SQUARE.fill(self.COLORS["DARK_MAROON"])
+        self.BOMB1_SQUARE = self.FLAGGED_SQUARE.copy()
+        pygame.draw.line(
+            self.BOMB1_SQUARE, self.COLORS["GRAY"], (0, 0), (30, 30), width=3
+        )
+        pygame.draw.line(
+            self.BOMB1_SQUARE, self.COLORS["GRAY"], (30, 0), (0, 30), width=3
+        )
+
         self.B1POS = (2000, 1100)
-        # initial game parameters
-        self.LEVEL_PRESETS = [
-            (5, 5, 10, True),
-            (12, 12, 15, True),
-            (25, 25, 20, False),
-            (40, 40, 30, False),
-        ]
-        (
-            self.grid_x,
-            self.grid_y,
-            self.bomb_density,
-            self.uncover_one_at_start,
-        ) = self.LEVEL_PRESETS[0]
 
     def setup(self):
         self.x0 = (self.PLAY_SURFACE.get_width() - 32 * self.grid_x) // 2
@@ -74,7 +70,7 @@ class Game:
         ]
         self.minefield_uncovered = [[False] * self.grid_x for _ in range(self.grid_y)]
         self.minefield_marked = deepcopy(self.minefield_uncovered)
-        # auto-uncover first square if option selected adn then neighbors
+        # auto-uncover first square if option selected and then neighbors
         if self.uncover_one_at_start:
             while True:
                 i, row = random.randint(0, self.grid_x - 1), random.randint(
@@ -109,25 +105,39 @@ class Game:
 
     def update_display(self):
         # update PLAY surface
-        self.PLAY_SURFACE.fill(self.COLOR1)
+        self.PLAY_SURFACE.fill((15, 15, 15))
         for row in range(self.grid_y):
             for i in range(self.grid_x):
                 _t = ""
-                if self.minefield_uncovered[row][i]:
+                if self.minefield_uncovered[row][i] or self.reveal:
                     square = self.UNCOVERED_SQUARE.copy()
                     if self.minefield_numbers[row][i] > 0:
                         _t = str(self.minefield_numbers[row][i])
                     text = self.FONTS["NUN24"].render(
-                        _t, True, self.COLORS["BLACK"], self.COLOR2
+                        _t, True, self.COLORS["BLACK"], self.COLOR1
                     )
                     square.blit(source=text, dest=text.get_rect(center=(15, 15)))
-                elif self.reveal and self.minefield_bombs[row][i]:
-                    square = self.BOMB_SQUARE.copy()
                 else:
                     if self.minefield_marked[row][i]:
                         square = self.FLAGGED_SQUARE.copy()
                     else:
                         square = self.COVERED_SQUARE.copy()
+
+                if self.reveal:
+                    if (
+                        self.minefield_bombs[row][i] and self.minefield_marked[row][i]
+                    ):  # square flagged correctly
+                        square = self.FLAGGED_SQUARE.copy()
+                    elif (
+                        not self.minefield_bombs[row][i]
+                        and self.minefield_marked[row][i]
+                    ):  # square flagged incorrectly
+                        square = self.BOMB1_SQUARE.copy()
+                    elif (
+                        self.minefield_bombs[row][i]
+                        and not self.minefield_marked[row][i]
+                    ):  # square not flagged
+                        square = self.BOMB2_SQUARE.copy()
 
                 self.PLAY_SURFACE.blit(
                     source=square, dest=(self.x0 + 32 * i, self.y0 + 32 * row)
@@ -208,6 +218,8 @@ class Game:
             GAME.stage = 3
 
     def uncover_blank_neighbors(self):
+        # TODO: do not uncover if marked
+
         # uncover all squares adjacent to open blanks
         _change = True
         while _change:
@@ -285,31 +297,32 @@ def main_menu():
         )
         frame1.set_title(
             " Preset Options",
-            title_font_color=((243, 245, 233)),
-            background_color=((68, 20, 225)),
+            title_font_color=(GAME.COLORS["WHITE"]),
+            background_color=(GAME.COLOR3),
         )
         button_selection = pygame_menu.widgets.SimpleSelection().set_background_color(
-            GAME.COLOR1
+            GAME.COLOR3
         )
         for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
-            b = menu.add.button(
+            _b = menu.add.button(
                 text,
                 action=lambda: press_preset_level(),
                 padding=(15, 30),
                 font_color=GAME.COLOR3,
+                selection_color=GAME.COLORS["WHITE"],
                 align=pygame_menu.locals.ALIGN_CENTER,
                 button_id=str(level),
             )
 
-            b.set_selection_effect(button_selection)
-            frame1.pack(b)
+            _b.set_selection_effect(button_selection)
+            frame1.pack(_b)
 
         # define middle frame
         frame2 = menu.add.frame_v(height=400, width=600)
         frame2.set_title(
             " Manual Options",
-            title_font_color=((243, 245, 233)),
-            background_color=((68, 20, 225)),
+            title_font_color=(GAME.COLORS["WHITE"]),
+            background_color=(GAME.COLOR3),
         )
 
         GAME.widgets = [
@@ -319,6 +332,15 @@ def main_menu():
                 padding=(22, 0, 0, 1),
                 increment=1,
                 font_color=GAME.COLOR3,
+                range_line_height=3,
+                range_text_value_color=GAME.COLORS["BLACK"],
+                slider_color=GAME.COLORS["BLACK"],
+                slider_selected_color=GAME.COLORS["BLACK"],
+                slider_text_value_bgcolor=GAME.COLOR2,
+                slider_text_value_color=GAME.COLORS["WHITE"],
+                range_line_color=GAME.COLORS["BLACK"],
+                range_text_value_tick_color=GAME.COLORS["BLACK"],
+                range_text_value_tick_thick=3,
                 onchange=lambda i: set_game_parameters(i, 0),
                 default=GAME.grid_x,
                 value_format=lambda x: str(int(x)),
@@ -331,6 +353,15 @@ def main_menu():
                 padding=(24, 0, 0, 121),
                 increment=1,
                 font_color=GAME.COLOR3,
+                range_line_height=3,
+                range_text_value_color=GAME.COLORS["BLACK"],
+                slider_color=GAME.COLORS["BLACK"],
+                slider_selected_color=GAME.COLORS["BLACK"],
+                slider_text_value_bgcolor=GAME.COLOR2,
+                slider_text_value_color=GAME.COLORS["WHITE"],
+                range_line_color=GAME.COLORS["BLACK"],
+                range_text_value_tick_color=GAME.COLORS["BLACK"],
+                range_text_value_tick_thick=3,
                 default=GAME.grid_y,
                 onchange=lambda i: set_game_parameters(i, 1),
                 value_format=lambda x: str(int(x)),
@@ -345,6 +376,15 @@ def main_menu():
                     increment=1,
                     font_color=GAME.COLOR3,
                     default=GAME.bomb_density,
+                    range_line_height=3,
+                    range_text_value_color=GAME.COLORS["BLACK"],
+                    slider_color=GAME.COLORS["BLACK"],
+                    slider_selected_color=GAME.COLORS["BLACK"],
+                    slider_text_value_bgcolor=GAME.COLOR2,
+                    slider_text_value_color=GAME.COLORS["WHITE"],
+                    range_line_color=GAME.COLORS["BLACK"],
+                    range_text_value_tick_color=GAME.COLORS["BLACK"],
+                    range_text_value_tick_thick=3,
                     onchange=lambda i: set_game_parameters(i, 2),
                     value_format=lambda x: str(int(x)),
                 )
@@ -356,9 +396,8 @@ def main_menu():
                     "Open Blank at Start :",
                     padding=(30, 0, 0, 100),
                     font_color=GAME.COLOR3,
-                    selection_color=(20, 20, 200),
-                    state_color=((68, 20, 225), (255, 255, 255)),
-                    state_text_font_color=((255, 255, 255), (68, 20, 225)),
+                    state_color=(GAME.COLOR3, (255, 255, 255)),
+                    state_text_font_color=((255, 255, 255), GAME.COLOR3),
                     state_text=("No", "Yes"),
                     onchange=lambda i: set_game_parameters(i, 3),
                     default=GAME.uncover_one_at_start,
@@ -370,17 +409,21 @@ def main_menu():
         for widget in GAME.widgets:
             frame2.pack(widget)
 
-        menu.add.button(
-            "PLAY",
+        _b = menu.add.button(
+            " PLAY ",
+            font_color=(38, 158, 151),
             action=start_game,
             font_size=60,
             align=pygame_menu.locals.ALIGN_CENTER,
         )
 
+        _b.set_background_color(color=(4, 47, 58))
+        _b._font_selected_color = GAME.COLORS["WHITE"]
+
     MENU_THEME = pygame_menu.themes.THEME_SOLARIZED.copy()
     MENU_THEME.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_ADAPTIVE
     MENU_THEME.widget_selection_effect = pygame_menu.widgets.SimpleSelection()
-    MENU_THEME.selection_color = (50, 50, 50)
+    MENU_THEME.selection_color = GAME.COLOR3
 
     menu = pygame_menu.Menu(
         "Boom",
@@ -397,11 +440,11 @@ def main_menu():
 
 def main():
     GAME.stage = 0
-    mainmenu = main_menu()
-    while mainmenu.is_enabled():
+    main_menu = menus.boom(GAME)
+    while main_menu.is_enabled():
         match GAME.stage:
             case 0:
-                mainmenu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
+                main_menu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
             case 1:
                 GAME.reveal = False
                 GAME.setup()

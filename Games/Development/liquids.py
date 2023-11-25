@@ -1,200 +1,93 @@
 import pygame
-
 from pygame.locals import *
 import pygame_menu
 import random
-import os
+import sys, os
+
+# import custom modules
+sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
+from gft_utils import pygameUtils
+import menus
 
 pygame.init()
 
 
 class Game:
-    WORKING_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Games", "Development")
-    RESOURCES_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources")
-    FONT20 = pygame.font.Font(os.path.join(RESOURCES_PATH, "Fonts", "roboto.ttf"), 20)
-    BOTTLE_IMAGE = pygame.transform.scale(
-        pygame.image.load(os.path.join(WORKING_PATH, "empty-bottle.png")), (128, 128)
-    )
-    BACKGROUND_COLOR = (128, 128, 128)
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    BLUE = (0, 0, 255)
-    COLORS = {
-        "R": (255, 0, 0),
-        "B": (0, 0, 255),
-        "G": (0, 255, 0),
-        "Y": (225, 255, 0),
-        "M": (106, 84, 12),
-        " ": (255, 255, 255),
-    }
-    MAIN_SURFACE = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    LEVEL_PRESETS = [(12, 3, 4, 2), (20, 2, 5, 3), (38, 2, 6, 4), (50, 1, 6, 5)]
+    def __init__(self):
+        # load general presets
+        pygameUtils.__init__(self)
+        self.BOTTLE_IMAGE = pygame.transform.scale(
+            pygame.image.load("empty-bottle.png"), (128, 128)
+        )
+        self.COLOR1 = self.COLORS["CYBER_BLUE01"]
+        self.COLOR2 = self.COLORS["CYBER_BLUE02"]
+        self.COLOR3 = self.COLORS["CYBER_BLUE03"]
+        self.COLOR4 = self.COLORS["CYBER_BLUE04"]
+        self.COLOR5 = self.COLORS["CYBER_BLUE05"]
+        self.LOCAL_COLORS = {
+            "R": self.COLORS["RED"],
+            "B": self.COLORS["BLUE"],
+            "G": self.COLORS["GREEN"],
+            "Y": self.COLORS["YELLOW"],
+            "M": self.COLORS["MAROON"],
+            " ": self.COLORS["WHITE"],
+        }
 
-    full_bottles = 34
-    empty_bottles = 1
-    bottle_size = 4
-    colors = 4  # range 2-6
+    # full_bottles = 34
+    # empty_bottles = 1
+    # bottle_size = 4
+    # colors = 4  # range 2-6
     selected_bottle = False
     fr = -1
     moves_counter = 0
 
+    def update_display(self):
+        self.MAIN_SURFACE.fill(self.COLORS["GRAY"])
+        for row in range(len(self.collection) // 10 + 1):
+            for col in range(min(10, len(self.collection) - 10 * row)):
+                self.MAIN_SURFACE.blit(
+                    source=self.surfaces[row * 10 + col],
+                    dest=(100 + 100 * col, 100 + 200 * row),
+                )
+                text = self.FONTS["ROB20"].render(
+                    f"{row*10+col:02d}",
+                    True,
+                    self.COLORS["RED"]
+                    if GAME.fr == (10 * row + col)
+                    else self.COLORS["BLACK"],
+                    self.COLORS["GRAY"],
+                )
+                self.MAIN_SURFACE.blit(
+                    source=text, dest=(155 + 100 * col, 230 + 200 * row)
+                )
+        pygame.display.flip()
 
-def update_display():
-    GAME.MAIN_SURFACE.fill(GAME.BACKGROUND_COLOR)
-    for row in range(len(GAME.collection) // 10 + 1):
-        for col in range(min(10, len(GAME.collection) - 10 * row)):
-            GAME.MAIN_SURFACE.blit(
-                source=GAME.surfaces[row * 10 + col],
-                dest=(100 + 100 * col, 100 + 200 * row),
-            )
-            text = GAME.FONT20.render(
-                f"{row*10+col:02d}",
-                True,
-                GAME.RED if GAME.fr == (10 * row + col) else GAME.BLACK,
-                GAME.BACKGROUND_COLOR,
-            )
-            GAME.MAIN_SURFACE.blit(source=text, dest=(155 + 100 * col, 230 + 200 * row))
-    pygame.display.flip()
-
-
-def main_menu():
-    def set_game_parameters(value, parameter):
-        val = int(value)
-        match parameter:
-            case 0:
-                GAME.full_bottles = val
-            case 1:
-                GAME.empty_bottles = val
-            case 2:
-                GAME.bottle_size = val
-            case 3:
-                GAME.colors = val
-
-    def start_game():
-        GAME.stage = 1
-
-    def press_preset_level(level):
-        print(level)
-        (
-            GAME.full_bottles,
-            GAME.empty_bottles,
-            GAME.bottle_size,
-            GAME.colors,
-        ) = GAME.LEVEL_PRESETS[level]
-        GAME.stage = 1
-
-    MENU_THEME = pygame_menu.themes.THEME_SOLARIZED.copy()
-    MENU_THEME.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_ADAPTIVE
-    MENU_THEME.widget_selection_effect = pygame_menu.widgets.SimpleSelection()
-
-    menu = pygame_menu.Menu(
-        "Liquids",
-        600,
-        800,
-        theme=MENU_THEME,
-        center_content=True,
-        onclose=pygame_menu.events.CLOSE,
-    )
-
-    # define top frame
-    frame1 = menu.add.frame_h(
-        height=100, width=500, align=pygame_menu.locals.ALIGN_CENTER
-    )
-    frame1.set_title(" Preset Options")
-    button_selection = (
-        pygame_menu.widgets.SimpleSelection()
-        .set_background_color(GAME.BLACK)
-        .set_color(GAME.BLUE)
-    )
-    for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
-        b = menu.add.button(
-            text,
-            action=lambda: press_preset_level(level),
-            padding=(5, 18),
-            align=pygame_menu.locals.ALIGN_CENTER,
+    def setup(self):
+        with_liquid = "".join(
+            [
+                i * ((self.full_bottles // GAME.colors) * GAME.bottle_size)
+                for i in list(self.LOCAL_COLORS.keys())[: self.colors]
+            ]
         )
-
-        b.set_selection_effect(button_selection)
-        frame1.pack(b)
-
-    # define middle frame
-    frame2 = menu.add.frame_v(height=300, width=500)
-    frame2.set_title(" Manual Options")
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Colors :':>26}",
-            range_values=[i for i in range(2, 6)],
-            onchange=lambda i: set_game_parameters(i, 3),
-            default=GAME.colors,
-            slider_text_value_enabled=False,
+        allAvailable = list(
+            with_liquid
+            + " " * (self.full_bottles * self.bottle_size - len(with_liquid))
         )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Full Bottles :':>24}",
-            range_values=(8, 50),
-            increment=1,
-            default=GAME.full_bottles,
-            onchange=lambda i: set_game_parameters(i, 0),
-            value_format=lambda x: str(int(x)),
-        )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Empty Bottles :':>20}",
-            range_values=[i for i in range(1, 4)],
-            onchange=lambda i: set_game_parameters(i, 1),
-            default=GAME.empty_bottles,
-            slider_text_value_enabled=False,
-        )
-    )
-    frame2.pack(
-        menu.add.range_slider(
-            f"{'Bottle Size :':>24}",
-            range_values=[i for i in range(3, 7)],
-            onchange=lambda i: set_game_parameters(i, 2),
-            default=GAME.bottle_size,
-            slider_text_value_enabled=False,
-        )
-    )
-
-    frame3 = menu.add.frame_h(height=100, width=500)
-    frame3.pack(
-        menu.add.button("Play", action=start_game, padding=(5, 60), font_size=60)
-    )
-    frame3.pack(
-        menu.add.button(
-            "Quit", action=pygame_menu.events.EXIT, padding=(5, 60), font_size=60
-        )
-    )
-
-    return menu
-
-
-def setup():
-    with_liquid = "".join(
-        [
-            i * ((GAME.full_bottles // GAME.colors) * GAME.bottle_size)
-            for i in list(GAME.COLORS.keys())[: GAME.colors]
+        random.shuffle(allAvailable)
+        allAvailable += list([" "] * self.bottle_size * self.empty_bottles)
+        GAME.collection = [
+            allAvailable[i * self.bottle_size : (i + 1) * self.bottle_size]
+            for i in range(self.full_bottles + self.empty_bottles)
         ]
-    )
-    allAvailable = list(
-        with_liquid + " " * (GAME.full_bottles * GAME.bottle_size - len(with_liquid))
-    )
-    random.shuffle(allAvailable)
-    allAvailable += list([" "] * GAME.bottle_size * GAME.empty_bottles)
-    GAME.collection = [
-        allAvailable[i * GAME.bottle_size : (i + 1) * GAME.bottle_size]
-        for i in range(GAME.full_bottles + GAME.empty_bottles)
-    ]
-    # spaces must be on top (fix later)
-    for k, bottle in enumerate(GAME.collection):
-        if " " in bottle:
-            GAME.collection[k] = sorted(GAME.collection[k], reverse=False)
-    # create initial pygame entities
-    GAME.surfaces = [
-        update_entity(GAME.BOTTLE_IMAGE.copy(), bottle) for bottle in GAME.collection
-    ]
+        # spaces must be on top (fix later)
+        for k, bottle in enumerate(self.collection):
+            if " " in bottle:
+                self.collection[k] = sorted(self.collection[k], reverse=False)
+        # create initial pygame entities
+        self.surfaces = [
+            update_entity(self.BOTTLE_IMAGE.copy(), bottle)
+            for bottle in self.collection
+        ]
 
 
 def process_click(pos, button):
@@ -257,7 +150,7 @@ def update_entity(surface, content):
     height = 90 // GAME.bottle_size
     for y0, color in enumerate(content):
         pygame.draw.rect(
-            surface, GAME.COLORS[color], (36, 30 + y0 * height, 56, height)
+            surface, GAME.LOCAL_COLORS[color], (36, 30 + y0 * height, 56, height)
         )
     return surface
 
@@ -270,7 +163,7 @@ def check_end():
 
 
 def main():
-    mainmenu = main_menu()
+    mainmenu = menus.liquids(GAME)
     GAME.stage = 0
 
     while mainmenu.is_enabled():
@@ -278,7 +171,7 @@ def main():
             mainmenu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
             # print(GAME.full_bottles, GAME.empty_bottles, GAME.bottle_size, GAME.colors)
         elif GAME.stage == 1:
-            setup()
+            GAME.setup()
             GAME.stage = 2
         elif GAME.stage == 2:
             events = pygame.event.get()
@@ -288,7 +181,7 @@ def main():
                     return
                 elif event.type == MOUSEBUTTONDOWN:
                     process_click(pos=pygame.mouse.get_pos(), button=event.button)
-                update_display()
+                GAME.update_display()
 
                 if check_end():
                     print(f"Finished Successfully in {GAME.moves_counter} moves!")
@@ -296,6 +189,4 @@ def main():
 
 
 GAME = Game()
-
-
 main()

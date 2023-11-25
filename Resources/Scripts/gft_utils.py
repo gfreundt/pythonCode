@@ -84,41 +84,26 @@ class ChromeUtils:
                 quit()
 
 
-class PygameUtils:
+class pygameUtils:
     def __init__(self) -> None:
-        import json, os
         import pygame
+        import json, os
 
         pygame.init()
 
-        with open(
-            os.path.join(
-                os.getcwd()[:2],
-                r"\pythonCode",
-                "Resources",
-                "StaticData",
-                "pygame_data.json",
-            ),
-            mode="r",
-        ) as file:
-            self.COLORS = json.load(file)["colors"]
-
-        LIGHT_BLUE = (51, 153, 255)
-        GRAY = (120, 120, 120)
-        BG = (25, 72, 80)
-        BG_CONTROLS = (0, 102, 102)
-        INV_COLORS = [(44, 93, 118), (74, 148, 186)]
-        self.RESOURCES_PATH = os.path.join(
-            os.getcwd()[:2], r"\pythonCode", "Resources", "Fonts"
-        )
+        # load environment constants
+        self.DISPLAY_WIDTH = pygame.display.Info().current_w
+        self.DISPLAY_HEIGHT = pygame.display.Info().current_h
         self.MAIN_SURFACE = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
+        # load custom constants
+        self.RESOURCES_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources")
+        with open(os.path.join(self.RESOURCES_PATH,"ConfigData", "pygame_data.json"),mode="r") as file:
+            data = json.load(file)
+        self.COLORS = data["colors"]
+        _fonts = data["fonts"]
+        self.FONTS = {i:pygame.font.Font(os.path.join(self.RESOURCES_PATH, "Fonts", _fonts[i]["ttf"]), _fonts[i]["size"]) for i in _fonts}
 
-"""
-    DISPLAY_WIDTH = pygame.display.Info().current_w
-    DISPLAY_HEIGHT = pygame.display.Info().current_h // 1.01
-    FONT9 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 9)
-    FONT12 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 12)
-    FONT14 = pygame.font.Font(os.path.join(RESOURCES_PATH, "seguisym.ttf"), 14)
-    FONT20 = pygame.font.Font(os.path.join(RESOURCES_PATH, "roboto.ttf"), 20)
-"""
+
+
+
