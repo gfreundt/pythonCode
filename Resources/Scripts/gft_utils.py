@@ -98,12 +98,19 @@ class pygameUtils:
 
         # load custom constants
         self.RESOURCES_PATH = os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources")
-        with open(os.path.join(self.RESOURCES_PATH,"ConfigData", "pygame_data.json"),mode="r") as file:
+        with open(
+            os.path.join(self.RESOURCES_PATH, "ConfigData", "pygame_data.json"),
+            mode="r",
+        ) as file:
             data = json.load(file)
         self.COLORS = data["colors"]
         _fonts = data["fonts"]
-        self.FONTS = {i:pygame.font.Font(os.path.join(self.RESOURCES_PATH, "Fonts", _fonts[i]["ttf"]), _fonts[i]["size"]) for i in _fonts}
+        self.FONTS = {
+            i: pygame.font.Font(
+                os.path.join(self.RESOURCES_PATH, "Fonts", _fonts[i]["ttf"]),
+                _fonts[i]["size"],
+            )
+            for i in _fonts
+        }
 
-
-
-
+        pygame.quit()

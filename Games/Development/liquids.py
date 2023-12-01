@@ -1,6 +1,5 @@
 import pygame
 from pygame.locals import *
-import pygame_menu
 import random
 import sys, os
 
@@ -33,10 +32,6 @@ class Game:
             " ": self.COLORS["WHITE"],
         }
 
-    # full_bottles = 34
-    # empty_bottles = 1
-    # bottle_size = 4
-    # colors = 4  # range 2-6
     selected_bottle = False
     fr = -1
     moves_counter = 0
@@ -163,6 +158,9 @@ def check_end():
 
 
 def main():
+    global GAME
+    GAME = Game()
+
     mainmenu = menus.liquids(GAME)
     GAME.stage = 0
 
@@ -188,5 +186,5 @@ def main():
                     return
 
 
-GAME = Game()
-main()
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,4 @@
+import win32gui
 import pygame
 from pygame.locals import *
 import pygame_menu

@@ -1,7 +1,6 @@
 import random
 import pygame
 from pygame.locals import *
-import pygame_menu
 from copy import deepcopy
 import sys, os
 
@@ -229,6 +228,7 @@ class Game:
                     if (
                         not GAME.minefield_numbers[row][i]
                         and GAME.minefield_uncovered[row][i]
+                        and not GAME.minefield_marked[row][i]
                     ):
                         for y in range(
                             max(0, row - 1),
@@ -261,184 +261,9 @@ class Game:
                     return
 
 
-def main_menu():
-    def set_game_parameters(value, parameter):
-        val = int(value)
-        match parameter:
-            case 0:
-                GAME.grid_x = val
-            case 1:
-                GAME.grid_y = val
-            case 2:
-                GAME.bomb_density = val
-            case 3:
-                GAME.uncover_one_at_start = val
-
-    def start_game():
-        GAME.stage = 1
-
-    def press_preset_level():
-        (
-            GAME.grid_x,
-            GAME.grid_y,
-            GAME.bomb_density,
-            GAME.uncover_one_at_start,
-        ) = GAME.LEVEL_PRESETS[int(menu.get_selected_widget()._id)]
-        # update widgets
-        GAME.widgets[0]._value = [GAME.grid_x, 0]
-        GAME.widgets[1]._value = [GAME.grid_y, 0]
-        GAME.widgets[2]._value = [GAME.bomb_density, 0]
-        GAME.widgets[3]._state = GAME.uncover_one_at_start
-
-    def draw_widgets():
-        # define top frame
-        frame1 = menu.add.frame_h(
-            height=100, width=600, align=pygame_menu.locals.ALIGN_CENTER
-        )
-        frame1.set_title(
-            " Preset Options",
-            title_font_color=(GAME.COLORS["WHITE"]),
-            background_color=(GAME.COLOR3),
-        )
-        button_selection = pygame_menu.widgets.SimpleSelection().set_background_color(
-            GAME.COLOR3
-        )
-        for level, text in enumerate(("Easy", "Medium", "Hard", "Expert")):
-            _b = menu.add.button(
-                text,
-                action=lambda: press_preset_level(),
-                padding=(15, 30),
-                font_color=GAME.COLOR3,
-                selection_color=GAME.COLORS["WHITE"],
-                align=pygame_menu.locals.ALIGN_CENTER,
-                button_id=str(level),
-            )
-
-            _b.set_selection_effect(button_selection)
-            frame1.pack(_b)
-
-        # define middle frame
-        frame2 = menu.add.frame_v(height=400, width=600)
-        frame2.set_title(
-            " Manual Options",
-            title_font_color=(GAME.COLORS["WHITE"]),
-            background_color=(GAME.COLOR3),
-        )
-
-        GAME.widgets = [
-            menu.add.range_slider(
-                f"{'Horizontal Size :':>27}",
-                range_values=(5, 40),
-                padding=(22, 0, 0, 1),
-                increment=1,
-                font_color=GAME.COLOR3,
-                range_line_height=3,
-                range_text_value_color=GAME.COLORS["BLACK"],
-                slider_color=GAME.COLORS["BLACK"],
-                slider_selected_color=GAME.COLORS["BLACK"],
-                slider_text_value_bgcolor=GAME.COLOR2,
-                slider_text_value_color=GAME.COLORS["WHITE"],
-                range_line_color=GAME.COLORS["BLACK"],
-                range_text_value_tick_color=GAME.COLORS["BLACK"],
-                range_text_value_tick_thick=3,
-                onchange=lambda i: set_game_parameters(i, 0),
-                default=GAME.grid_x,
-                value_format=lambda x: str(int(x)),
-            )
-        ]
-        GAME.widgets.append(
-            menu.add.range_slider(
-                "Vertical Size :",
-                range_values=(5, 40),
-                padding=(24, 0, 0, 121),
-                increment=1,
-                font_color=GAME.COLOR3,
-                range_line_height=3,
-                range_text_value_color=GAME.COLORS["BLACK"],
-                slider_color=GAME.COLORS["BLACK"],
-                slider_selected_color=GAME.COLORS["BLACK"],
-                slider_text_value_bgcolor=GAME.COLOR2,
-                slider_text_value_color=GAME.COLORS["WHITE"],
-                range_line_color=GAME.COLORS["BLACK"],
-                range_text_value_tick_color=GAME.COLORS["BLACK"],
-                range_text_value_tick_thick=3,
-                default=GAME.grid_y,
-                onchange=lambda i: set_game_parameters(i, 1),
-                value_format=lambda x: str(int(x)),
-            )
-        )
-        GAME.widgets.append(
-            (
-                menu.add.range_slider(
-                    "Bomb Density % :",
-                    range_values=(10, 30),
-                    padding=(24, 0, 0, 60),
-                    increment=1,
-                    font_color=GAME.COLOR3,
-                    default=GAME.bomb_density,
-                    range_line_height=3,
-                    range_text_value_color=GAME.COLORS["BLACK"],
-                    slider_color=GAME.COLORS["BLACK"],
-                    slider_selected_color=GAME.COLORS["BLACK"],
-                    slider_text_value_bgcolor=GAME.COLOR2,
-                    slider_text_value_color=GAME.COLORS["WHITE"],
-                    range_line_color=GAME.COLORS["BLACK"],
-                    range_text_value_tick_color=GAME.COLORS["BLACK"],
-                    range_text_value_tick_thick=3,
-                    onchange=lambda i: set_game_parameters(i, 2),
-                    value_format=lambda x: str(int(x)),
-                )
-            )
-        )
-        GAME.widgets.append(
-            (
-                menu.add.toggle_switch(
-                    "Open Blank at Start :",
-                    padding=(30, 0, 0, 100),
-                    font_color=GAME.COLOR3,
-                    state_color=(GAME.COLOR3, (255, 255, 255)),
-                    state_text_font_color=((255, 255, 255), GAME.COLOR3),
-                    state_text=("No", "Yes"),
-                    onchange=lambda i: set_game_parameters(i, 3),
-                    default=GAME.uncover_one_at_start,
-                    width=70,
-                    slider_thickness=0,
-                )
-            )
-        )
-        for widget in GAME.widgets:
-            frame2.pack(widget)
-
-        _b = menu.add.button(
-            " PLAY ",
-            font_color=(38, 158, 151),
-            action=start_game,
-            font_size=60,
-            align=pygame_menu.locals.ALIGN_CENTER,
-        )
-
-        _b.set_background_color(color=(4, 47, 58))
-        _b._font_selected_color = GAME.COLORS["WHITE"]
-
-    MENU_THEME = pygame_menu.themes.THEME_SOLARIZED.copy()
-    MENU_THEME.title_bar_style = pygame_menu.widgets.MENUBAR_STYLE_ADAPTIVE
-    MENU_THEME.widget_selection_effect = pygame_menu.widgets.SimpleSelection()
-    MENU_THEME.selection_color = GAME.COLOR3
-
-    menu = pygame_menu.Menu(
-        "Boom",
-        600,
-        800,
-        theme=MENU_THEME,
-        center_content=True,
-        onclose=pygame_menu.events.CLOSE,
-    )
-
-    draw_widgets()
-    return menu
-
-
 def main():
+    global GAME
+    GAME = Game()
     GAME.stage = 0
     main_menu = menus.boom(GAME)
     while main_menu.is_enabled():
@@ -467,5 +292,5 @@ def main():
                 GAME.stage = 0
 
 
-GAME = Game()
-main()
+if __name__ == "__main__":
+    main()
