@@ -3,11 +3,12 @@ import pygame
 from pygame.locals import *
 from copy import deepcopy
 import sys, os
+from datetime import datetime as dt
 
 # import custom modules
 sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
 from gft_utils import pygameUtils
-import menus
+import menus2 as menus
 
 pygame.init()
 
@@ -16,12 +17,8 @@ class Game:
     def __init__(self):
         # load general presets
         pygameUtils.__init__(self)
-        # define pallette
-        self.COLOR1 = self.COLORS["CYBER_BLUE01"]
-        self.COLOR2 = self.COLORS["CYBER_BLUE02"]
-        self.COLOR3 = self.COLORS["CYBER_BLUE03"]
-        self.COLOR4 = self.COLORS["CYBER_BLUE04"]
-        self.COLOR5 = self.COLORS["CYBER_BLUE05"]
+        # define palette
+        self.PALETTE = self.PALETTES["CYBER_BLUE"]
         # setup surfaces and sub-surfaces
         self.PLAY_SURFACE = pygame.Surface(
             (self.DISPLAY_WIDTH * 0.6, self.DISPLAY_HEIGHT)
@@ -30,13 +27,16 @@ class Game:
             (self.DISPLAY_WIDTH * 0.4, self.DISPLAY_HEIGHT)
         )
         self.MSG_SURFACE = pygame.Surface(
-            (self.INFO_SURFACE.get_width() * 0.8, self.INFO_SURFACE.get_height() * 0.4)
+            (
+                self.INFO_SURFACE.get_width() * 0.8,
+                self.INFO_SURFACE.get_height() * 0.265,
+            )
         )
-        # create all possible squares
+        # create all possible types of squares
         self.COVERED_SQUARE = pygame.Surface((30, 30))
-        self.COVERED_SQUARE.fill(self.COLOR3)
+        self.COVERED_SQUARE.fill(self.PALETTE[2])
         self.UNCOVERED_SQUARE = self.COVERED_SQUARE.copy()
-        self.UNCOVERED_SQUARE.fill(self.COLOR1)
+        self.UNCOVERED_SQUARE.fill(self.PALETTE[0])
         self.FLAGGED_SQUARE = self.COVERED_SQUARE.copy()
         self.FLAGGED_SQUARE.fill(self.COLORS["MAROON"])
         self.BOMB2_SQUARE = self.COVERED_SQUARE.copy()
@@ -48,10 +48,23 @@ class Game:
         pygame.draw.line(
             self.BOMB1_SQUARE, self.COLORS["GRAY"], (30, 0), (0, 30), width=3
         )
-
-        self.B1POS = (2000, 1100)
+        self.BUTT1_POS = (2000, 1100)
+        # load images
+        self.end_images = [
+            pygame.image.load("boom_lost.png"),
+            pygame.image.load("boom_won.png"),
+            pygame.image.load("boom_quit.png"),
+        ]
 
     def setup(self):
+        # assign generic menu parameters to game-specific variables
+        (
+            GAME.grid_x,
+            GAME.grid_y,
+            GAME.bomb_density,
+            GAME.uncover_one_at_start,
+        ) = GAME.parameters
+        self.reveal = False
         self.x0 = (self.PLAY_SURFACE.get_width() - 32 * self.grid_x) // 2
         self.y0 = (self.PLAY_SURFACE.get_height() - 32 * self.grid_y) // 2
         self.total_bombs = int(self.grid_x * self.grid_y * self.bomb_density / 100)
@@ -82,17 +95,32 @@ class Game:
                     self.minefield_uncovered[row][i] = True
                     self.uncover_blank_neighbors()
                     break
-
-        # create main game button
-        self.main_game_button(" QUIT ")
-
-    def main_game_button(self, text):
-        _text = self.FONTS["NUN40"].render(text, True, self.COLORS["BLACK"])
-        self.B1SFC = pygame.Surface((_text.get_width(), 80))
-        self.B1SFC.fill(self.COLOR3)
-        self.B1SFC.blit(
-            source=_text, dest=_text.get_rect(center=(_text.get_width() // 2, 40))
+        # calculate game difficulty level
+        self.difficulty = (
+            self.grid_x
+            * self.grid_y
+            * self.bomb_density
+            / 100
+            * (1 if self.uncover_one_at_start else 1.01)
         )
+        # create main game button
+        self.main_game_button("QUIT")
+        # start timer
+        self.time_start = dt.now()
+
+    def main_game_button(self, button_text):
+        _text = self.FONTS["NUN40B"].render(button_text, True, self.COLORS["WHITE"])
+        _sfc = pygame.Surface((_text.get_width() * 1.25, 80))
+        _sfc.fill(self.PALETTE[4])
+        _sfc.blit(
+            source=_text, dest=_text.get_rect(center=(_text.get_width() * 0.625, 40))
+        )
+        _pos = (
+            self.PLAY_SURFACE.get_width()
+            + (self.INFO_SURFACE.get_width() - _sfc.get_width()) // 2,
+            1150,
+        )
+        self.main_button = (_sfc, _pos)
 
     def calculate_number(self, y, x):
         bomb_count = 0
@@ -113,7 +141,7 @@ class Game:
                     if self.minefield_numbers[row][i] > 0:
                         _t = str(self.minefield_numbers[row][i])
                     text = self.FONTS["NUN24"].render(
-                        _t, True, self.COLORS["BLACK"], self.COLOR1
+                        _t, True, self.COLORS["BLACK"], self.PALETTE[0]
                     )
                     square.blit(source=text, dest=text.get_rect(center=(15, 15)))
                 else:
@@ -144,36 +172,71 @@ class Game:
         self.MAIN_SURFACE.blit(source=self.PLAY_SURFACE, dest=(0, 0))
 
         # update INFO surface
-        self.INFO_SURFACE.fill(self.COLOR1)
-        self.messages = [f"Total Squares: {self.grid_x * self.grid_y}"]
-        self.messages.append(f"Total Bombs: {self.total_bombs}")
-        self.messages.append(
-            f"Unmarked Bombs: {self.total_bombs-len([i for row in self.minefield_marked for i in row if i])}"
-        )
-        self.messages.append(
-            f"Unopened Squares: {self.grid_x * self.grid_y-len([i for row in self.minefield_uncovered for i in row if i])}"
-        )
-        self.MSG_SURFACE.fill(self.COLORS["YELLOW"])
+        self.INFO_SURFACE.fill(self.PALETTE[2])
+        self.messages = [
+            ("Board Statistics", "", "NUN40B"),
+            ("Squares", f"< {self.grid_x * self.grid_y:,} >", "NUN40"),
+            ("Bombs", f"< {self.total_bombs} >", "NUN40"),
+            (
+                "Difficulty",
+                f"< {self.difficulty} >",
+                "NUN40",
+            ),
+            ("",),
+            ("Game Statistics", "", "NUN40B"),
+            ("Play Time", f"< {str(dt.now() - self.time_start)[:-5]}>", "NUN40"),
+            (
+                "Unmarked Bombs",
+                f"< {self.total_bombs-len([i for row in self.minefield_marked for i in row if i])} >",
+                "NUN40",
+            ),
+            (
+                "Score",
+                f"< {len([i for row in self.minefield_uncovered for i in row if i])/(self.grid_x*self.grid_y)*self.difficulty:.1f}>",
+                "NUN40",
+            ),
+        ]
+        # print crafted text
+        self.MSG_SURFACE.fill(self.COLORS["BLACK"])  # self.PALETTE[2])
         for row, line in enumerate(self.messages):
+            if not line[0]:
+                line = ("", "", "NUN40")
             self.MSG_SURFACE.blit(
-                self.FONTS["NUN40"].render(
-                    line, True, self.COLORS["BLACK"], self.INFO_SURFACE.get_colorkey()
+                self.FONTS[line[2]].render(
+                    line[0],
+                    True,
+                    self.COLORS["WHITE"],
+                    self.INFO_SURFACE.get_colorkey(),
                 ),
-                dest=(10, row * 40),
+                dest=(60, row * 40),
+            )
+            self.MSG_SURFACE.blit(
+                self.FONTS[line[2]].render(
+                    line[1],
+                    True,
+                    self.COLORS["WHITE"],
+                    self.INFO_SURFACE.get_colorkey(),
+                ),
+                dest=(400, row * 40),
             )
 
         self.INFO_SURFACE.blit(
-            source=self.MSG_SURFACE, dest=(self.INFO_SURFACE.get_width() * 0.1, 20)
+            source=self.MSG_SURFACE, dest=(self.INFO_SURFACE.get_width() * 0.1, 90)
         )
-
+        # exit image
+        if self.stage == 3:
+            self.INFO_SURFACE.blit(
+                source=self.end_images[self.end_criteria], dest=(240, 560)
+            )
         self.MAIN_SURFACE.blit(
             source=self.INFO_SURFACE, dest=(self.DISPLAY_WIDTH * 0.6, 0)
         )
-        self.MAIN_SURFACE.blit(source=self.B1SFC, dest=self.B1POS)
+        # main game button
+        self.MAIN_SURFACE.blit(source=self.main_button[0], dest=self.main_button[1])
 
         pygame.display.flip()
 
-    def check_win(self):
+    def check_end(self):
         _uncovered = len([i for row in self.minefield_uncovered for i in row if not i])
         _marked = len([i for row in self.minefield_marked for i in row if i])
         if _uncovered == self.total_bombs and _uncovered == _marked:
@@ -181,6 +244,7 @@ class Game:
             GAME.stage = 3
 
     def process_click(self, pos, button):
+        # clicked on game square
         if pygame.Rect(self.PLAY_SURFACE.get_rect()).collidepoint(
             pygame.mouse.get_pos()
         ):
@@ -212,13 +276,15 @@ class Game:
                 GAME.minefield_marked[row][i] = (
                     False if GAME.minefield_marked[row][i] else True
                 )
-        elif pygame.Rect(self.B1SFC.get_rect(topleft=GAME.B1POS)).collidepoint(pos):
+            return
+        # clicked on control button
+        if pygame.Rect(
+            self.main_button[0].get_rect(topleft=self.main_button[1])
+        ).collidepoint(pos):
             GAME.end_criteria = 2  # pressed QUIT button
             GAME.stage = 3
 
     def uncover_blank_neighbors(self):
-        # TODO: do not uncover if marked
-
         # uncover all squares adjacent to open blanks
         _change = True
         while _change:
@@ -246,17 +312,18 @@ class Game:
         match self.end_criteria:
             case 0:  # Bomb Exploded (Lost)
                 GAME.reveal = True
+
             case 1:  # Found all Bombs (Won)
                 print("You Win!")
-            case 2:  # QUIT button pressed
-                print("Quitter...")
+            case 2:  # ESC key / QUIT button pressed
+                GAME.reveal = True
 
         self.main_game_button(" CONTINUE ")
         self.update_display()
         while True:
             for event in pygame.event.get():
                 if event.type == MOUSEBUTTONDOWN and pygame.Rect(
-                    self.B1SFC.get_rect(topleft=GAME.B1POS)
+                    self.main_button[0].get_rect(topleft=self.main_button[1])
                 ).collidepoint(pygame.mouse.get_pos()):
                     return
 
@@ -264,14 +331,16 @@ class Game:
 def main():
     global GAME
     GAME = Game()
+    GAME.game = "boom"
     GAME.stage = 0
-    main_menu = menus.boom(GAME)
+    main_menu = menus.menu(GAME)
+
     while main_menu.is_enabled():
+        # print(GAME.stage)
         match GAME.stage:
             case 0:
                 main_menu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
             case 1:
-                GAME.reveal = False
                 GAME.setup()
                 GAME.stage = 2
             case 2:
@@ -280,16 +349,19 @@ def main():
                     if event.type == QUIT or (
                         event.type == KEYDOWN and event.key == 27
                     ):
+                        GAME.end_criteria = 2
                         GAME.stage = 3
                     elif event.type == MOUSEBUTTONDOWN:
                         GAME.process_click(
                             pos=pygame.mouse.get_pos(), button=event.button
                         )
-                    GAME.update_display()
-                    GAME.check_win()
+                GAME.update_display()
+                GAME.check_end()
             case 3:
                 GAME.wrap_up()
                 GAME.stage = 0
+
+    pygame.quit()
 
 
 if __name__ == "__main__":

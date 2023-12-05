@@ -8,7 +8,7 @@ import math
 # import custom modules
 sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
 from gft_utils import pygameUtils
-import menus
+import menus2 as menus
 
 pygame.init()
 
@@ -19,6 +19,7 @@ class Game:
         pygameUtils.__init__(self)
 
         # define pallette
+        self.PALETTE = self.PALETTES["CYBER_BLUE"]
         self.COLOR_LIST = [
             self.COLORS["BLACK"],
             self.COLORS["YELLOW"],
@@ -119,11 +120,12 @@ class Game:
 def main():
     global GAME
     GAME = Game()
-    GAME.stage = 0  # change to 0
-    # main_menu = menus.mastermind(GAME)
+    GAME.game = "gravity"
+    GAME.stage = 0
+    main_menu = menus.menu(GAME)
 
     clock = pygame.time.Clock()
-    while True:  # main_menu.is_enabled():
+    while main_menu.is_enabled():
         match GAME.stage:
             case 0:
                 GAME._speed = int(input("Speed: "))

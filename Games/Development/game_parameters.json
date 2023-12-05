@@ -1,0 +1,209 @@
+{
+    "liquids": {
+        "LEVEL_PRESETS": [
+            [
+                12,
+                3,
+                4,
+                2
+            ],
+            [
+                20,
+                2,
+                5,
+                3
+            ],
+            [
+                38,
+                2,
+                6,
+                4
+            ],
+            [
+                50,
+                1,
+                6,
+                5
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Liquids",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Full Bottles :",
+                "padding": 40,
+                "range": [
+                    8,
+                    50
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Empty Bottles :",
+                "padding": 8,
+                "range": [
+                    1,
+                    4
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Bottle Size :",
+                "padding": 40,
+                "range": [
+                    3,
+                    7
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Colors :",
+                "padding": 59,
+                "range": [
+                    2,
+                    6
+                ],
+                "increment": 1
+            }
+        ]
+    },
+    "boom": {
+        "LEVEL_PRESETS": [
+            [
+                5,
+                5,
+                10,
+                true
+            ],
+            [
+                12,
+                12,
+                15,
+                true
+            ],
+            [
+                25,
+                25,
+                20,
+                false
+            ],
+            [
+                40,
+                40,
+                30,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 750,
+        "GAME_TITLE": "Boom",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Horizontal Size :",
+                "padding": 27,
+                "range": [
+                    5,
+                    40
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Vertical Size :",
+                "padding": 53,
+                "range": [
+                    5,
+                    40
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Bomb Density % :",
+                "padding": 0,
+                "range": [
+                    10,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Open Blank at Start :",
+                "padding": 125
+            }
+        ]
+    },
+    "gravity": {
+        "LEVEL_PRESETS": [
+            [
+                45,
+                100
+            ],
+            [
+                12,
+                12,
+                15,
+                true
+            ],
+            [
+                25,
+                25,
+                20,
+                false
+            ],
+            [
+                40,
+                40,
+                30,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 750,
+        "GAME_TITLE": "Gravity",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Horizontal Size :",
+                "padding": 27,
+                "range": [
+                    5,
+                    40
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Vertical Size :",
+                "padding": 53,
+                "range": [
+                    5,
+                    40
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Bomb Density % :",
+                "padding": 0,
+                "range": [
+                    10,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Open Blank at Start :",
+                "padding": 125
+            }
+        ]
+    }
+}

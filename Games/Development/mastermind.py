@@ -134,7 +134,6 @@ class Game:
                 )
 
         self.MAIN_SURFACE.blit(source=self.PLAY_SURFACE, dest=(self.PLAYx, self.PLAYy))
-
         pygame.display.flip()
 
     def get_result_color(self, guess):

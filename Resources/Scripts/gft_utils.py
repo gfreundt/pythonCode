@@ -104,6 +104,7 @@ class pygameUtils:
         ) as file:
             data = json.load(file)
         self.COLORS = data["colors"]
+        self.PALETTES = data["palettes"]
         _fonts = data["fonts"]
         self.FONTS = {
             i: pygame.font.Font(
@@ -112,5 +113,3 @@ class pygameUtils:
             )
             for i in _fonts
         }
-
-        pygame.quit()
