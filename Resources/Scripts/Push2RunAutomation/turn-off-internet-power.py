@@ -7,13 +7,15 @@ from selenium.webdriver.common.keys import Keys
 # Custom imports
 if "Windows" in platform.uname().system:
     _path = r"\pythonCode\Resources\Scripts"
+    _update = False
 else:
     _path = r"/home/gfreundt/pythonCode/Resources/Scripts"
+    _update = True
 
 sys.path.append(_path)
 from gft_utils import ChromeUtils
 
-wd = ChromeUtils().init_driver(headless=True)
+wd = ChromeUtils().init_driver(headless=True, no_driver_update=_update)
 url = r"http:\\192.168.100.1"
 
 wd.get(url)
