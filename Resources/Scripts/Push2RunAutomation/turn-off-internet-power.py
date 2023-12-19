@@ -9,8 +9,8 @@ if "Windows" in platform.uname().system:
     _path = r"\pythonCode\Resources\Scripts"
 else:
     _path = r"/home/gfreundt/pythonCode/Resources/Scripts"
-sys.path.append(_path)
 
+sys.path.append(_path)
 from gft_utils import ChromeUtils
 
 wd = ChromeUtils().init_driver(headless=True)
@@ -75,6 +75,12 @@ if (
 ):
     f.click()
 time.sleep(2)
+
+wd.switch_to.default_content()
+
+# click logout
+f = wd.find_element(By.ID, "headerLogoutText")
+f.click()
 
 # clean exit
 print("Script ran successfully")
