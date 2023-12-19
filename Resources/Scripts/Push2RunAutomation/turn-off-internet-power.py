@@ -1,10 +1,16 @@
 import sys
 import time
+import platform
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 # Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
+if "Windows" in platform.uname().system:
+    _path = r"\pythonCode\Resources\Scripts"
+else:
+    _path = r"/home/gfreundt/pythonCode/Resources/Scripts"
+sys.path.append(_path)
+
 from gft_utils import ChromeUtils
 
 wd = ChromeUtils().init_driver(headless=True)
@@ -43,7 +49,12 @@ wd.switch_to.frame("menuIframe")
 
 # click Enable MAC filter button
 f = wd.find_element(By.ID, "EnableMacFilter")
-f.click()
+if (
+    (not f.is_selected() and "OFF" in sys.argv)
+    or (f.is_selected() and "ON" in sys.argv)
+    or len(sys.argv) < 2
+):
+    f.click()
 time.sleep(2)
 
 wd.switch_to.default_content()
@@ -57,7 +68,12 @@ wd.switch_to.frame("menuIframe")
 
 # click Enable MAC filter button
 f = wd.find_element(By.ID, "EnableMacFilter")
-f.click()
+if (
+    (not f.is_selected() and "OFF" in sys.argv)
+    or (f.is_selected() and "ON" in sys.argv)
+    or len(sys.argv) < 2
+):
+    f.click()
 time.sleep(2)
 
 # clean exit
