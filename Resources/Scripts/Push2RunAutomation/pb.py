@@ -40,7 +40,4 @@ def wait_for_message(token, time_limit):
 at = "o.hb6GkzmwgludKtUOhv2hyeGz3kadMstt"
 time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 120
 
-try:
-    wait_for_message(token=at, time_limit=time_limit)
-except:
-    print("Communication error")
+wait_for_message(token=at, time_limit=time_limit)
