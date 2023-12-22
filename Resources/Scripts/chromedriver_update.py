@@ -74,4 +74,5 @@ CURRENT_PATH = os.path.join(BASE_PATH, "chromedriver.exe")
 TARGET_PATH = os.path.join(BASE_PATH, "chromedriver.zip")
 UNZIPPED_PATH = os.path.join(BASE_PATH, "chromedriver-win64")
 
+
 main()
