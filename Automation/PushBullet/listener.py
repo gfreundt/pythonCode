@@ -31,9 +31,11 @@ def wait_for_message(token, time_limit, path):
                 response = requests.get(url, headers=header, params=params)
                 message = response.json()["pushes"][-1]["body"].strip()
                 if "stop internet" in message:
-                    subprocess.run([os.path.join(path, "switch-internet.py"), "OFF"])
+                    os.chdir(path)
+                    subprocess.run(["python", "switch-internet.py", "OFF"])
                 if "start internet" in message:
-                    subprocess.run([os.path.join(path, "switch-internet.py"), "ON"])
+                    os.chdir(path)
+                    subprocess.run(["python", "switch-internet.py", "ON"])
                 elif "quit" in message:
                     ws.close()
                     quit()
