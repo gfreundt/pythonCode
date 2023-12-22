@@ -11,7 +11,7 @@ def check_system_path():
     if "Windows" in platform.uname().system:
         root = os.path.join(r"d:\pythonCode")
     else:
-        root = os.path.join("~/pythonCode")
+        root = os.path.join("/home/gfreundt/pythonCode")
 
     return os.path.join(root, "Automation", "PushBullet")
 
