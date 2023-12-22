@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime as dt
 import platform
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -83,6 +84,10 @@ wd.switch_to.default_content()
 # click logout
 f = wd.find_element(By.ID, "headerLogoutText")
 f.click()
+time.sleep(2)
 
 # clean exit
-print("Script ran successfully")
+wd.close()
+print(
+    f"Switch Internet {sys.argv[-1]} Ran Successfully at {dt.now().strftime('%H:%M:%S')}"
+)

@@ -43,7 +43,7 @@ def wait_for_message(token, time_limit, path):
                     subprocess.run(["python", "switch-internet.py", "ON"])
                 elif "quit" in message:
                     ws.close()
-                    quit()
+                    return
         else:
             ws.close()
             return
