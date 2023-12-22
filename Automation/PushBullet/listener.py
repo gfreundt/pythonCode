@@ -22,7 +22,7 @@ def check_system_path():
     return os.path.join(root, "Automation", "PushBullet"), ext
 
 
-def take_action(message, extension):
+def take_action(message, extension, path):
     if extension in message:
         if "stop internet" in message:
             os.chdir(path)
