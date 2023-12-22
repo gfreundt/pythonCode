@@ -15,10 +15,10 @@ def get_key():
 def check_system_path():
     if "Windows" in platform.uname().system:
         root = os.path.join(r"d:\pythonCode")
-        ext = "PC1"
+        ext = "pc1"
     else:
         root = os.path.join("/home/gfreundt/pythonCode")
-        ext = "RP1"
+        ext = "rp1"
     return os.path.join(root, "Automation", "PushBullet"), ext
 
 
