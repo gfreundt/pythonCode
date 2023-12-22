@@ -17,8 +17,20 @@ def check_system_path():
         root = os.path.join(r"d:\pythonCode")
     else:
         root = os.path.join("/home/gfreundt/pythonCode")
-
     return os.path.join(root, "Automation", "PushBullet")
+
+
+def take_action(message):
+    if "stop internet" in message:
+        os.chdir(path)
+        subprocess.run(["python", "switch-internet.py", "OFF"])
+        return "continue"
+    elif "start internet" in message:
+        os.chdir(path)
+        subprocess.run(["python", "switch-internet.py", "ON"])
+        return "continue"
+    elif "quit" in message:
+        return "stop"
 
 
 def wait_for_message(token, time_limit, path):
@@ -35,13 +47,8 @@ def wait_for_message(token, time_limit, path):
                 params = {"modified_after": time.time() - 5}
                 response = requests.get(url, headers=header, params=params)
                 message = response.json()["pushes"][-1]["body"].strip()
-                if "stop internet" in message:
-                    os.chdir(path)
-                    subprocess.run(["python", "switch-internet.py", "OFF"])
-                if "start internet" in message:
-                    os.chdir(path)
-                    subprocess.run(["python", "switch-internet.py", "ON"])
-                elif "quit" in message:
+                after_action = take_action(message=message.lower())
+                if after_action == "stop":
                     ws.close()
                     return
         else:
