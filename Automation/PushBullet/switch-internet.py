@@ -16,7 +16,7 @@ else:
 sys.path.append(_path)
 from gft_utils import ChromeUtils
 
-wd = ChromeUtils().init_driver(headless=True, no_driver_update=_update)
+wd = ChromeUtils().init_driver(headless=True, no_driver_update=_update, verbose=False)
 url = r"http:\\192.168.100.1"
 
 wd.get(url)
