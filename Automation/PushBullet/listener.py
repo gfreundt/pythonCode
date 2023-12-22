@@ -7,6 +7,11 @@ import platform
 import os
 
 
+def get_key():
+    with open("pushbullet_key.txt", mode="r") as file:
+        return file.read()
+
+
 def check_system_path():
     if "Windows" in platform.uname().system:
         root = os.path.join(r"d:\pythonCode")
@@ -17,7 +22,7 @@ def check_system_path():
 
 
 def wait_for_message(token, time_limit, path):
-    uri = f"wss://stream.pushbullet.com/websocket/{at}"
+    uri = f"wss://stream.pushbullet.com/websocket/{token}"
     ws = websocket.WebSocket()
     ws.connect(uri)
     start = time.time()
@@ -44,7 +49,6 @@ def wait_for_message(token, time_limit, path):
             return
 
 
-at = "o.hb6GkzmwgludKtUOhv2hyeGz3kadMstt"
 time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 120
 path = check_system_path()
-wait_for_message(token=at, time_limit=time_limit, path=path)
+wait_for_message(token=get_key(), time_limit=time_limit, path=path)
