@@ -30,6 +30,7 @@ def wait_for_message(token, time_limit, path):
         if time.time() - start < time_limit or time_limit == 0:
             receive = ws.recv()
             if "tickle" in receive:
+                print("Tickle")
                 url = "https://api.pushbullet.com/v2/pushes"
                 header = {"Access-Token": token}
                 params = {"modified_after": time.time() - 5}
