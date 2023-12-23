@@ -1,0 +1,64 @@
+{
+    "events": [
+        {
+            "trigger_phrase": "start internet",
+            "platforms": [
+                "pc1",
+                "rp1"
+            ],
+            "action": [
+                "python",
+                "switch-internet.py",
+                "OFF"
+            ],
+            "change_directory": true,
+            "response_on_success": "* Process Completed *",
+            "response_on_failure": "* Error! *",
+            "continue": true
+        },
+        {
+            "trigger_phrase": "stop internet",
+            "platforms": [
+                "pc1",
+                "rp1"
+            ],
+            "action": [
+                "python",
+                "switch-internet.py",
+                "ON"
+            ],
+            "change_directory": true,
+            "response_on_success": "* Process Completed *",
+            "response_on_failure": "* Error! *",
+            "continue": true
+        },
+        {
+            "trigger_phrase": "sleep",
+            "platforms": [
+                "pc1"
+            ],
+            "action": [
+                "rundll32.exe",
+                "powrprof.dll",
+                "SetSuspendState",
+                "Sleep"
+            ],
+            "change_directory": false,
+            "response_on_success": "* Process Completed *",
+            "response_on_failure": "* Error! *",
+            "continue": false
+        },
+        {
+            "trigger_phrase": "quit",
+            "platforms": [
+                "pc1",
+                "rp1"
+            ],
+            "action": [],
+            "change_directory": false,
+            "response_on_success": "* Stopping Listener *",
+            "response_on_failure": "* Error! *",
+            "continue": false
+        }
+    ]
+}

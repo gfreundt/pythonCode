@@ -5,6 +5,7 @@ import subprocess
 import sys
 import platform
 import os
+import json
 
 
 class PushBullet:
@@ -15,6 +16,9 @@ class PushBullet:
         with open(os.path.join(self.path, "pushbullet_key.txt"), mode="r") as file:
             self.token = file.read().strip()
             self.header = {"Access-Token": self.token}
+        # get list of trigger phrases, corresponding actions and platforms
+        with open(os.path.join(self.path, "monitored_events.json"), mode="r") as file:
+            self.events = json.load(file)["events"]
 
     def check_system_path(self):
         if "Windows" in platform.uname().system:
@@ -27,7 +31,34 @@ class PushBullet:
 
     def listener(self, time_limit):
         # run specific action depending on message received
-        def take_action(message):
+        def take_action(instruction):
+            print("1  ", instruction)
+            for event in self.events:
+                print("2  ", event)
+                print("3  ", self.extension)
+                if (
+                    event["trigger_phrase"] in instruction
+                    and self.extension in event["platforms"]
+                ):
+                    # change directory
+                    if event.get("change_directory"):
+                        os.chdir(self.path)
+                    # execute system-level code
+                    if event.get("action"):
+                        process = subprocess.run(
+                            event["action"], capture_output=True, check=False
+                        )
+                        # respond with success/failure message
+                        _msg = (
+                            event["response_on_success"]
+                            if process.returncode == 0
+                            else event["response_on_failure"]
+                        )
+                        self.send_push(_msg)
+                    # continue/stop listener
+                    return "continue" if event["continue"] else "stop"
+
+        def take_action2(message):
             if self.extension in message:
                 if "stop internet" in message:
                     os.chdir(self.path)
@@ -53,6 +84,12 @@ class PushBullet:
                     else:
                         self.send_push("Error!")
                     return "continue"
+                elif "sleep" in message:
+                    socket.close()
+                    subprocess.run(
+                        ["rundll32.exe", "powrprof.dll", "SetSuspendState", "Sleep"]
+                    )
+                    return "stop"
                 elif "quit" in message:
                     self.send_push("* Listener Stopped *")
                     return "stop"
@@ -70,8 +107,8 @@ class PushBullet:
                     url = "https://api.pushbullet.com/v2/pushes"
                     params = {"modified_after": time.time() - 5}
                     response = requests.get(url, headers=self.header, params=params)
-                    message = response.json()["pushes"][-1]["body"].strip().lower()
-                    after_action = take_action(message=message)
+                    instruction = response.json()["pushes"][-1]["body"].strip().lower()
+                    after_action = take_action(instruction=instruction)
                     if after_action == "stop":
                         socket.close()
                         return
@@ -82,8 +119,7 @@ class PushBullet:
     def send_push(self, message):
         uri = "https://api.pushbullet.com/v2/pushes"
         params = {"type": "note", "title": "Action Requested", "body": message}
-        response = requests.post(uri, headers=self.header, data=params)
-        print("@@@@@@@@@", response.text)
+        _ = requests.post(uri, headers=self.header, data=params)
 
     def get_devices(self):
         url = "https://api.pushbullet.com/v2/devices"
@@ -95,11 +131,6 @@ def main():
     pb = PushBullet()
     time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
     pb.listener(time_limit=time_limit)
-
-
-def main2():
-    pb = PushBullet()
-    pb.send_push("Automation!")
 
 
 main()
