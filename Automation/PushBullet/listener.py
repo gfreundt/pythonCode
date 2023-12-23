@@ -7,60 +7,99 @@ import platform
 import os
 
 
-def get_key():
-    with open("pushbullet_key.txt", mode="r") as file:
-        return file.read().strip()
+class PushBullet:
+    def __init__(self):
+        # path and extension code depends if service running on Windows or Raspberry
+        self.path, self.extension = self.check_system_path()
+        # get secret token from local file, created request header
+        with open(os.path.join(self.path, "pushbullet_key.txt"), mode="r") as file:
+            self.token = file.read().strip()
+            self.header = {"Access-Token": self.token}
 
-
-def check_system_path():
-    if "Windows" in platform.uname().system:
-        root = os.path.join(r"d:\pythonCode")
-        ext = "pc1"
-    else:
-        root = os.path.join("/home/gfreundt/pythonCode")
-        ext = "rp1"
-    return os.path.join(root, "Automation", "PushBullet"), ext
-
-
-def take_action(message, extension, path):
-    if extension in message:
-        if "stop internet" in message:
-            os.chdir(path)
-            subprocess.run(["python", "switch-internet.py", "OFF"])
-            return "continue"
-        elif "start internet" in message:
-            os.chdir(path)
-            subprocess.run(["python", "switch-internet.py", "ON"])
-            return "continue"
-        elif "quit" in message:
-            return "stop"
-
-
-def wait_for_message(token, time_limit, path, extension):
-    uri = f"wss://stream.pushbullet.com/websocket/{token}"
-    ws = websocket.WebSocket()
-    ws.connect(uri)
-    start = time.time()
-    while True:
-        if time.time() - start < time_limit or time_limit == 0:
-            receive = ws.recv()
-            if "tickle" in receive:
-                url = "https://api.pushbullet.com/v2/pushes"
-                header = {"Access-Token": token}
-                params = {"modified_after": time.time() - 5}
-                response = requests.get(url, headers=header, params=params)
-                message = response.json()["pushes"][-1]["body"].strip()
-                after_action = take_action(
-                    message=message.lower(), path=path, extension=extension
-                )
-                if after_action == "stop":
-                    ws.close()
-                    return
+    def check_system_path(self):
+        if "Windows" in platform.uname().system:
+            root = os.path.join(r"d:\pythonCode")
+            extension = "pc1"
         else:
-            ws.close()
-            return
+            root = os.path.join("/home/gfreundt/pythonCode")
+            extension = "rp1"
+        return os.path.join(root, "Automation", "PushBullet"), extension
+
+    def listener(self, time_limit):
+        # run specific action depending on message received
+        def take_action(message):
+            if self.extension in message:
+                if "stop internet" in message:
+                    os.chdir(self.path)
+                    process = subprocess.run(
+                        ["python", "switch-internet.py", "OFF"],
+                        capture_output=True,
+                        check=False,
+                    )
+                    if process.returncode == 0:
+                        self.send_push("* Process Succesful *")
+                    else:
+                        self.send_push("Error!")
+                    return "continue"
+                elif "start internet" in message:
+                    os.chdir(self.path)
+                    subprocess.run(
+                        ["python", "switch-internet.py", "ON"],
+                        capture_output=True,
+                        check=False,
+                    )
+                    if process.returncode == 0:
+                        self.send_push("* Process Succesful *")
+                    else:
+                        self.send_push("Error!")
+                    return "continue"
+                elif "quit" in message:
+                    self.send_push("* Listener Stopped *")
+                    return "stop"
+
+        # connect to PushBullet service
+        uri = f"wss://stream.pushbullet.com/websocket/{self.token}"
+        socket = websocket.WebSocket()
+        socket.connect(uri)
+        # permanent listening until asked to quit or time exceeded
+        start = time.time()
+        while True:
+            if time.time() - start < time_limit or time_limit == 0:
+                receive = socket.recv()
+                if "tickle" in receive:
+                    url = "https://api.pushbullet.com/v2/pushes"
+                    params = {"modified_after": time.time() - 5}
+                    response = requests.get(url, headers=self.header, params=params)
+                    message = response.json()["pushes"][-1]["body"].strip().lower()
+                    after_action = take_action(message=message)
+                    if after_action == "stop":
+                        socket.close()
+                        return
+            else:
+                socket.close()
+                return
+
+    def send_push(self, message):
+        uri = "https://api.pushbullet.com/v2/pushes"
+        params = {"type": "note", "title": "Action Requested", "body": message}
+        response = requests.post(uri, headers=self.header, data=params)
+        print("@@@@@@@@@", response.text)
+
+    def get_devices(self):
+        url = "https://api.pushbullet.com/v2/devices"
+        response = requests.get(url, headers=self.header)
+        return {i["nickname"]: i["iden"] for i in response.json()["devices"]}
 
 
-time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
-path, ext = check_system_path()
-wait_for_message(token=get_key(), time_limit=time_limit, path=path, extension=ext)
+def main():
+    pb = PushBullet()
+    time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    pb.listener(time_limit=time_limit)
+
+
+def main2():
+    pb = PushBullet()
+    pb.send_push("Automation!")
+
+
+main()
