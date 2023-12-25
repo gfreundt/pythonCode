@@ -10,8 +10,8 @@ import json
 
 class PushBullet:
     def __init__(self):
-        # path and extension code depends if service running on Windows or Raspberry
-        self.path, self.extension = self.check_system_path()
+        # path and platform code depends if service running on Windows or Raspberry
+        self.path, self.platf = self.check_system_path()
         # get secret token from local file, created request header
         with open(os.path.join(self.path, "pushbullet_key.txt"), mode="r") as file:
             self.token = file.read().strip()
@@ -23,22 +23,19 @@ class PushBullet:
     def check_system_path(self):
         if "Windows" in platform.uname().system:
             root = os.path.join(r"d:\pythonCode")
-            extension = "pc1"
+            platf = "pc1"
         else:
             root = os.path.join("/home/gfreundt/pythonCode")
-            extension = "rp1"
-        return os.path.join(root, "Automation", "PushBullet"), extension
+            platf = "rp1"
+        return os.path.join(root, "Automation", "PushBullet"), platf
 
     def listener(self, time_limit):
         # run specific action depending on message received
         def take_action(instruction):
-            print("1  ", instruction)
             for event in self.events:
-                print("2  ", event)
-                print("3  ", self.extension)
                 if (
                     event["trigger_phrase"] in instruction
-                    and self.extension in event["platforms"]
+                    and self.platf in event["platforms"]
                 ):
                     # change directory
                     if event.get("change_directory"):
@@ -58,63 +55,46 @@ class PushBullet:
                     # continue/stop listener
                     return "continue" if event["continue"] else "stop"
 
-        def take_action2(message):
-            if self.extension in message:
-                if "stop internet" in message:
-                    os.chdir(self.path)
-                    process = subprocess.run(
-                        ["python", "switch-internet.py", "OFF"],
-                        capture_output=True,
-                        check=False,
-                    )
-                    if process.returncode == 0:
-                        self.send_push("* Process Succesful *")
-                    else:
-                        self.send_push("Error!")
-                    return "continue"
-                elif "start internet" in message:
-                    os.chdir(self.path)
-                    subprocess.run(
-                        ["python", "switch-internet.py", "ON"],
-                        capture_output=True,
-                        check=False,
-                    )
-                    if process.returncode == 0:
-                        self.send_push("* Process Succesful *")
-                    else:
-                        self.send_push("Error!")
-                    return "continue"
-                elif "sleep" in message:
-                    socket.close()
-                    subprocess.run(
-                        ["rundll32.exe", "powrprof.dll", "SetSuspendState", "Sleep"]
-                    )
-                    return "stop"
-                elif "quit" in message:
-                    self.send_push("* Listener Stopped *")
-                    return "stop"
-
         # connect to PushBullet service
         uri = f"wss://stream.pushbullet.com/websocket/{self.token}"
-        socket = websocket.WebSocket()
-        socket.connect(uri)
-        # permanent listening until asked to quit or time exceeded
-        start = time.time()
-        while True:
-            if time.time() - start < time_limit or time_limit == 0:
-                receive = socket.recv()
-                if "tickle" in receive:
-                    url = "https://api.pushbullet.com/v2/pushes"
-                    params = {"modified_after": time.time() - 5}
-                    response = requests.get(url, headers=self.header, params=params)
-                    instruction = response.json()["pushes"][-1]["body"].strip().lower()
-                    after_action = take_action(instruction=instruction)
-                    if after_action == "stop":
+        reconnect_attempts = 1
+        while reconnect_attempts <= 5:
+            try:
+                print(
+                    f"Connecting to PushBullet Webserver - Attempt {reconnect_attempts}/5"
+                )
+                socket = websocket.WebSocket()
+                socket.connect(uri)
+                reconnect_attempts = 1
+                # permanent listening until asked to quit or time exceeded
+                start = time.time()
+                while True:
+                    if time.time() - start < time_limit or time_limit == 0:
+                        print("rrr")
+                        receive = socket.recv()
+                        if "tickle" in receive:
+                            url = "https://api.pushbullet.com/v2/pushes"
+                            params = {"modified_after": time.time() - 5}
+                            response = requests.get(
+                                url, headers=self.header, params=params
+                            )
+                            instruction = (
+                                response.json()["pushes"][-1]["body"].strip().lower()
+                            )
+                            after_action = take_action(instruction=instruction)
+                            if after_action == "stop":
+                                socket.close()
+                                return
+                    else:
                         socket.close()
                         return
-            else:
-                socket.close()
-                return
+            except KeyboardInterrupt:
+                quit()
+            except:
+                # wait before attempting reconnect
+                print("Connection Error... Waiting 30 seconds to reconnect.")
+                time.sleep(30)
+                reconnect_attempts += 1
 
     def send_push(self, message):
         uri = "https://api.pushbullet.com/v2/pushes"
