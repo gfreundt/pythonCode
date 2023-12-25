@@ -59,6 +59,19 @@
             "response_on_success": "* Stopping Listener *",
             "response_on_failure": "* Error! *",
             "continue": false
+        },
+        {
+            "trigger_phrase": "notepad",
+            "platforms": [
+                "pc1"
+            ],
+            "action": [
+                "notepad.exe"
+            ],
+            "change_directory": false,
+            "response_on_success": "* Caculator opened *",
+            "response_on_failure": "* Error! *",
+            "continue": true
         }
     ]
 }
