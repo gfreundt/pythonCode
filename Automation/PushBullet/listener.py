@@ -70,7 +70,6 @@ class PushBullet:
                 start = time.time()
                 while True:
                     if time.time() - start < time_limit or time_limit == 0:
-                        print("rrr")
                         receive = socket.recv()
                         if "tickle" in receive:
                             url = "https://api.pushbullet.com/v2/pushes"
