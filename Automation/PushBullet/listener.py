@@ -37,6 +37,7 @@ class PushBullet:
                     event["trigger_phrase"] in instruction
                     and self.platf in event["platforms"]
                 ):
+                    print("Instruction received")
                     # change directory
                     if event.get("change_directory"):
                         os.chdir(self.path)

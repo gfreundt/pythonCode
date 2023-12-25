@@ -9,7 +9,7 @@
             "action": [
                 "python",
                 "switch-internet.py",
-                "OFF"
+                "ON"
             ],
             "change_directory": true,
             "response_on_success": "* Process Completed *",
@@ -25,7 +25,7 @@
             "action": [
                 "python",
                 "switch-internet.py",
-                "ON"
+                "OFF"
             ],
             "change_directory": true,
             "response_on_success": "* Process Completed *",
