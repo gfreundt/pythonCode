@@ -2,10 +2,10 @@ import websocket
 import requests
 import time
 import subprocess
-import sys
 import platform
 import os
 import json
+from datetime import datetime as dt
 
 
 class PushBullet:
@@ -29,19 +29,20 @@ class PushBullet:
             platf = "rp1"
         return os.path.join(root, "Automation", "PushBullet"), platf
 
-    def listener(self, time_limit):
+    def listener(self):
         # run specific action depending on message received
         def take_action(instruction):
             for event in self.events:
                 if (
                     event["trigger_phrase"] in instruction
+                    and self.platf in instruction
                     and self.platf in event["platforms"]
                 ):
-                    print("Instruction received")
+                    print("*** Instruction received.")
                     # change directory
                     if event.get("change_directory"):
                         os.chdir(self.path)
-                    # execute system-level code
+                    # execute os-level code
                     if event.get("action"):
                         process = subprocess.run(
                             event["action"], capture_output=True, check=False
@@ -52,7 +53,7 @@ class PushBullet:
                             if process.returncode == 0
                             else event["response_on_failure"]
                         )
-                        self.send_push(_msg)
+                        self.send_push(f"{dt.now().strftime('%H:%M:%S')} - {_msg}")
                     # continue/stop listener
                     return "continue" if event["continue"] else "stop"
 
@@ -62,32 +63,27 @@ class PushBullet:
         while reconnect_attempts <= 5:
             try:
                 print(
-                    f"Connecting to PushBullet Webserver - Attempt {reconnect_attempts}/5"
+                    f"{dt.now().strftime('%H:%M:%S')} Connecting to PushBullet Webserver - Attempt {reconnect_attempts}/5."
                 )
                 socket = websocket.WebSocket()
                 socket.connect(uri)
+                # reset reconnection attempts counter
                 reconnect_attempts = 1
+                print("Connected. Listening for Instructions.")
                 # permanent listening until asked to quit or time exceeded
-                start = time.time()
                 while True:
-                    if time.time() - start < time_limit or time_limit == 0:
-                        receive = socket.recv()
-                        if "tickle" in receive:
-                            url = "https://api.pushbullet.com/v2/pushes"
-                            params = {"modified_after": time.time() - 5}
-                            response = requests.get(
-                                url, headers=self.header, params=params
-                            )
-                            instruction = (
-                                response.json()["pushes"][-1]["body"].strip().lower()
-                            )
-                            after_action = take_action(instruction=instruction)
-                            if after_action == "stop":
-                                socket.close()
-                                return
-                    else:
-                        socket.close()
-                        return
+                    receive = socket.recv()
+                    if "tickle" in receive:
+                        url = "https://api.pushbullet.com/v2/pushes"
+                        params = {"modified_after": time.time() - 5}
+                        response = requests.get(url, headers=self.header, params=params)
+                        instruction = (
+                            response.json()["pushes"][-1]["body"].strip().lower()
+                        )
+                        after_action = take_action(instruction=instruction)
+                        if after_action == "stop":
+                            socket.close()
+                            return
             except KeyboardInterrupt:
                 quit()
             except:
@@ -109,8 +105,7 @@ class PushBullet:
 
 def main():
     pb = PushBullet()
-    time_limit = int(sys.argv[1]) if len(sys.argv) > 1 else 0
-    pb.listener(time_limit=time_limit)
+    pb.listener()
 
 
 main()
