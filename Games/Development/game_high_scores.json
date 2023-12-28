@@ -1,0 +1,82 @@
+{
+    "Boom": [
+        {
+            "score": 1000,
+            "time": 45.8,
+            "player": "GFT",
+            "date": "25/01/2024"
+        },
+        {
+            "score": 800,
+            "time": 65.8,
+            "player": "GFT",
+            "date": "27/05/2024"
+        },
+        {
+            "score": 3,
+            "time": 99.9,
+            "player": "GFT4",
+            "date": "11/09/2023"
+        }
+    ],
+    "Liquids": [
+        {
+            "score": "1000",
+            "time": 45.8,
+            "player": "GFT",
+            "date": "25/01/2024"
+        },
+        {
+            "score": 800,
+            "time": 65.8,
+            "player": "GFT",
+            "date": "27/05/2024"
+        },
+        {
+            "score": 3,
+            "time": 99.9,
+            "player": "GFT4",
+            "date": "11/09/2023"
+        }
+    ],
+    "tetris": [
+        {
+            "score": "1000",
+            "time": 45.8,
+            "player": "GFT",
+            "date": "25/01/2024"
+        },
+        {
+            "score": "800",
+            "time": 65.8,
+            "player": "GFT",
+            "date": "27/05/2024"
+        },
+        {
+            "score": "3",
+            "time": 99.9,
+            "player": "GFT4",
+            "date": "11/09/2023"
+        }
+    ],
+    "viper": [
+        {
+            "score": "1000",
+            "time": 45.8,
+            "player": "GFT",
+            "date": "25/01/2024"
+        },
+        {
+            "score": "800",
+            "time": 65.8,
+            "player": "GFT",
+            "date": "27/05/2024"
+        },
+        {
+            "score": "3",
+            "time": 99.9,
+            "player": "GFT4",
+            "date": "11/09/2023"
+        }
+    ]
+}

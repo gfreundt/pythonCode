@@ -7,13 +7,14 @@ from datetime import datetime as dt
 # import custom modules
 sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
 from gft_utils import pygameUtils
-import menus2 as menus
+import game_shell as shell
 
 pygame.init()
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, game_name):
+        self.game = game_name
         # load general presets
         pygameUtils.__init__(self)
         # load palette and colors
@@ -28,49 +29,34 @@ class Game:
             " ": self.COLORS["GRAY"],
         }
         # setup surfaces and sub-surfaces
-        self.PLAY_SURFACE = pygame.Surface(
-            (self.DISPLAY_WIDTH * 0.6, self.DISPLAY_HEIGHT)
-        )
-        self.INFO_SURFACE = pygame.Surface(
-            (self.DISPLAY_WIDTH * 0.4, self.DISPLAY_HEIGHT)
-        )
-        self.MSG_SURFACE = pygame.Surface(
-            (
-                self.INFO_SURFACE.get_width() * 0.8,
-                self.INFO_SURFACE.get_height() * 0.265,
-            )
-        )
+        shell.define_main_surfaces(self)
 
         # load images
+        shell.load_generic_images(self)
         self.BOTTLE_IMAGE = pygame.transform.scale(
             pygame.image.load("liquids_empty-bottle.png"), (128, 128)
         )
         self.BOTTLE_SELECTED_IMAGE = pygame.transform.scale(
             pygame.image.load("liquids_empty-bottle-selected.png"), (128, 128)
         )
-        self.end_images = [
-            "",
-            pygame.image.load("boom_won.png"),
-            pygame.image.load("boom_quit.png"),
-        ]
 
     def setup(self):
         # assign generic menu parameters to game-specific variables
         (
-            GAME.full_bottles,
-            GAME.empty_bottles,
-            GAME.bottle_size,
-            GAME.colors,
-        ) = GAME.parameters
+            self.full_bottles,
+            self.empty_bottles,
+            self.bottle_size,
+            self.colors,
+        ) = self.parameters
         # initial values
         self.selected_bottle = False
         self.fr = -1
         self.moves_counter = 1
         self.difficulty = self.full_bottles * self.colors // self.empty_bottles
+        self.score = 0
         # fill bottles with random liquid content
         _randomize_colors = list(self.LOCAL_COLORS.keys())[:-1]
         random.shuffle(_randomize_colors)
-        print(_randomize_colors)
         with_liquid = "".join(
             [
                 i * ((self.full_bottles // self.colors) * self.bottle_size)
@@ -97,23 +83,9 @@ class Game:
             for bottle in self.collection
         ]
         # create main game button
-        self.main_game_button("QUIT")
+        shell.main_game_button(self, "QUIT")
         # start timer
         self.time_start = dt.now()
-
-    def main_game_button(self, button_text):
-        _text = self.FONTS["NUN40B"].render(button_text, True, self.COLORS["WHITE"])
-        _sfc = pygame.Surface((_text.get_width() * 1.25, 80))
-        _sfc.fill(self.PALETTE[4])
-        _sfc.blit(
-            source=_text, dest=_text.get_rect(center=(_text.get_width() * 0.625, 40))
-        )
-        _pos = (
-            self.PLAY_SURFACE.get_width()
-            + (self.INFO_SURFACE.get_width() - _sfc.get_width()) // 2,
-            1150,
-        )
-        self.main_button = (_sfc, _pos)
 
     def update_display(self):
         self.MAIN_SURFACE.fill(self.COLORS["GRAY"])
@@ -123,23 +95,15 @@ class Game:
                     source=self.surfaces[row * 10 + col],
                     dest=(100 + 100 * col, 100 + 200 * row),
                 )
-                """
-                text = self.FONTS["ROB20"].render(
-                    f"{row*10+col:02d}",
-                    True,
-                    self.COLORS["RED"]
-                    if GAME.fr == (10 * row + col)
-                    else self.COLORS["BLACK"],
-                    self.COLORS["GRAY"],
-                )
-                self.MAIN_SURFACE.blit(
-                    source=text, dest=(155 + 100 * col, 230 + 200 * row)
-                )
-                """
-
         # update INFO surface
-        self.INFO_SURFACE.fill(self.PALETTE[2])
-        self.messages = [
+        self.score = len(
+            [
+                i
+                for i in self.collection
+                if i.count(i[0]) == self.bottle_size and i[0] != " "
+            ]
+        )
+        _message = [
             ("Board Statistics", "", "NUN40B"),
             ("Bottles", f"< {self.full_bottles + self.empty_bottles} >", "NUN40"),
             ("Bottle Size", f"< {self.bottle_size} >", "NUN40"),
@@ -154,51 +118,18 @@ class Game:
             ("Play Time", f"< {str(dt.now() - self.time_start)[:-5]}>", "NUN40"),
             (
                 "Score",
-                f"< {self.difficulty/self.moves_counter:.1f}>",
+                f"< {self.score:.1f}>",
                 "NUN40",
             ),
         ]
-        # print crafted text
-        self.MSG_SURFACE.fill(self.COLORS["BLACK"])
-        for row, line in enumerate(self.messages):
-            if not line[0]:
-                line = ("", "", "NUN40")
-            self.MSG_SURFACE.blit(
-                self.FONTS[line[2]].render(
-                    line[0],
-                    True,
-                    self.COLORS["WHITE"],
-                    self.INFO_SURFACE.get_colorkey(),
-                ),
-                dest=(60, row * 40),
-            )
-            self.MSG_SURFACE.blit(
-                self.FONTS[line[2]].render(
-                    line[1],
-                    True,
-                    self.COLORS["WHITE"],
-                    self.INFO_SURFACE.get_colorkey(),
-                ),
-                dest=(400, row * 40),
-            )
-
-        self.INFO_SURFACE.blit(
-            source=self.MSG_SURFACE, dest=(self.INFO_SURFACE.get_width() * 0.1, 90)
-        )
-        # exit image
-        if self.stage == 3:
-            self.INFO_SURFACE.blit(
-                source=self.end_images[self.end_criteria], dest=(240, 560)
-            )
-        self.MAIN_SURFACE.blit(
-            source=self.INFO_SURFACE, dest=(self.DISPLAY_WIDTH * 0.6, 0)
-        )
-        # main game button
-        self.MAIN_SURFACE.blit(source=self.main_button[0], dest=self.main_button[1])
-
+        shell.update_info_surface(GAME, _message)
         pygame.display.flip()
 
     def process_click(self, pos, button):
+        # clicked on control button
+        if shell.check_if_main_game_button_pressed(self, pos):
+            return
+        # clicked on bottle
         bottle = self.get_selected_bottle(pos)
         if bottle > -1:
             if self.selected_bottle:
@@ -216,13 +147,6 @@ class Game:
                 self.surfaces[self.fr] = self.update_entity(
                     self.BOTTLE_SELECTED_IMAGE.copy(), self.collection[self.fr]
                 )
-
-        # clicked on control button
-        if pygame.Rect(
-            self.main_button[0].get_rect(topleft=self.main_button[1])
-        ).collidepoint(pos):
-            GAME.end_criteria = 2  # pressed QUIT button
-            GAME.stage = 3
 
     def get_selected_bottle(self, pos):
         for k, bottle in enumerate(self.surfaces):
@@ -280,54 +204,15 @@ class Game:
             if bottle.count(bottle[0]) < self.bottle_size:
                 return
         # winner
-        GAME.end_criteria = 1
+        GAME.end_criteria = "won"
         GAME.stage = 3
 
     def wrap_up(self):
-        self.main_game_button(" CONTINUE ")
-        self.update_display()
-        while True:
-            for event in pygame.event.get():
-                if event.type == MOUSEBUTTONDOWN and pygame.Rect(
-                    self.main_button[0].get_rect(topleft=self.main_button[1])
-                ).collidepoint(pygame.mouse.get_pos()):
-                    return
-
-
-def main():
-    global GAME
-    GAME = Game()
-    GAME.game = "liquids"
-    GAME.stage = 0
-    mainmenu = menus.menu(GAME)
-
-    while mainmenu.is_enabled():
-        match GAME.stage:
-            case 0:
-                mainmenu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
-            case 1:
-                GAME.setup()
-                GAME.stage = 2
-            case 2:
-                events = pygame.event.get()
-                for event in events:
-                    if event.type == QUIT or (
-                        event.type == KEYDOWN and event.key == 27
-                    ):
-                        GAME.end_criteria = 2
-                        GAME.stage = 3
-                    elif event.type == MOUSEBUTTONDOWN:
-                        GAME.process_click(
-                            pos=pygame.mouse.get_pos(), button=event.button
-                        )
-                GAME.update_display()
-                GAME.check_end()
-            case 3:
-                GAME.wrap_up()
-                GAME.stage = 0
-
-    pygame.quit()
+        # kept as function in case extra code needs to be inserted
+        shell.wrap_up(GAME)
 
 
 if __name__ == "__main__":
-    main()
+    GAME = Game("liquids")
+    shell.main(GAME)
+    pygame.quit()

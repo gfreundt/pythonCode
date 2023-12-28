@@ -70,7 +70,7 @@
                 "python",
                 "active.py"
             ],
-            "change_directory": false,
+            "change_directory": true,
             "response_on_success": "* Activity ok *",
             "response_on_failure": "* Error! *",
             "continue": true

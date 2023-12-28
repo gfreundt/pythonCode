@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-from random import randint, choice
+from random import randrange, choice
 import sys, os
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -23,6 +23,16 @@ class Game:
         pygameUtils.__init__(self)
         # load palette and colors
         self.PALETTE = self.PALETTES["CYBER_BLUE"]
+        self.SHAPE_COLORS = (
+            self.COLORS["BLACK"],
+            self.COLORS["TETRIS_RED"],
+            self.COLORS["TETRIS_GREEN"],
+            self.COLORS["TETRIS_YELLOW"],
+            self.COLORS["TETRIS_ORANGE"],
+            self.COLORS["TETRIS_DARK_BLUE"],
+            self.COLORS["TETRIS_LIGHT_BLUE"],
+            self.COLORS["TETRIS_PURPLE"],
+        )
         # setup surfaces and sub-surfaces
         shell.define_main_surfaces(self)
         # load images
@@ -43,18 +53,20 @@ class Game:
         self.grid = [[0 for _ in range(self.width)] for _ in range(self.height)]
         self.PIECES = (
             [[1, 1, 0], [0, 1, 1]],
-            [[0, 1, 1], [1, 1, 0]],
-            [[1, 1], [1, 1]],
-            [[1, 1, 1], [1, 0, 0]],
-            [[1, 1, 1], [0, 0, 1]],
-            [[1, 1, 1, 1]],
-            [[0, 1, 0], [1, 1, 1]],
+            [[0, 2, 2], [2, 2, 0]],
+            [[3, 3], [3, 3]],
+            [[4, 4, 4], [4, 0, 0]],
+            [[5, 5, 5], [0, 0, 5]],
+            [[6, 6, 6, 6]],
+            [[0, 7, 0], [7, 7, 7]],
         )
         self.falling_piece = False
         self.next_piece = choice(self.PIECES)
         self.score = 0
 
-        self.difficulty = 0  # placeholder
+        self.difficulty = round(
+            (100 * self.width / self.height) * (1 + self.game_level / 10), 2
+        )
         self.x_margin = (self.PLAY_SURFACE.get_width() - self.width * 32) // 2
         self.y_margin = (self.PLAY_SURFACE.get_height() - self.height * 32) // 2
 
@@ -67,19 +79,22 @@ class Game:
     def check_locked(self):
         for r in range(self.height):
             for s in range(self.width):
-                if self.grid[r][s] == 1 and (
-                    r + 1 == self.height or self.grid[r + 1][s] == 2
+                if self.grid[r][s] > 0 and (
+                    r + 1 == self.height or self.grid[r + 1][s] < 0
                 ):
                     self.grid = [
                         [
-                            2 if self.grid[y][x] == 1 else self.grid[y][x]
+                            -self.grid[y][x] if self.grid[y][x] > 0 else self.grid[y][x]
                             for x in range(self.width)
                         ]
                         for y in range(self.height)
                     ]
                     self.falling_piece = False
+                    # scores highest if time to lock piece is shorter (anyhing less than 1 sec is capped at 1 sec)
+                    self.score += 10 / max(
+                        1, (dt.now() - self.falling_piece_timestamp).total_seconds()
+                    )
                     return True
-        return False
 
     def next_frame(self):
         # if no piece falling, generate new one
@@ -91,43 +106,40 @@ class Game:
                     self.grid[r][
                         s + (self.width - len(self.falling_piece[0])) // 2
                     ] += q
+            self.falling_piece_timestamp = dt.now()
             return
-
-        # lock pieces if necessary
-        self.check_locked()
 
         # check for line complete, erase it
         for r, row in enumerate(self.grid):
-            if all([True if i == 2 else False for i in row]):
+            if all([True if i < 0 else False for i in row]):
                 self.grid.pop(r)
                 self.grid.insert(0, [0 for i in range(self.width)])
-                self.score += 1
-                self.game_level += 1
+                self.game_level += 0.5
 
         # regulate falling speed
-        if dt.now() - self.last_time < td(seconds=1 / self.game_level):
-            return
-        else:
+        if dt.now() - self.last_time > td(seconds=1 / self.game_level):
+            # lock pieces if necessary
+            self.check_locked()
             # drop piece one line down
             self.move_piece(dy=1)
             self.last_time = dt.now()
 
     def move_piece(self, dx=0, dy=0):
         _grid = [
-            [2 if self.grid[y][x] == 2 else 0 for x in range(self.width)]
+            [self.grid[y][x] if self.grid[y][x] < 0 else 0 for x in range(self.width)]
             for y in range(self.height)
         ]
         for y in range(self.height):
             for x in range(self.width):
-                if self.grid[y][x] == 1:
+                if self.grid[y][x] > 0:
                     # check for out of bounds
                     if (x + dx < 0 or x + dx == self.width) or (y + dy == self.height):
                         return
                     # check if sqyare occupied
-                    if self.grid[y + dy][x + dx] == 2:
+                    if self.grid[y + dy][x + dx] < 0:
                         return
                     # move sqUare
-                    _grid[y + dy][x + dx] = 1
+                    _grid[y + dy][x + dx] = self.grid[y][x]
 
         # if all validations ok...
         self.grid = copy(_grid)
@@ -138,7 +150,7 @@ class Game:
             _grid = np.array(
                 [
                     [
-                        self.grid[y][x] if self.grid[y][x] > 1 else 0
+                        self.grid[y][x] if self.grid[y][x] < 0 else 0
                         for x in range(self.width)
                     ]
                     for y in range(self.height)
@@ -148,7 +160,7 @@ class Game:
                 (x, y)
                 for x in range(self.width)
                 for y in range(self.height)
-                if self.grid[y][x] == 1
+                if self.grid[y][x] > 0
             ]
             xs = [i[0] for i in _p]
             ys = [i[1] for i in _p]
@@ -168,6 +180,7 @@ class Game:
             _grid[y0 : y0 + (x1 - x0 + 1), x0 : x0 + (y1 - y0 + 1)] = matrix
             # if all validations ok...
             self.grid = copy(_grid)
+
         except:
             return
 
@@ -184,16 +197,27 @@ class Game:
         self.MAIN_SURFACE.fill(self.COLORS["GRAY"])
         for r, row in enumerate(self.grid):
             for s, sq in enumerate(row):
-                if sq == 0:
-                    square = self.EMPTY_GRID_SQUARE.copy()
-                elif sq == 1:
-                    square = self.FALLING_SQUARE.copy()
-                elif sq == 2:
-                    square = self.LOCKED_SQUARE.copy()
+                square = self.EMPTY_GRID_SQUARE.copy()
+                if sq != 0:
+                    square.fill(self.SHAPE_COLORS[abs(sq)])
                 self.MAIN_SURFACE.blit(
                     source=square, dest=(self.x_margin + 32 * s, self.y_margin + 32 * r)
                 )
-
+        # show next piece
+        if self.show_next:
+            for r, row in enumerate(self.next_piece):
+                for s, sq in enumerate(row):
+                    square = self.EMPTY_PLAY_SQUARE.copy()
+                    if sq != 0:
+                        square.fill(self.SHAPE_COLORS[abs(sq)])
+                    self.MAIN_SURFACE.blit(
+                        source=square,
+                        dest=(
+                            (self.PLAY_SURFACE.get_width() - len(row) * 32) // 2
+                            + s * 32,
+                            self.y_margin - 150 + 32 * r,
+                        ),
+                    )
         # update INFO surface
         _message = [
             ("Board Statistics", "", "NUN40B"),
@@ -210,26 +234,11 @@ class Game:
             ("Play Time", f"< {str(dt.now() - self.time_start)[:-5]}>", "NUN40"),
             (
                 "Score",
-                f"< {self.difficulty:.1f}>",
+                f"< {self.score:.1f}>",
                 "NUN40",
             ),
         ]
         shell.update_info_surface(GAME, _message)
-        # show next piece
-        if self.show_next:
-            for r, row in enumerate(self.next_piece):
-                for s, sq in enumerate(row):
-                    if sq == 0:
-                        square = self.EMPTY_PLAY_SQUARE.copy()
-                    elif sq == 1:
-                        square = self.FALLING_SQUARE.copy()
-                    self.MAIN_SURFACE.blit(
-                        source=square,
-                        dest=(
-                            self.x_margin + 300 + 32 * s,
-                            self.y_margin - 150 + 32 * r,
-                        ),
-                    )
 
         pygame.display.flip()
 
@@ -251,7 +260,10 @@ class Game:
             self.drop_piece()
 
     def check_end(self):
-        if not self.falling_piece and 2 in self.grid[0] or 2 in self.grid[1]:
+        _condition = any(
+            [True if i < 0 else False for i in (self.grid[0] + self.grid[1])]
+        )
+        if not self.falling_piece and _condition:
             self.stage = 3
             self.end_criteria = "lost"
 

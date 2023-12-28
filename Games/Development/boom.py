@@ -8,30 +8,20 @@ from datetime import datetime as dt
 # import custom modules
 sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
 from gft_utils import pygameUtils
-import menus2 as menus
+import game_shell as shell
 
 pygame.init()
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, game_name):
+        self.game = game_name
         # load general presets
         pygameUtils.__init__(self)
         # define palette
         self.PALETTE = self.PALETTES["CYBER_BLUE"]
         # setup surfaces and sub-surfaces
-        self.PLAY_SURFACE = pygame.Surface(
-            (self.DISPLAY_WIDTH * 0.6, self.DISPLAY_HEIGHT)
-        )
-        self.INFO_SURFACE = pygame.Surface(
-            (self.DISPLAY_WIDTH * 0.4, self.DISPLAY_HEIGHT)
-        )
-        self.MSG_SURFACE = pygame.Surface(
-            (
-                self.INFO_SURFACE.get_width() * 0.8,
-                self.INFO_SURFACE.get_height() * 0.265,
-            )
-        )
+        shell.define_main_surfaces(self)
         # create all possible types of squares
         self.COVERED_SQUARE = pygame.Surface((30, 30))
         self.COVERED_SQUARE.fill(self.PALETTE[2])
@@ -50,11 +40,7 @@ class Game:
         )
         self.BUTT1_POS = (2000, 1100)
         # load images
-        self.end_images = [
-            pygame.image.load("boom_lost.png"),
-            pygame.image.load("boom_won.png"),
-            pygame.image.load("boom_quit.png"),
-        ]
+        shell.load_generic_images(self)
 
     def setup(self):
         # assign generic menu parameters to game-specific variables
@@ -104,23 +90,9 @@ class Game:
             * (1 if self.uncover_one_at_start else 1.01)
         )
         # create main game button
-        self.main_game_button("QUIT")
+        shell.main_game_button(self, "QUIT")
         # start timer
         self.time_start = dt.now()
-
-    def main_game_button(self, button_text):
-        _text = self.FONTS["NUN40B"].render(button_text, True, self.COLORS["WHITE"])
-        _sfc = pygame.Surface((_text.get_width() * 1.25, 80))
-        _sfc.fill(self.PALETTE[4])
-        _sfc.blit(
-            source=_text, dest=_text.get_rect(center=(_text.get_width() * 0.625, 40))
-        )
-        _pos = (
-            self.PLAY_SURFACE.get_width()
-            + (self.INFO_SURFACE.get_width() - _sfc.get_width()) // 2,
-            1150,
-        )
-        self.main_button = (_sfc, _pos)
 
     def calculate_number(self, y, x):
         bomb_count = 0
@@ -173,7 +145,7 @@ class Game:
 
         # update INFO surface
         self.INFO_SURFACE.fill(self.PALETTE[2])
-        self.messages = [
+        _message = [
             ("Board Statistics", "", "NUN40B"),
             ("Squares", f"< {self.grid_x * self.grid_y:,} >", "NUN40"),
             ("Bombs", f"< {self.total_bombs} >", "NUN40"),
@@ -196,54 +168,20 @@ class Game:
                 "NUN40",
             ),
         ]
-        # print crafted text
-        self.MSG_SURFACE.fill(self.COLORS["BLACK"])  # self.PALETTE[2])
-        for row, line in enumerate(self.messages):
-            if not line[0]:
-                line = ("", "", "NUN40")
-            self.MSG_SURFACE.blit(
-                self.FONTS[line[2]].render(
-                    line[0],
-                    True,
-                    self.COLORS["WHITE"],
-                    self.INFO_SURFACE.get_colorkey(),
-                ),
-                dest=(60, row * 40),
-            )
-            self.MSG_SURFACE.blit(
-                self.FONTS[line[2]].render(
-                    line[1],
-                    True,
-                    self.COLORS["WHITE"],
-                    self.INFO_SURFACE.get_colorkey(),
-                ),
-                dest=(400, row * 40),
-            )
-
-        self.INFO_SURFACE.blit(
-            source=self.MSG_SURFACE, dest=(self.INFO_SURFACE.get_width() * 0.1, 90)
-        )
-        # exit image
-        if self.stage == 3:
-            self.INFO_SURFACE.blit(
-                source=self.end_images[self.end_criteria], dest=(240, 560)
-            )
-        self.MAIN_SURFACE.blit(
-            source=self.INFO_SURFACE, dest=(self.DISPLAY_WIDTH * 0.6, 0)
-        )
-        # main game button
-        self.MAIN_SURFACE.blit(source=self.main_button[0], dest=self.main_button[1])
-
+        shell.update_info_surface(GAME, _message)
         pygame.display.flip()
 
     def check_end(self):
         _uncovered = len([i for row in self.minefield_uncovered for i in row if not i])
         _marked = len([i for row in self.minefield_marked for i in row if i])
         if _uncovered == self.total_bombs and _uncovered == _marked:
-            GAME.end_criteria = 1  # win game
+            GAME.end_criteria = "won"
             GAME.stage = 3
 
     def process_click(self, pos, button):
+        # clicked on control button
+        if shell.check_if_main_game_button_pressed(self, pos):
+            return
         # clicked on game square
         if pygame.Rect(self.PLAY_SURFACE.get_rect()).collidepoint(
             pygame.mouse.get_pos()
@@ -262,11 +200,11 @@ class Game:
                 return
 
             # left-click: open square if not marked
-            if button == 1 and not GAME.minefield_marked[row][i]:
+            if button == 1 and not self.minefield_marked[row][i]:
                 # check if mine there
-                if GAME.minefield_bombs[row][i]:
-                    GAME.end_criteria = 0  # lose game
-                    GAME.stage = 3
+                if self.minefield_bombs[row][i]:
+                    self.end_criteria = "lost"
+                    self.stage = 3
                 else:
                     GAME.minefield_uncovered[row][i] = True
                     self.uncover_blank_neighbors()
@@ -276,13 +214,6 @@ class Game:
                 GAME.minefield_marked[row][i] = (
                     False if GAME.minefield_marked[row][i] else True
                 )
-            return
-        # clicked on control button
-        if pygame.Rect(
-            self.main_button[0].get_rect(topleft=self.main_button[1])
-        ).collidepoint(pos):
-            GAME.end_criteria = 2  # pressed QUIT button
-            GAME.stage = 3
 
     def uncover_blank_neighbors(self):
         # uncover all squares adjacent to open blanks
@@ -309,60 +240,11 @@ class Game:
                                     _change = True
 
     def wrap_up(self):
-        match self.end_criteria:
-            case 0:  # Bomb Exploded (Lost)
-                GAME.reveal = True
-
-            case 1:  # Found all Bombs (Won)
-                print("You Win!")
-            case 2:  # ESC key / QUIT button pressed
-                GAME.reveal = True
-
-        self.main_game_button(" CONTINUE ")
-        self.update_display()
-        while True:
-            for event in pygame.event.get():
-                if event.type == MOUSEBUTTONDOWN and pygame.Rect(
-                    self.main_button[0].get_rect(topleft=self.main_button[1])
-                ).collidepoint(pygame.mouse.get_pos()):
-                    return
-
-
-def main():
-    global GAME
-    GAME = Game()
-    GAME.game = "boom"
-    GAME.stage = 0
-    main_menu = menus.menu(GAME)
-
-    while main_menu.is_enabled():
-        # print(GAME.stage)
-        match GAME.stage:
-            case 0:
-                main_menu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
-            case 1:
-                GAME.setup()
-                GAME.stage = 2
-            case 2:
-                events = pygame.event.get()
-                for event in events:
-                    if event.type == QUIT or (
-                        event.type == KEYDOWN and event.key == 27
-                    ):
-                        GAME.end_criteria = 2
-                        GAME.stage = 3
-                    elif event.type == MOUSEBUTTONDOWN:
-                        GAME.process_click(
-                            pos=pygame.mouse.get_pos(), button=event.button
-                        )
-                GAME.update_display()
-                GAME.check_end()
-            case 3:
-                GAME.wrap_up()
-                GAME.stage = 0
-
-    pygame.quit()
+        self.reveal = True
+        shell.wrap_up(GAME)
 
 
 if __name__ == "__main__":
-    main()
+    GAME = Game("boom")
+    shell.main(GAME)
+    pygame.quit()

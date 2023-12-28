@@ -40,6 +40,11 @@
             153,
             255
         ],
+        "ORANGE": [
+            255,
+            109,
+            10
+        ],
         "GRAY": [
             120,
             120,
@@ -53,6 +58,46 @@
         "DARK_MAROON": [
             81,
             4,
+            0
+        ],
+        "PINK": [
+            255,
+            102,
+            204
+        ],
+        "TETRIS_LIGHT_BLUE": [
+            0,
+            240,
+            240
+        ],
+        "TETRIS_DARK_BLUE": [
+            0,
+            0,
+            240
+        ],
+        "TETRIS_ORANGE": [
+            240,
+            161,
+            0
+        ],
+        "TETRIS_YELLOW": [
+            240,
+            240,
+            0
+        ],
+        "TETRIS_GREEN": [
+            0,
+            240,
+            0
+        ],
+        "TETRIS_PURPLE": [
+            161,
+            0,
+            240
+        ],
+        "TETRIS_RED": [
+            240,
+            0,
             0
         ]
     },
@@ -101,6 +146,10 @@
         "NUN40B": {
             "ttf": "nunito-black.ttf",
             "size": 40
+        },
+        "NUN80B": {
+            "ttf": "nunito-black.ttf",
+            "size": 80
         }
     }
 }

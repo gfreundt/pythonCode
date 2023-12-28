@@ -205,5 +205,259 @@
                 "padding": 125
             }
         ]
+    },
+    "mastermind": {
+        "LEVEL_PRESETS": [
+            [
+                3,
+                3,
+                10
+            ],
+            [
+                4,
+                4,
+                9
+            ],
+            [
+                5,
+                5,
+                8
+            ],
+            [
+                6,
+                6,
+                7
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 750,
+        "GAME_TITLE": "Mastermind",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Colors :",
+                "padding": 27,
+                "range": [
+                    3,
+                    6
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Tokens :",
+                "padding": 53,
+                "range": [
+                    3,
+                    6
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Attempts :",
+                "padding": 53,
+                "range": [
+                    7,
+                    10
+                ],
+                "increment": 1
+            }
+        ]
+    },
+    "lost": {
+        "LEVEL_PRESETS": [
+            [
+                30,
+                20,
+                30
+            ],
+            [
+                50,
+                30,
+                20
+            ],
+            [
+                90,
+                50,
+                15
+            ],
+            [
+                120,
+                80,
+                10
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Lost",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Horizontal Size :",
+                "padding": 27,
+                "range": [
+                    20,
+                    150
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Vertical Size :",
+                "padding": 53,
+                "range": [
+                    20,
+                    150
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Box Size :",
+                "padding": 27,
+                "range": [
+                    5,
+                    30
+                ],
+                "increment": 1
+            }
+        ]
+    },
+    "tetris": {
+        "LEVEL_PRESETS": [
+            [
+                22,
+                10,
+                1,
+                true
+            ],
+            [
+                26,
+                14,
+                2,
+                true
+            ],
+            [
+                22,
+                16,
+                3,
+                false
+            ],
+            [
+                18,
+                18,
+                4,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Tetris",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Vertical Size :",
+                "padding": 37,
+                "range": [
+                    18,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Horizontal Size :",
+                "padding": 11,
+                "range": [
+                    10,
+                    18
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Starting Level :",
+                "padding": 20,
+                "range": [
+                    1,
+                    4
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Show Next Piece :",
+                "padding": 150
+            }
+        ]
+    },
+    "viper": {
+        "LEVEL_PRESETS": [
+            [
+                22,
+                10,
+                1,
+                true
+            ],
+            [
+                26,
+                14,
+                2,
+                true
+            ],
+            [
+                22,
+                16,
+                3,
+                false
+            ],
+            [
+                18,
+                18,
+                4,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Viper",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Vertical Size :",
+                "padding": 37,
+                "range": [
+                    18,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Horizontal Size :",
+                "padding": 11,
+                "range": [
+                    10,
+                    18
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Starting Level :",
+                "padding": 20,
+                "range": [
+                    1,
+                    4
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Show Next Piece :",
+                "padding": 150
+            }
+        ]
     }
 }
