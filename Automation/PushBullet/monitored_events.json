@@ -61,15 +61,17 @@
             "continue": false
         },
         {
-            "trigger_phrase": "notepad",
+            "trigger_phrase": "active",
             "platforms": [
-                "pc1"
+                "pc1",
+                "rp1"
             ],
             "action": [
-                "notepad.exe"
+                "python",
+                "active.py"
             ],
             "change_directory": false,
-            "response_on_success": "* Caculator opened *",
+            "response_on_success": "* Activity ok *",
             "response_on_failure": "* Error! *",
             "continue": true
         }
