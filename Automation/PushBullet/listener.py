@@ -19,6 +19,8 @@ class PushBullet:
         # get list of trigger phrases, corresponding actions and platforms
         with open(os.path.join(self.path, "monitored_events.json"), mode="r") as file:
             self.events = json.load(file)["events"]
+        # list of attended instructions (empty to begin with)
+        self.attended_instructions = []
 
     def check_system_path(self):
         if "Windows" in platform.uname().system:
@@ -38,7 +40,7 @@ class PushBullet:
                     and self.platf in instruction
                     and self.platf in event["platforms"]
                 ):
-                    print("*** Instruction received.")
+                    self.stdout(f"Instruction received ({event['trigger_phrase']})")
                     # change directory
                     if event.get("change_directory"):
                         os.chdir(self.path)
@@ -53,7 +55,7 @@ class PushBullet:
                             if process.returncode == 0
                             else event["response_on_failure"]
                         )
-                        self.send_push(f"{dt.now().strftime('%H:%M:%S')} - {_msg}")
+                        self.send_push(f"[{dt.now().strftime('%H:%M:%S')}] {_msg}")
                     # continue/stop listener
                     return "continue" if event["continue"] else "stop"
 
@@ -62,33 +64,41 @@ class PushBullet:
         reconnect_attempts = 1
         while reconnect_attempts <= 5:
             try:
-                print(
-                    f"{dt.now().strftime('%H:%M:%S')} Connecting to PushBullet Webserver - Attempt {reconnect_attempts}/5."
+                self.stdout(
+                    f"Connecting to PushBullet Websocket - Attempt {reconnect_attempts}/5."
                 )
                 socket = websocket.WebSocket()
                 socket.connect(uri)
                 # reset reconnection attempts counter
                 reconnect_attempts = 1
-                print("Connected. Listening for Instructions.")
+                self.stdout("Connected. Listening for Instructions.")
                 # permanent listening until asked to quit or time exceeded
                 while True:
+                    time.sleep(1)
                     receive = socket.recv()
                     if "tickle" in receive:
                         url = "https://api.pushbullet.com/v2/pushes"
                         params = {"modified_after": time.time() - 5}
                         response = requests.get(url, headers=self.header, params=params)
-                        instruction = (
-                            response.json()["pushes"][-1]["body"].strip().lower()
-                        )
-                        after_action = take_action(instruction=instruction)
-                        if after_action == "stop":
-                            socket.close()
-                            return
+                        if (
+                            response.json()["pushes"][-1]["guid"]
+                            not in self.attended_instructions
+                        ):
+                            instruction = (
+                                response.json()["pushes"][-1]["body"].strip().lower()
+                            )
+                            after_action = take_action(instruction=instruction)
+                            if after_action == "stop":
+                                socket.close()
+                                return
+                            self.attended_instructions.append(
+                                response.json()["pushes"][-1]["guid"]
+                            )
             except KeyboardInterrupt:
                 quit()
             except:
                 # wait before attempting reconnect
-                print("Connection Error... Waiting 30 seconds to reconnect.")
+                self.stdout("Connection Error... Waiting 30 seconds to reconnect.")
                 time.sleep(30)
                 reconnect_attempts += 1
 
@@ -101,6 +111,9 @@ class PushBullet:
         url = "https://api.pushbullet.com/v2/devices"
         response = requests.get(url, headers=self.header)
         return {i["nickname"]: i["iden"] for i in response.json()["devices"]}
+
+    def stdout(self, message):
+        print(f"[{dt.now().strftime('%H:%M:%S')}] {message}")
 
 
 def main():
