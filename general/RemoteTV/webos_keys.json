@@ -1,10 +1,149 @@
-[
-    {
-        "device_name": "TV_Bedroom",
-        "client_key": "e5a39c8cc27b57baa83b2cbb5d10e425"
-    },
-    {
-        "device_name": "TV_Living",
-        "client_key": "e5a39c8cc27b57baa83b2cbb5d10e425"
-    }
-]
+{
+    "keys": [
+        {
+            "device_name": "TV_Bedroom",
+            "client_key": "e5a39c8cc27b57baa83b2cbb5d10e425"
+        },
+        {
+            "device_name": "TV_Living",
+            "client_key": "e5a39c8cc27b57baa83b2cbb5d10e425"
+        }
+    ],
+    "buttons": [
+        {
+            "name": "power",
+            "image": "power.png",
+            "location": [
+                0,
+                0
+            ],
+            "action": "POWER"
+        },
+        {
+            "name": "home",
+            "image": "home.png",
+            "location": [
+                2,
+                0
+            ],
+            "action": "HOME"
+        },
+        {
+            "name": "up-arrow",
+            "image": "up-arrow.png",
+            "location": [
+                1,
+                2
+            ],
+            "action": "UP"
+        },
+        {
+            "name": "left-arrow",
+            "image": "left-arrow.png",
+            "location": [
+                0,
+                3
+            ],
+            "action": "LEFT"
+        },
+        {
+            "name": "enter",
+            "image": "enter.png",
+            "location": [
+                1,
+                3
+            ],
+            "action": "ENTER"
+        },
+        {
+            "name": "right-arrow",
+            "image": "right-arrow.png",
+            "location": [
+                2,
+                3
+            ],
+            "action": "RIGHT"
+        },
+        {
+            "name": "down-arrow",
+            "image": "down-arrow.png",
+            "location": [
+                1,
+                4
+            ],
+            "action": "DOWN"
+        },
+        {
+            "name": "back",
+            "image": "back.png",
+            "location": [
+                2,
+                4
+            ],
+            "action": "BACK"
+        },
+        {
+            "name": "60-volume",
+            "image": "sixty.png",
+            "location": [
+                0,
+                6
+            ],
+            "action": "%TBD"
+        },
+        {
+            "name": "plus",
+            "image": "plus.png",
+            "location": [
+                1,
+                6
+            ],
+            "action": "VOLUMEUP"
+        },
+        {
+            "name": "40-volume",
+            "image": "forty.png",
+            "location": [
+                0,
+                7
+            ],
+            "action": "%TBD"
+        },
+        {
+            "name": "minus",
+            "image": "minus.png",
+            "location": [
+                1,
+                7
+            ],
+            "action": "VOLUMEDOWN"
+        },
+        {
+            "name": "20-volume",
+            "image": "twenty.png",
+            "location": [
+                0,
+                8
+            ],
+            "action": "%TBD"
+        },
+        {
+            "name": "mute",
+            "image": "mute.png",
+            "location": [
+                1,
+                8
+            ],
+            "action": "MUTE"
+        },
+        {
+            "name": "apps",
+            "image": "apps.png",
+            "location": [
+                2,
+                8
+            ],
+            "action": "%TBD"
+        }
+    ]
+}

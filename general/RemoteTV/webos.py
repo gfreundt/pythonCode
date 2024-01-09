@@ -23,7 +23,8 @@ class Remote:
         self.HOST = "192.168.100.4"
         with open(file="webos_keys.json", mode="r") as file:
             self.tv_data = json.loads(file.read())
-        self.CLIENT_KEY = self.tv_data[0]["client_key"]
+        self.CLIENT_KEY = self.tv_data["keys"][0]["client_key"]
+        self.BUTTONS = self.tv_data["buttons"]
 
     def handler(self):
         while True:
@@ -35,53 +36,64 @@ class Remote:
                 if event.type == pygame.KEYDOWN:
                     quit()
 
-    async def main(self):
-        self.client = WebOsClient(self.HOST, self.CLIENT_KEY)
-        await self.client.connect()
-
-        apps = await self.client.get_apps()
-
-        # self.apps = json.loads(open("structure.json", "r").read())
-        self.apps = await self.client.get_apps()
-
-        self.surfaces = []
-        for k, app in enumerate(self.apps):
-            _sfc = pygame.Surface((500, 50))
-            _sfc.fill(self.COLORS["BLACK"])
-            text = self.FONTS["NUN24"].render(
-                f"{app['title']}",
-                True,
-                self.COLORS["WHITE"],
-                self.COLORS["BLACK"],
+    def draw_remote(self):
+        self.all_buttons = []
+        self.button_size = 60
+        for button in self.BUTTONS:
+            _button = pygame.Surface((self.button_size, self.button_size))
+            _button.fill(self.COLORS["BLACK"])
+            pygame.draw.rect(
+                surface=_button,
+                color=self.COLORS["GREEN"],
+                rect=(0, 0, self.button_size, self.button_size),
+                width=0,
+                border_radius=5,
             )
-            _sfc.blit(source=text, dest=(75, 15))
-            _img = Image.open(
-                urllib.request.urlopen(
-                    app["icon"], context=ssl._create_unverified_context()
-                )
+            _img = pygame.transform.scale(
+                pygame.image.load(button["image"]),
+                (self.button_size - 10, self.button_size - 10),
             )
-            _img.save(f"temp{k}.png")
-            _img = pygame.transform.scale(pygame.image.load(f"temp{k}.png"), (50, 50))
-            _sfc.blit(source=_img, dest=(5, 0))
-            _rect = self.MAIN_SURFACE.blit(
-                _sfc, (100 + 600 * (k // 10), 60 * (k % 10) + 50)
+            _button.blit(source=_img, dest=(5, 5))
+            _b = self.MAIN_SURFACE.blit(
+                source=_button,
+                dest=(
+                    button["location"][0] * (self.button_size * 1.2) + 100,
+                    button["location"][1] * (self.button_size * 1.2) + 100,
+                ),
             )
-            self.surfaces.append(_rect)
-
+            self.all_buttons.append(_b)
         pygame.display.flip()
 
-        time.sleep(5)
+    async def connect(self):
+        if not self.client.is_connected():
+            await self.client.connect()
+            await asyncio.sleep(3)
 
-        id = self.handler()
-        await self.client.launch_app(id)
+    async def main(self):
+        self.client = WebOsClient(self.HOST, self.CLIENT_KEY)
+        await self.connect()
+        # apps = await self.client.get_apps()
+
+        # self.apps = json.loads(open("structure.json", "r").read())
+        # self.apps = await self.client.get_apps()
+
+        self.draw_remote()
+
+        k = 0
+        while True:
+            await self.connect()
+            cmd = self.handler()
+            await self.client.button(cmd)
+            await asyncio.sleep(0.5)
+
         return
 
         await client.disconnect()
 
     def click(self, pos):
-        for k, b in enumerate(self.surfaces):
+        for k, b in enumerate(self.all_buttons):
             if b.collidepoint(pos):
-                return self.apps[k]["id"]
+                return self.BUTTONS[k]["action"]
 
 
 REMOTE = Remote()
