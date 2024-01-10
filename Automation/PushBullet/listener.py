@@ -34,6 +34,9 @@ class PushBullet:
     def listener(self):
         # run specific action depending on message received
         def take_action(instruction):
+            # if no specific platform defined, default to rp1
+            if not "rp1" in instruction and not "pc1" in instruction:
+                instruction += " rp1"
             for event in self.events:
                 if (
                     event["trigger_phrase"] in instruction
@@ -70,38 +73,38 @@ class PushBullet:
         uri = f"wss://stream.pushbullet.com/websocket/{self.token}"
         reconnect_attempts = 1
         while reconnect_attempts <= 5:
-            # try:
-            self.stdout(
-                f"Connecting to PushBullet Websocket - Attempt {reconnect_attempts}/5."
-            )
-            socket = websocket.WebSocket()
-            socket.connect(uri)
-            # reset reconnection attempts counter
-            reconnect_attempts = 1
-            self.stdout("Connected. Listening for Instructions.")
-            # permanent listening until asked to quit or time exceeded
-            while True:
-                time.sleep(1)
-                receive = socket.recv()
-                if "tickle" in receive:
-                    url = "https://api.pushbullet.com/v2/pushes"
-                    params = {"modified_after": time.time() - 5}
-                    response = requests.get(url, headers=self.header, params=params)
-                    if (
-                        response.json()["pushes"][-1]["guid"]
-                        not in self.attended_instructions
-                    ):
-                        instruction = (
-                            response.json()["pushes"][-1]["body"].strip().lower()
-                        )
-                        after_action = take_action(instruction=instruction)
-                        if after_action == "stop":
-                            socket.close()
-                            return
-                        self.attended_instructions.append(
+            try:
+                self.stdout(
+                    f"Connecting to PushBullet Websocket - Attempt {reconnect_attempts}/5."
+                )
+                socket = websocket.WebSocket()
+                socket.connect(uri)
+                # reset reconnection attempts counter
+                reconnect_attempts = 0
+                self.stdout("Connected. Listening for Instructions.")
+                # permanent listening until asked to quit or time exceeded
+                while True:
+                    time.sleep(1)
+                    receive = socket.recv()
+                    if "tickle" in receive:
+                        url = "https://api.pushbullet.com/v2/pushes"
+                        params = {"modified_after": time.time() - 5}
+                        response = requests.get(url, headers=self.header, params=params)
+                        if (
                             response.json()["pushes"][-1]["guid"]
-                        )
-            """
+                            not in self.attended_instructions
+                        ):
+                            instruction = (
+                                response.json()["pushes"][-1]["body"].strip().lower()
+                            )
+                            after_action = take_action(instruction=instruction)
+                            if after_action == "stop":
+                                socket.close()
+                                return
+                            self.attended_instructions.append(
+                                response.json()["pushes"][-1]["guid"]
+                            )
+
             except KeyboardInterrupt:
                 quit()
             except:
@@ -109,7 +112,6 @@ class PushBullet:
                 self.stdout("Connection Error... Waiting 30 seconds to reconnect.")
                 time.sleep(30)
                 reconnect_attempts += 1
-            """
 
     def send_push(self, title, message):
         uri = "https://api.pushbullet.com/v2/pushes"
