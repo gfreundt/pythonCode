@@ -20,90 +20,129 @@ class Remote:
     def __init__(self) -> None:
         # load general presets
         pygameUtils.__init__(self)
+        self.SSL = ssl._create_unverified_context()
         self.HOST = "192.168.100.4"
         with open(file="webos_keys.json", mode="r") as file:
             self.tv_data = json.loads(file.read())
         self.CLIENT_KEY = self.tv_data["keys"][0]["client_key"]
         self.BUTTONS = self.tv_data["buttons"]
+        self.BUTTON_SIZE = 3840 / self.DISPLAY_WIDTH * 50
+        self.all_buttons = []
+        self.all_apps = self.apps = []
+        self._show_apps = False
+        self.start_time = time.time() - 10
 
     def handler(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    id = REMOTE.click(pygame.mouse.get_pos())
-                    if id:
-                        return id
-                if event.type == pygame.KEYDOWN:
-                    quit()
-
-    def draw_remote(self):
-        self.all_buttons = []
-        self.button_size = 60
-        for button in self.BUTTONS:
-            _button = pygame.Surface((self.button_size, self.button_size))
-            _button.fill(self.COLORS["BLACK"])
-            pygame.draw.rect(
-                surface=_button,
-                color=self.COLORS["GREEN"],
-                rect=(0, 0, self.button_size, self.button_size),
-                width=0,
-                border_radius=5,
-            )
-            _img = pygame.transform.scale(
-                pygame.image.load(button["image"]),
-                (self.button_size - 10, self.button_size - 10),
-            )
-            _button.blit(source=_img, dest=(5, 5))
-            _b = self.MAIN_SURFACE.blit(
-                source=_button,
-                dest=(
-                    button["location"][0] * (self.button_size * 1.2) + 100,
-                    button["location"][1] * (self.button_size * 1.2) + 100,
-                ),
-            )
-            self.all_buttons.append(_b)
-        pygame.display.flip()
-
-    async def connect(self):
-        if not self.client.is_connected():
-            await self.client.connect()
-            await asyncio.sleep(3)
-
-    async def main(self):
-        self.client = WebOsClient(self.HOST, self.CLIENT_KEY)
-        await self.connect()
-        # apps = await self.client.get_apps()
-
-        # self.apps = json.loads(open("structure.json", "r").read())
-        # self.apps = await self.client.get_apps()
-
-        self.draw_remote()
-
-        k = 0
-        while True:
-            await self.connect()
-            cmd = self.handler()
-            await self.client.button(cmd)
-            await asyncio.sleep(0.5)
-
-        return
-
-        await client.disconnect()
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                id = self.click(pygame.mouse.get_pos())
+                if id:
+                    return id
+            if event.type == pygame.KEYDOWN and event.key == 27:
+                return "QUIT"
 
     def click(self, pos):
         for k, b in enumerate(self.all_buttons):
             if b.collidepoint(pos):
                 return self.BUTTONS[k]["action"]
+        for k, b in enumerate(self.all_apps):
+            if b.collidepoint(pos):
+                return f"${self.apps[k]['id']}"
+
+    def draw_remote(self):
+        self.MAIN_SURFACE.fill(self.COLORS["BLACK"])
+        self.all_buttons = []
+        for k, button in enumerate(self.BUTTONS):
+            _button = pygame.Surface((self.BUTTON_SIZE, self.BUTTON_SIZE))
+            pygame.draw.rect(
+                surface=_button,
+                color=self.COLORS["GREEN"],
+                rect=(0, 0, self.BUTTON_SIZE, self.BUTTON_SIZE),
+                width=0,
+                border_radius=5,
+            )
+            _img = pygame.transform.scale(
+                pygame.image.load(button["image"]),
+                (self.BUTTON_SIZE - 10, self.BUTTON_SIZE - 10),
+            )
+            _button.blit(source=_img, dest=(5, 5))
+            _b = self.MAIN_SURFACE.blit(
+                source=_button,
+                dest=(
+                    button["location"][0] * (self.BUTTON_SIZE * 1.2) + 100,
+                    button["location"][1] * (self.BUTTON_SIZE * 1.2) + 100,
+                ),
+            )
+            self.all_buttons.append(_b)
+
+        if self._show_apps:
+            self.all_apps = []
+            for k, button in enumerate(self.apps):
+                _button = pygame.Surface((self.BUTTON_SIZE, self.BUTTON_SIZE))
+                pygame.draw.rect(
+                    surface=_button,
+                    color=self.COLORS["BLACK"],
+                    rect=(0, 0, self.BUTTON_SIZE, self.BUTTON_SIZE),
+                    width=0,
+                    border_radius=5,
+                )
+                _img = pygame.transform.scale(
+                    pygame.image.load(f"icon{k}.bmp"),
+                    (self.BUTTON_SIZE - 10, self.BUTTON_SIZE - 10),
+                )
+                button["location"] = (4 + k // 9, k % 9)
+                _button.blit(source=_img, dest=(5, 5))
+                _b = self.MAIN_SURFACE.blit(
+                    source=_button,
+                    dest=(
+                        button["location"][0] * (self.BUTTON_SIZE * 1.2) + 100,
+                        button["location"][1] * (self.BUTTON_SIZE * 1.2) + 100,
+                    ),
+                )
+                self.all_apps.append(_b)
+
+        pygame.display.flip()
+
+    async def main(self):
+        self.client = WebOsClient(self.HOST, self.CLIENT_KEY)
+        while True:
+            if not self.client.is_connected():
+                await self.client.connect()
+                await asyncio.sleep(0.5)
+            self.draw_remote()
+            command = self.handler()
+            if not command:
+                continue
+            elif "$" in command:
+                await self.client.launch_app(command[1:])
+            elif "%" in command:
+                await self.client.button(command[1:])
+                await asyncio.sleep(0.5)
+            elif "VOL" in command:
+                await self.client.set_volume(int(command[-2:]))
+                await asyncio.sleep(0.5)
+            elif "APPS" in command:
+                self._show_apps = True if not self._show_apps else False
+                if not self.all_apps:
+                    self.apps = await self.client.get_apps()
+                    for k, app in enumerate(self.apps):
+                        img = Image.open(
+                            urllib.request.urlopen(url=app["icon"], context=self.SSL)
+                        )
+                        img.save(f"icon{k}.bmp")
+            if "POWER" in command or "QUIT" in command:
+                await self.client.disconnect()
+                return
 
 
 REMOTE = Remote()
 
 try:
     asyncio.run(REMOTE.main())
-
-
 except asyncio.exceptions.TimeoutError:
     print("Could not connect to TV")
+
+
 """
 
 BUTTONS=(

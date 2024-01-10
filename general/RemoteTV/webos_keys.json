@@ -17,7 +17,7 @@
                 0,
                 0
             ],
-            "action": "POWER"
+            "action": "%POWER"
         },
         {
             "name": "home",
@@ -26,7 +26,7 @@
                 2,
                 0
             ],
-            "action": "HOME"
+            "action": "%HOME"
         },
         {
             "name": "up-arrow",
@@ -35,7 +35,7 @@
                 1,
                 2
             ],
-            "action": "UP"
+            "action": "%UP"
         },
         {
             "name": "left-arrow",
@@ -44,7 +44,7 @@
                 0,
                 3
             ],
-            "action": "LEFT"
+            "action": "%LEFT"
         },
         {
             "name": "enter",
@@ -53,7 +53,7 @@
                 1,
                 3
             ],
-            "action": "ENTER"
+            "action": "%ENTER"
         },
         {
             "name": "right-arrow",
@@ -62,7 +62,7 @@
                 2,
                 3
             ],
-            "action": "RIGHT"
+            "action": "%RIGHT"
         },
         {
             "name": "down-arrow",
@@ -71,7 +71,7 @@
                 1,
                 4
             ],
-            "action": "DOWN"
+            "action": "%DOWN"
         },
         {
             "name": "back",
@@ -80,7 +80,7 @@
                 2,
                 4
             ],
-            "action": "BACK"
+            "action": "%BACK"
         },
         {
             "name": "60-volume",
@@ -89,7 +89,7 @@
                 0,
                 6
             ],
-            "action": "%TBD"
+            "action": "VOL60"
         },
         {
             "name": "plus",
@@ -98,7 +98,7 @@
                 1,
                 6
             ],
-            "action": "VOLUMEUP"
+            "action": "%VOLUMEUP"
         },
         {
             "name": "40-volume",
@@ -107,7 +107,7 @@
                 0,
                 7
             ],
-            "action": "%TBD"
+            "action": "VOL40"
         },
         {
             "name": "minus",
@@ -116,7 +116,7 @@
                 1,
                 7
             ],
-            "action": "VOLUMEDOWN"
+            "action": "%VOLUMEDOWN"
         },
         {
             "name": "20-volume",
@@ -125,7 +125,7 @@
                 0,
                 8
             ],
-            "action": "%TBD"
+            "action": "VOL20"
         },
         {
             "name": "mute",
@@ -134,7 +134,7 @@
                 1,
                 8
             ],
-            "action": "MUTE"
+            "action": "%MUTE"
         },
         {
             "name": "apps",
@@ -143,7 +143,7 @@
                 2,
                 8
             ],
-            "action": "%TBD"
+            "action": "APPS"
         }
     ]
 }
