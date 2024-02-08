@@ -209,7 +209,10 @@ class Game:
 
     def wrap_up(self):
         # kept as function in case extra code needs to be inserted
-        shell.wrap_up(GAME)
+        shell.wrap_up(self)
+
+    def high_score(self):
+        shell.update_high_scores(self)
 
 
 if __name__ == "__main__":

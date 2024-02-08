@@ -6,7 +6,6 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 import time
 from copy import deepcopy as copy
-import numpy as np
 
 # import custom modules
 sys.path.append(os.path.join(os.getcwd()[:2], r"\pythonCode", "Resources", "Scripts"))
@@ -53,22 +52,40 @@ class Game:
 
     def setup(self):
         # assign generic menu parameters to game-specific variables
-        (self.height, self.width, self.game_level, self.show_next) = self.parameters
+        (
+            self.max_value,
+            self.MAX_CAPTURE,
+            self.MAX_SIZE,
+            self.reload_sprites,
+        ) = self.parameters
         # initial values
         self.score = 0
+        self.hunter_width = randrange(10, 31)
+        self.hunter_height = int(self.hunter_width)
         self.hunter = Sprite(
-            color=self.COLORS["YELLOW"], width=30, height=30, x0=500, y0=500
+            color=self.COLORS["YELLOW"],
+            width=self.hunter_width,
+            height=self.hunter_height,
+            x0=500,
+            y0=500,
         )
         self.hunter_value = 0
         self.hunter_deltax, self.hunter_deltay = 0, 0
         self.all_hunters.add(self.hunter)
+        self.EDGES = {
+            "left": 0,
+            "right": self.PLAY_SURFACE.get_width() - self.hunter_width,
+            "top": 0,
+            "bottom": self.PLAY_SURFACE.get_height() - self.hunter_height,
+        }
+        self.collected_sprites = 0
         # random blocks of varying size and value
         _counter = 0
-        while _counter < 200:
+        while _counter < 60:  # TODO: update to vraible
             _block = Sprite(
                 color=choice(self.COLOR_OPTIONS),
-                width=randrange(20, 30),
-                height=randrange(20, 40),
+                width=randrange(20, self.MAX_SIZE),
+                height=randrange(20, self.MAX_SIZE),
                 x0=randrange(50, 1500),
                 y0=randrange(50, 1200),
             )
@@ -78,7 +95,7 @@ class Game:
             ) or pygame.sprite.spritecollideany(_block, self.all_hunters):
                 continue
             # render value in block
-            _block.value = randrange(1, 10)
+            _block.value = randrange(1, self.max_value)
             _text = self.FONTS["NUN24"].render(
                 str(_block.value), True, self.COLORS["WHITE"], _block.color
             )
@@ -97,11 +114,13 @@ class Game:
     def next_turn(self):
         self.hunter.rect.x += self.hunter_deltax
         self.hunter.rect.y += self.hunter_deltay
+
         collision = pygame.sprite.spritecollide(
             self.hunter, self.all_sprites, dokill=True
         )
         if collision:
             self.hunter_value += sum(i.value for i in collision)
+            self.collected_sprites += 1
 
     def update_display(self):
         self.next_turn()
@@ -135,19 +154,33 @@ class Game:
             self.hunter_deltay += 1
 
     def check_end(self):
-        return
-        _condition = any(
-            [True if i < 0 else False for i in (self.grid[0] + self.grid[1])]
-        )
-        if not self.falling_piece and _condition:
+        # time is up
+        if (dt.now() - self.time_start).total_seconds() > 30:
+            self.stage = 3
+            self.end_criteria = "won"
+        # hunter gone off-limits
+        if (
+            self.hunter.rect.x < self.EDGES["left"]
+            or self.hunter.rect.x > self.EDGES["right"]
+            or self.hunter.rect.y < self.EDGES["top"]
+            or self.hunter.rect.y > self.EDGES["bottom"]
+        ):
             self.stage = 3
             self.end_criteria = "lost"
+        # reached maximum amount of sprites collected
+        if self.collected_sprites >= self.MAX_CAPTURE:
+            self.stage = 3
+            self.end_criteria = "won"
 
     def wrap_up(self):
         shell.wrap_up(GAME)
 
+    def high_score(self):
+        if self.end_criteria == "won":
+            shell.update_high_scores(self)
+
 
 if __name__ == "__main__":
-    GAME = Game("viper")
+    GAME = Game("growth")
     shell.main(GAME)
     pygame.quit()

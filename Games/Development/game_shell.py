@@ -1,6 +1,7 @@
+from datetime import datetime as dt
 import pygame
 from pygame.locals import *
-import json
+import json, time, sys
 import pygame_menu
 
 
@@ -30,7 +31,9 @@ def menu(GAME):
         WIDGETS = init_values["WIDGETS"]
     # load game high-scores
     with open("game_high_scores.json", mode="r") as file:
-        GAME.HIGH_SCORES = json.load(file)[GAME.game]
+        GAME.HIGH_SCORES = json.load(file)
+    # set user
+    GAME.user = sys.argv[1] if len(sys.argv) > 1 else "< Anonymous >"
 
     # fixed theme
     MENU_THEME = pygame_menu.themes.THEME_SOLARIZED.copy()
@@ -120,6 +123,11 @@ def menu(GAME):
                 slider_thickness=0,
                 toggleswitch_id="WIDGET" + str(k),
             )
+        elif w["type"] == "selector":  # TODO: Work in Progress
+            _widget = menu.add.selector(
+                "Select difficulty ",
+                [("1 - Easy", "EASY"), ("2 - Medium", "MEDIUM"), ("3 - Hard", "HARD")],
+            )
         widgets.append(_widget)
         frame2.pack(_widget)
 
@@ -139,6 +147,7 @@ def menu(GAME):
 
 
 def show_high_scores(GAME):
+    GAME.MAIN_SURFACE.fill(GAME.COLORS["BLACK"])
     _title = GAME.FONTS["NUN80B"].render(
         "High Scores",
         True,
@@ -149,7 +158,7 @@ def show_high_scores(GAME):
         _title, dest=((GAME.RIGHT_SURFACE.get_width() - _title.get_width()) / 2, 60)
     )
 
-    for k, _score in enumerate(GAME.HIGH_SCORES):
+    for k, _score in enumerate(GAME.HIGH_SCORES[GAME.game]):
         _row = [
             f"{_score['player']:<20}",
             f"{_score['score']:>10}",
@@ -174,7 +183,6 @@ def show_high_scores(GAME):
     GAME.MAIN_SURFACE.blit(
         GAME.RIGHT_SURFACE, dest=(GAME.MAIN_SURFACE.get_width() / 2, 0)
     )
-    pygame.display.flip()
 
 
 def define_main_surfaces(GAME):
@@ -205,6 +213,7 @@ def load_generic_images(GAME):
     GAME.end_images = {
         "lost": pygame.image.load("game_lost.png"),
         "won": pygame.image.load("game_won.png"),
+        "tied": pygame.image.load("game_tied.png"),
         "quit": pygame.image.load("game_quit.png"),
     }
 
@@ -260,6 +269,9 @@ def update_info_surface(GAME, message):
 
 
 def wrap_up(GAME):
+    # lock time played for high score control
+    GAME.time_played = round((dt.now() - GAME.time_start).total_seconds(), 1)
+    # wait for button click to continue
     main_game_button(GAME, " CONTINUE ")
     GAME.update_display()
     while True:
@@ -270,16 +282,38 @@ def wrap_up(GAME):
                 return
 
 
-def main(GAME):
+def update_high_scores(GAME):
+    if GAME.score > GAME.HIGH_SCORES[GAME.game][-1]["score"]:
+        GAME.HIGH_SCORES[GAME.game].append(
+            {
+                "score": round(GAME.score, 2),
+                "time": GAME.time_played,
+                "player": GAME.user,
+                "date": dt.now().strftime("%m/%d/%Y"),
+            }
+        )
+        GAME.HIGH_SCORES[GAME.game] = sorted(
+            GAME.HIGH_SCORES[GAME.game], key=lambda i: i["score"], reverse=True
+        )[: max(len(GAME.HIGH_SCORES), 10)]
+        with open("game_high_scores.json", mode="w+") as outfile:
+            json.dump(GAME.HIGH_SCORES, outfile, indent=4)
+
+
+def main2(GAME):
     clock = pygame.time.Clock()
     GAME.stage = 0
     main_menu = menu(GAME)
-    while main_menu.is_enabled():
+    while True:  # main_menu.is_enabled():
+        print("sdsdsdsd")
         match GAME.stage:
             case 0:
-                GAME.FPS = 60  # low frame rate for menu
-                main_menu.mainloop(GAME.MAIN_SURFACE, disable_loop=True)
-                show_high_scores(GAME)
+                GAME.FPS = 40  # low frame rate for menu
+                main_menu.mainloop(
+                    GAME.MAIN_SURFACE,
+                    bgfun=lambda i: show_high_scores(GAME),
+                    disable_loop=False,
+                )
+                clock.tick(GAME.FPS)
             case 1:
                 GAME.setup()
                 GAME.stage = 2
@@ -303,6 +337,50 @@ def main(GAME):
                 clock.tick(GAME.FPS)
             case 3:
                 GAME.wrap_up()
+                GAME.stage = 4
+            case 4:
+                GAME.high_score()
                 GAME.stage = 0
 
-    pygame.quit()
+
+def main(GAME):
+    clock = pygame.time.Clock()
+    GAME.stage = 0
+    main_menu = menu(GAME)
+    GAME.FPS = 60
+    while main_menu.is_enabled():
+        match GAME.stage:
+            case 0:  # game menu
+                show_high_scores(GAME)
+                clock.tick(GAME.FPS)
+                main_menu.draw(GAME.MAIN_SURFACE)
+                main_menu.update(pygame.event.get())
+                pygame.display.flip()
+            case 1:  # setup and continue
+                GAME.setup()
+                GAME.stage = 2
+            case 2:  # game play
+                GAME.update_display()
+                events = pygame.event.get()
+                for event in events:
+                    if event.type == QUIT or (
+                        event.type == KEYDOWN and event.key == 27
+                    ):
+                        GAME.end_criteria = "quit"
+                        GAME.stage = 3
+                    elif event.type == KEYDOWN:
+                        GAME.process_key(key=event.key)
+                    elif event.type == MOUSEBUTTONDOWN:
+                        GAME.process_click(
+                            pos=pygame.mouse.get_pos(), button=event.button
+                        )
+                GAME.check_end()
+                clock.tick(GAME.FPS)
+            case 3:  # post-game activities
+                GAME.wrap_up()
+                GAME.stage = 4
+            case 4:  # update highscore if necessary
+                GAME.high_score()
+                GAME.stage = 0
+
+    print("*********Clean Exit")

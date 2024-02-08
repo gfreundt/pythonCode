@@ -11,25 +11,25 @@ from datetime import datetime as dt
 class PushBullet:
     def __init__(self):
         # path and platform code depends if service running on Windows or Raspberry
-        self.path, self.platf = self.check_system_path()
+        self.root_path, self.platf = self.check_system_path()
         # get secret token from local file, created request header
-        with open(os.path.join(self.path, "pushbullet_key.txt"), mode="r") as file:
+        with open("pushbullet_key.txt", mode="r") as file:
             self.token = file.read().strip()
             self.header = {"Access-Token": self.token}
         # get list of trigger phrases, corresponding actions and platforms
-        with open(os.path.join(self.path, "monitored_events.json"), mode="r") as file:
+        with open("monitored_events.json", mode="r") as file:
             self.events = json.load(file)["events"]
         # list of attended instructions (empty to begin with)
         self.attended_instructions = []
 
     def check_system_path(self):
         if "Windows" in platform.uname().system:
-            root = os.path.join(r"d:\pythonCode")
+            root = os.path.join("d:", "\pythonCode")
             platf = "pc1"
         else:
-            root = os.path.join("/home/gfreundt/pythonCode")
+            root = os.path.join("/home", "gfreundt", "pythonCode")
             platf = "rp1"
-        return os.path.join(root, "Automation", "PushBullet"), platf
+        return [root], platf
 
     def listener(self):
         # run specific action depending on message received
@@ -49,8 +49,8 @@ class PushBullet:
                         message=f"[{dt.now().strftime('%H:%M:%S')}] {event['trigger_phrase']}",
                     )
                     # change directory
-                    if event.get("change_directory"):
-                        os.chdir(self.path)
+                    if event.get("path"):
+                        os.chdir(os.path.join(*self.root_path, *event.get("path")))
                     # execute os-level code
                     if event.get("action"):
                         process = subprocess.run(
@@ -90,10 +90,8 @@ class PushBullet:
                         url = "https://api.pushbullet.com/v2/pushes"
                         params = {"modified_after": time.time() - 5}
                         response = requests.get(url, headers=self.header, params=params)
-                        if (
-                            response.json()["pushes"][-1]["guid"]
-                            not in self.attended_instructions
-                        ):
+                        print(response.json())
+                        if True:
                             instruction = (
                                 response.json()["pushes"][-1]["body"].strip().lower()
                             )
@@ -101,17 +99,18 @@ class PushBullet:
                             if after_action == "stop":
                                 socket.close()
                                 return
-                            self.attended_instructions.append(
-                                response.json()["pushes"][-1]["guid"]
-                            )
+                        # self.attended_instructions.append(
+                        #     response.json()["pushes"][-1]["guid"]
+                        # )
 
             except KeyboardInterrupt:
                 quit()
-            except:
+            """except:
                 # wait before attempting reconnect
                 self.stdout("Connection Error... Waiting 30 seconds to reconnect.")
                 time.sleep(30)
                 reconnect_attempts += 1
+"""
 
     def send_push(self, title, message):
         uri = "https://api.pushbullet.com/v2/pushes"

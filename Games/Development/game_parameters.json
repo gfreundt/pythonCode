@@ -1,5 +1,7 @@
 {
     "liquids": {
+        "APP": "liquids.py",
+        "VERSION": 1.1,
         "LEVEL_PRESETS": [
             [
                 12,
@@ -73,6 +75,8 @@
         ]
     },
     "boom": {
+        "APP": "boom.py",
+        "VERSION": 1.1,
         "LEVEL_PRESETS": [
             [
                 5,
@@ -141,6 +145,8 @@
         ]
     },
     "gravity": {
+        "APP": "gravity.py",
+        "VERSION": 0.5,
         "LEVEL_PRESETS": [
             [
                 45,
@@ -207,6 +213,8 @@
         ]
     },
     "mastermind": {
+        "APP": "mastermind.py",
+        "VERSION": 0.9,
         "LEVEL_PRESETS": [
             [
                 3,
@@ -266,6 +274,8 @@
         ]
     },
     "lost": {
+        "APP": "lost.py",
+        "VERSION": 0.7,
         "LEVEL_PRESETS": [
             [
                 30,
@@ -325,6 +335,8 @@
         ]
     },
     "tetris": {
+        "APP": "tetris.py",
+        "VERSION": 1.1,
         "LEVEL_PRESETS": [
             [
                 22,
@@ -393,6 +405,8 @@
         ]
     },
     "viper": {
+        "APP": "viper.py",
+        "VERSION": 0.3,
         "LEVEL_PRESETS": [
             [
                 22,
@@ -456,6 +470,118 @@
             {
                 "type": "switch",
                 "name": "Show Next Piece :",
+                "padding": 150
+            }
+        ]
+    },
+    "growth": {
+        "APP": "growth.py",
+        "VERSION": 0.9,
+        "LEVEL_PRESETS": [
+            [
+                9,
+                60,
+                30,
+                true
+            ],
+            [
+                8,
+                40,
+                28,
+                true
+            ],
+            [
+                7,
+                30,
+                26,
+                false
+            ],
+            [
+                6,
+                20,
+                25,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Growth",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Maximum Value :",
+                "padding": 37,
+                "range": [
+                    6,
+                    9
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Pieces to Capture :",
+                "padding": 11,
+                "range": [
+                    20,
+                    60
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Piece Maximum Size :",
+                "padding": 20,
+                "range": [
+                    25,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Reload Pieces :",
+                "padding": 150
+            }
+        ]
+    },
+    "africa": {
+        "APP": "africa.py",
+        "VERSION": 1.1,
+        "LEVEL_PRESETS": [
+            [
+                3,
+                false
+            ],
+            [
+                4,
+                false
+            ],
+            [
+                5,
+                true
+            ],
+            [
+                6,
+                true
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Africa",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Stones in Pit :",
+                "padding": 37,
+                "range": [
+                    3,
+                    6
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "End Game Early :",
                 "padding": 150
             }
         ]

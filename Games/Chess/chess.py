@@ -2,9 +2,8 @@
 # TODO: castling no check on spaces travelled by king
 # TODO: castling deactivated if king selected but not moved (executed but rejected)
 # TODO: let player choose promoted piece
-# TODO: threefold repetition stalemate
-# TODO: 50-move rule stalemate
-# TODO> Timeout win - tie
+# TODO: Timeout win - draw if not timed out opponent could not have chekmated
+# TODO: draw by not enough pieces
 
 # NICE TO HAVE
 # TODO: Independent window - captured pieces
@@ -41,7 +40,6 @@ pygame.init()
 
 class Game:
     def __init__(self):
-
         self.load_options()
         self.FILE_PATH = setup.find_game_path()
         self.IMAGE_PATH = os.path.join(self.FILE_PATH, "chess", "Images")
@@ -115,7 +113,7 @@ class Game:
                         self.IMAGE_PATH,
                         f'{"black" if piece < 0 else "white"}_{pcg[abs(piece)]}.png',
                     )
-                ).resize((20 * self.scale, 20 * self.scale), Image.ANTIALIAS)
+                ).resize((20 * self.scale, 20 * self.scale))
                 self.pieceImages.update(
                     {piece: pygame.image.fromstring(img.tobytes(), img.size, img.mode)}
                 )
@@ -138,6 +136,7 @@ class Game:
         self.start_timer = dt.now()
         self.fifty_moves_counter = 0
         self.move_log = []
+        self.all_positions = []
 
     def load_init_config(self):
         filename = "chess_config.txt" if not self.TEST_MODE else "test_config.txt"
@@ -416,7 +415,6 @@ def grid_to_arithmetic(coord):
 
 
 def execute_move(origin, dest, piece, capture=False, selected_piece=None):
-
     # print(f"{origin=} {dest=}")
 
     move_details = {
@@ -561,12 +559,15 @@ def insufficient_material():
         return True
 
 
-def threefold_repetition():  # TODO: develop
+def threefold_repetition():
+    for position in game.all_positions:
+        if game.all_positions.count(position) >= 3:
+            return True
     return False
 
 
-def move_50_rule():  # Not Working. This part ok, variable adding is broken.
-    if game.fifty_moves_counter > 99:
+def move_50_rule():
+    if game.fifty_moves_counter >= 5:
         return True
 
 
@@ -598,6 +599,15 @@ def end_conditions():
 
 
 def log_move(move):
+    # add new position to list of all positions for three-fold repetition control
+    game.all_positions.append(game.activeBoard.tolist())
+    # manage 50-move counter
+    if move["capture"] or move["piece"] == 6:
+        game.fifty_moves_counter = 0
+    else:
+        game.fifty_moves_counter += 0.5
+
+    game.fifty_moves_counter
     if not move["castle"]:
         move_text = game.MOVE_LOG_INDEX[move["piece"]]
         # Capture?

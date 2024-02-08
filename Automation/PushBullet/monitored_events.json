@@ -11,7 +11,28 @@
                 "switch-internet.py",
                 "ON"
             ],
-            "change_directory": true,
+            "path": [
+                "Automation",
+                "PushBullet"
+            ],
+            "response_on_success": "* Process Completed *",
+            "response_on_failure": "* Error! *",
+            "continue": true
+        },
+        {
+            "trigger_phrase": "solpeds",
+            "platforms": [
+                "pc1"
+            ],
+            "action": [
+                "python",
+                "solpeds.py",
+                "ON"
+            ],
+            "path": [
+                "Automation",
+                "Solpeds"
+            ],
             "response_on_success": "* Process Completed *",
             "response_on_failure": "* Error! *",
             "continue": true
@@ -27,7 +48,10 @@
                 "switch-internet.py",
                 "OFF"
             ],
-            "change_directory": true,
+            "path": [
+                "Automation",
+                "PushBullet"
+            ],
             "response_on_success": "* Process Completed *",
             "response_on_failure": "* Error! *",
             "continue": true
@@ -43,7 +67,10 @@
                 "SetSuspendState",
                 "Sleep"
             ],
-            "change_directory": false,
+            "path": [
+                "Automation",
+                "PushBullet"
+            ],
             "response_on_success": "* Process Completed *",
             "response_on_failure": "* Error! *",
             "continue": false
@@ -55,7 +82,7 @@
                 "rp1"
             ],
             "action": [],
-            "change_directory": false,
+            "path": false,
             "response_on_success": "* Stopping Listener *",
             "response_on_failure": "* Error! *",
             "continue": false
@@ -70,7 +97,10 @@
                 "python",
                 "active.py"
             ],
-            "change_directory": true,
+            "path": [
+                "Automation",
+                "PushBullet"
+            ],
             "response_on_success": "* Activity ok *",
             "response_on_failure": "* Error! *",
             "continue": true

@@ -1,102 +1,99 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as WebDriverOptions
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementNotInteractableException
 import os, time, sys
 import keyboard
 from subprocess import Popen
+import pyautogui
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
 
-# TODO: doesn't work with headless
-# TODO: turn on and off VPN
-
 
 def turn_on_vpn():
-    Popen(r'"C:\Program Files\Palo Alto Networks\GlobalProtect\PanGPA.exe"')
+    # start VPN Windows service
+    Popen("net start pangps")
+    time.sleep(3)
+    # open interface on task bar
+    Popen(r'"D:\Program Files\Palo Alto Networks\GlobalProtect\PanGPA.exe"')
+    time.sleep(2)
+    # click on connect and wait
+    pyautogui.click(3620, 2035)
+    time.sleep(15)
 
 
-def load_webdriver():
-    """Define options for Chromedriver"""
-    options = WebDriverOptions()
-    # options.add_argument("--headless")
-    options.add_argument("--silent")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--incognito")
-    options.add_argument("--log-level=3")
-    options.add_experimental_option("excludeSwitches", ["enable-logging"])
-    return webdriver.Chrome(
-        service=Service(os.path.join(r"C:\pythonCode\Resources", "chromedriver.exe")),
-        options=options,
-    )
+def turn_off_vpn():
+    # stop VPN Windows service
+    Popen("net stop pangps")
 
 
-def login(webd):
-    time.sleep(4)
+def login():
     keyboard.write("gfreundt")
     keyboard.press_and_release("tab")
-    keyboard.write("Ahorra21")
+    time.sleep(1)
+    keyboard.write("Roboto21")
     keyboard.press_and_release("enter")
 
 
 def approve(webd):
-    counter = 0
-    list_of_approvals = []
-
     while True:
-        WebDriverWait(webd, 10).until(
+        WebDriverWait(webd, 30).until(
             EC.presence_of_element_located((By.ID, "TaskListFrame"))
         )
+        # go to solped listing frame
         webd.switch_to.frame("TaskListFrame")
         solpeds = webd.find_elements(By.ID, "GridView1$ctl02_table")
         if solpeds:
-            details = solpeds[0].text
-            counter += 1
-            if "SOLPED" not in details:
-                solpeds[0].click()
-                time.sleep(2)
-                second_click = webd.find_element(
-                    By.XPATH, '//*[@id="SVMenuOperation_0"]/tbody/tr/td[2]'
-                )
-                second_click.click()
-            else:
-                solpeds[0].click()
+            # select last solped of first page
+            pyautogui.click((510, 643))
+            time.sleep(3)
+            # dismiss non-IE alert if present
+            try:
+                webd.switch_to.alert.accept()
+            except:
+                pass
+            time.sleep(3)
         else:
             webd.quit()
-            break
+            return
+        # back to main frame
+
+        webd.switch_to.default_content()
+        time.sleep(2)
+        # press tab 50 times to ensure "Approve" button is clickable
+        for _ in range(50):
+            keyboard.press_and_release("tab")
+            time.sleep(0.1)
+        # approve
+        try:
+            webd.find_element(By.ID, "Approve").click()
+        except ElementNotInteractableException:
+            print("Cannot find Approve button")
+            quit()
+
+        # keep list of approvals
         time.sleep(3)
-        keyboard.press_and_release("enter")
-        time.sleep(10)
-        button = WebDriverWait(webd, 10).until(
-            EC.presence_of_element_located((By.ID, "Approve"))
-        )
-        button.click()
-        list_of_approvals.append(details)
-        time.sleep(10)
-
-    if list_of_approvals:
-        output = f"Completo con {counter} aprobaciones:"
-        for a in list_of_approvals:
-            output += f"{a}\n"
-    else:
-        output = "Nada que aprobar"
-
-    return output
 
 
 def main():
+    # turn on GlobalProtect VPN manually
+    turn_on_vpn()
+
+    # open web page
     url = "http://winshuttle.losportales.com.pe:82/prd/default.aspx"
-    webd = ChromeUtils.init_driver(headless=False)
+    webd = ChromeUtils().init_driver(headless=False, verbose=False)
     webd.get(url)
 
-    login(webd)
-    output = approve(webd)
+    # login credentials
+    login()
 
-    print(output)
+    # do approvals (no output captured)
+    approve(webd)
+
+    # turn off GlobalProtect VPN
+    turn_off_vpn()
 
 
 main()

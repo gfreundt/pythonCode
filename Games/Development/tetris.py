@@ -268,7 +268,10 @@ class Game:
             self.end_criteria = "lost"
 
     def wrap_up(self):
-        shell.wrap_up(GAME)
+        shell.wrap_up(self)
+
+    def high_score(self):
+        shell.update_high_scores(self)
 
 
 if __name__ == "__main__":

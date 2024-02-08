@@ -5,7 +5,7 @@ import random
 
 
 class ChromeUtils:
-    def init_driver(self=None, **kwargs):
+    def init_driver(self, **kwargs):
         """Returns a ChromeDriver object with commonly used parameters allowing for some optional settings"""
         from selenium import webdriver
         from selenium.webdriver.chrome.options import Options as WebDriverOptions
@@ -20,6 +20,7 @@ class ChromeUtils:
             "load_profile": False,
             "verbose": True,
             "no_driver_update": False,
+            "maximized": False,
         } | kwargs
 
         options = WebDriverOptions()
@@ -37,8 +38,13 @@ class ChromeUtils:
             options.add_argument(
                 f"--window-size={parameters['window-size'][0]},{parameters['window-size'][1]}"
             )
+        if parameters["maximized"]:
+            options.add_argument("--start-maximized")
 
         # fixed options
+        options.add_argument(
+            "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.218 Safari/537.36"
+        )
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--silent")
         options.add_argument("--disable-notifications")
@@ -50,6 +56,14 @@ class ChromeUtils:
         """
         options.add_argument("--disable-web-security")
         options.add_argument("--allow-running-insecure-content")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--proxy-server='direct://'")
+        options.add_argument("--proxy-bypass-list=*")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--ignore-certificate-errors")
         """
 
         _path = (

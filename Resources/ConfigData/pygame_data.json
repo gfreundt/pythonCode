@@ -135,6 +135,10 @@
             "ttf": "roboto.ttf",
             "size": 20
         },
+        "ROB80": {
+            "ttf": "roboto.ttf",
+            "size": 80
+        },
         "NUN24": {
             "ttf": "nunito.ttf",
             "size": 24
