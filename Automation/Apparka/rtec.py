@@ -8,6 +8,8 @@ from copy import deepcopy as copy
 import easyocr
 import csv, json
 
+from pprint import pprint as print
+
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
@@ -93,8 +95,13 @@ def process(placa):
         WEBD.find_element(By.ID, "BtnBuscar").click()
         time.sleep(2)
 
-        # if captcha is not correct, refresh and restart cycle
-        if len(WEBD.find_element(By.ID, "lblAlertaMensaje").text) < 3:
+        # if captcha is not correct, refresh and restart cycle, if no data found, return None
+        _alerta = WEBD.find_element(By.ID, "lblAlertaMensaje").text
+        if "no es correcto" in _alerta:
+            continue
+        elif "encontraron resultados" in _alerta:
+            return None
+        else:
             break
 
     # extract data from table and parse relevant data
@@ -131,22 +138,46 @@ def load_database():
         return json.load(file)
 
 
+def update_database(scrape_data, database, record, pos):
+    # TODO: request lock for threading
+    database[record]["vehiculos"][pos]["rtecs"] = scrape_data
+    return database
+
+
 def main():
     url = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
     WEBD.get(url)
     time.sleep(2)
 
     database = load_database()
+    print(database[67])
+    data = [
+        {
+            "certificadora": "REVISIONES MAKALU S.A.C.",
+            "placa": "C9K342",
+            "certificado": "C-2023-218-331-007833",
+            "desde": "24/06/2023",
+            "hasta": "24/06/2024",
+            "resultado": "APROBADO",
+            "vigencia": "VIGENTE",
+        }
+    ]
+    database = update_database(data, database, 67, 0)
+    print(database[67])
+    quit()
     for record in database[667:670]:
-        for vehiculo in record["vehiculos"]:
-            print("*******", vehiculo["placa"])
-            r = process(vehiculo["placa"])
-            print(r)
+        for pos, vehiculo in enumerate(record["vehiculos"]):
+            update_database(
+                scrape_data=process(vehiculo["placa"]),
+                database=database,
+                record=record,
+                pos=pos,
+            )
             WEBD.get(url)
             time.sleep(2)
 
 
 READER = easyocr.Reader(["es"], gpu=False)
-WEBD = ChromeUtils().init_driver(headless=False, verbose=True, maximized=True)
+WEBD = ChromeUtils().init_driver(headless=True, verbose=True, maximized=True)
 
 main()

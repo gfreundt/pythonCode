@@ -26,7 +26,7 @@ class Remote:
             self.tv_data = json.loads(file.read())
         self.CLIENT_KEY = self.tv_data["keys"][0]["client_key"]
         self.BUTTONS = self.tv_data["buttons"]
-        self.BUTTON_SIZE = 3840 / self.DISPLAY_WIDTH * 50
+        self.BUTTON_SIZE = 3840 / self.DISPLAY_WIDTH * 10
         self.all_buttons = []
         self.all_apps = self.apps = []
         self._show_apps = False
