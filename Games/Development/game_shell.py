@@ -147,13 +147,13 @@ def menu(GAME):
 
 
 def show_high_scores(GAME):
-    GAME.MAIN_SURFACE.fill(GAME.COLORS["BLACK"])
     _title = GAME.FONTS["NUN80B"].render(
         "High Scores",
         True,
         GAME.COLORS["WHITE"],
         GAME.RIGHT_SURFACE.get_colorkey(),
     )
+    GAME.RIGHT_SURFACE.fill(GAME.COLORS["BLACK"])
     GAME.RIGHT_SURFACE.blit(
         _title, dest=((GAME.RIGHT_SURFACE.get_width() - _title.get_width()) / 2, 60)
     )
@@ -297,50 +297,6 @@ def update_high_scores(GAME):
         )[: max(len(GAME.HIGH_SCORES), 10)]
         with open("game_high_scores.json", mode="w+") as outfile:
             json.dump(GAME.HIGH_SCORES, outfile, indent=4)
-
-
-def main2(GAME):
-    clock = pygame.time.Clock()
-    GAME.stage = 0
-    main_menu = menu(GAME)
-    while True:  # main_menu.is_enabled():
-        print("sdsdsdsd")
-        match GAME.stage:
-            case 0:
-                GAME.FPS = 40  # low frame rate for menu
-                main_menu.mainloop(
-                    GAME.MAIN_SURFACE,
-                    bgfun=lambda i: show_high_scores(GAME),
-                    disable_loop=False,
-                )
-                clock.tick(GAME.FPS)
-            case 1:
-                GAME.setup()
-                GAME.stage = 2
-            case 2:
-                GAME.FPS = 60  # higher frame rate for game
-                GAME.update_display()
-                events = pygame.event.get()
-                for event in events:
-                    if event.type == QUIT or (
-                        event.type == KEYDOWN and event.key == 27
-                    ):
-                        GAME.end_criteria = "quit"
-                        GAME.stage = 3
-                    elif event.type == KEYDOWN:
-                        GAME.process_key(key=event.key)
-                    elif event.type == MOUSEBUTTONDOWN:
-                        GAME.process_click(
-                            pos=pygame.mouse.get_pos(), button=event.button
-                        )
-                GAME.check_end()
-                clock.tick(GAME.FPS)
-            case 3:
-                GAME.wrap_up()
-                GAME.stage = 4
-            case 4:
-                GAME.high_score()
-                GAME.stage = 0
 
 
 def main(GAME):

@@ -58,6 +58,7 @@ class Game:
             self.MAX_SIZE,
             self.reload_sprites,
         ) = self.parameters
+        self.MAX_TIME = 60
         # initial values
         self.score = 0
         self.hunter_width = randrange(10, 31)
@@ -131,6 +132,11 @@ class Game:
         _message = [
             ("Board Statistics", "", "NUN40B"),
             ("Score", f"< {self.hunter_value} >", "NUN40"),
+            (
+                "Time",
+                f"< {(dt.now() - self.time_start).total_seconds():.1f} seconds >",
+                "NUN40",
+            ),
         ]
         shell.update_info_surface(GAME, _message)
         pygame.display.flip()
@@ -155,7 +161,7 @@ class Game:
 
     def check_end(self):
         # time is up
-        if (dt.now() - self.time_start).total_seconds() > 30:
+        if (dt.now() - self.time_start).total_seconds() > self.MAX_TIME:
             self.stage = 3
             self.end_criteria = "won"
         # hunter gone off-limits
@@ -177,6 +183,7 @@ class Game:
 
     def high_score(self):
         if self.end_criteria == "won":
+            self.score = self.hunter_value
             shell.update_high_scores(self)
 
 

@@ -104,6 +104,24 @@
             "response_on_success": "* Activity ok *",
             "response_on_failure": "* Error! *",
             "continue": true
+        },
+        {
+            "trigger_phrase": "placa",
+            "platforms": [
+                "pc1",
+                "rp1"
+            ],
+            "action": [
+                "python",
+                "rtec.py"
+            ],
+            "path": [
+                "Automation",
+                "Apparka"
+            ],
+            "response_on_success": "* Placas ok *",
+            "response_on_failure": "* Error! *",
+            "continue": true
         }
     ]
 }

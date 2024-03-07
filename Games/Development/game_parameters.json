@@ -476,7 +476,7 @@
     },
     "growth": {
         "APP": "growth.py",
-        "VERSION": 0.9,
+        "VERSION": 1.0,
         "LEVEL_PRESETS": [
             [
                 9,
@@ -582,6 +582,76 @@
             {
                 "type": "switch",
                 "name": "End Game Early :",
+                "padding": 150
+            }
+        ]
+    },
+    "sudoku": {
+        "APP": "sudoku.py",
+        "VERSION": 1.0,
+        "LEVEL_PRESETS": [
+            [
+                9,
+                60,
+                30,
+                true
+            ],
+            [
+                8,
+                40,
+                28,
+                true
+            ],
+            [
+                7,
+                30,
+                26,
+                false
+            ],
+            [
+                6,
+                20,
+                25,
+                false
+            ]
+        ],
+        "MENU_WIDTH": 600,
+        "MENU_HEIGHT": 800,
+        "GAME_TITLE": "Sudoku",
+        "WIDGETS": [
+            {
+                "type": "slider",
+                "name": "Maximum Value :",
+                "padding": 37,
+                "range": [
+                    6,
+                    9
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Pieces to Capture :",
+                "padding": 11,
+                "range": [
+                    20,
+                    60
+                ],
+                "increment": 1
+            },
+            {
+                "type": "slider",
+                "name": "Piece Maximum Size :",
+                "padding": 20,
+                "range": [
+                    25,
+                    30
+                ],
+                "increment": 1
+            },
+            {
+                "type": "switch",
+                "name": "Reload Pieces :",
                 "padding": 150
             }
         ]

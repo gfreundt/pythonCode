@@ -2,7 +2,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import ElementNotInteractableException
-import os, time, sys
+import time, sys
 import keyboard
 from subprocess import Popen
 import pyautogui
@@ -20,7 +20,7 @@ def turn_on_vpn():
     Popen(r'"D:\Program Files\Palo Alto Networks\GlobalProtect\PanGPA.exe"')
     time.sleep(2)
     # click on connect and wait
-    pyautogui.click(3620, 2035)
+    pyautogui.click(3620, 2035, 2)
     time.sleep(15)
 
 
@@ -33,7 +33,7 @@ def login():
     keyboard.write("gfreundt")
     keyboard.press_and_release("tab")
     time.sleep(1)
-    keyboard.write("Roboto21")
+    keyboard.write("Energia21")
     keyboard.press_and_release("enter")
 
 
