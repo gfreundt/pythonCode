@@ -1,19 +1,31 @@
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import *
 import time, sys
+import csv, json
+from datetime import datetime as dt, timedelta as td
 from PIL import Image
 import io
 import urllib
+import shutil
 from copy import deepcopy as copy
+import uuid
+import threading
 
 import easyocr
-import csv, json
 
-from pprint import pprint as print
+
+# from pprint import pprint as print
 
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
+
+
+class Central:
+    def __init__(self) -> None:
+        self.count = 0
+        self.errors = 0
 
 
 def transform_csv_to_json(csv_path):
@@ -35,7 +47,7 @@ def transform_csv_to_json(csv_path):
     }
     create_record = lambda i: {
         "nombre": i[0].strip(),
-        "documento": {"tipo": i[1], "num_doc": i[2]},
+        "documento": {"tipo": i[1], "numero": i[2]},
         "telefono": i[3],
         "vehiculos": vehiculos,
     }
@@ -66,11 +78,85 @@ def transform_csv_to_json(csv_path):
     # wrap-up with last pending record
     json_data.append(create_record(previous_row))
     # write into json format file
-    with open("test.json", "w+", encoding="utf-8") as json_file:
+    with open("rtec_data.json", "a+", encoding="utf-8") as json_file:
         json.dump(json_data, json_file, indent=4)
 
 
-def process(placa):
+def run_full_update(database, start_record, end_record):
+    # define Chromedrive
+    WEBD = ChromeUtils().init_driver(headless=True, verbose=True, maximized=True)
+    # open webpage for first time
+    WEBD.get(URL)
+    time.sleep(5)
+
+    counter = 1
+    for record_index, record in enumerate(
+        database[start_record:end_record], start=start_record
+    ):
+        # print(f"from {start_record}:{end_record} = {record_index}")
+        GLOBAL.count += 1
+        print(f"{GLOBAL.count/len(database)*100:.2f}%", end="\r")
+        # print(GLOBAL.count)
+        try:
+            actualizado = dt.strptime(
+                record["vehiculos"][0]["rtecs_actualizado"], "%d/%m/%Y"
+            )
+        except:
+            print(record)
+            continue
+        for pos, vehiculo in enumerate(record["vehiculos"]):
+            placa = vehiculo["placa"]
+            if record_needs_updating(vehiculo["rtecs"], actualizado):
+                try:
+                    update_database(
+                        scrape_data=process(placa, WEBD),
+                        database=database,
+                        record=record_index,
+                        pos=pos,
+                    )
+                    WEBD.get(URL)
+                    time.sleep(1)
+                    counter += 1
+                except (NoSuchElementException, ElementNotInteractableException):
+                    print(record)
+                    GLOBAL.errors += 1
+                    if GLOBAL.errors > 10:
+                        print("Exceeded max error count. End Thread.")
+                        quit()
+                    else:
+                        print(f"Error #{GLOBAL.errors} Caught. Sleep and Retry.")
+                        time.sleep(60)
+
+        # write database to disk every n captures
+        if counter % WRITE_FREQUENCY == 0:
+            write_database(database)
+
+    # last write in case there are pending changes in memory
+    write_database(database)
+
+
+def record_needs_updating(rtecs, actualizado):
+    """Checks if record meets criteria for updating"""
+
+    # Check: last update was longer than n days from today
+    if dt.now() - actualizado < td(days=DAYS_BEFORE_UPDATE):
+        return False
+
+    # Check: there is no data for rtecs
+    if not rtecs:
+        return True
+
+    # Check: fecha_hasta is in the past (with margin)
+    if dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y") > dt.now() - td(
+        days=DAYS_BEFORE_EXPIRY
+    ):
+        return False
+
+    # If all tests succeed, update record
+    return True
+
+
+def process(placa, WEBD):
     retry = False
     while True:
         # get captcha in string format
@@ -107,11 +193,11 @@ def process(placa):
     # extract data from table and parse relevant data
     response = {}
     data_index = (
-        ("empresa", 1),
+        ("certificadora", 1),
         ("placa", 1),
         ("certificado", 2),
-        ("desde", 3),
-        ("hasta", 4),
+        ("fecha_desde", 3),
+        ("fecha_hasta", 4),
         ("resultado", 5),
         ("vigencia", 6),
     )
@@ -124,7 +210,7 @@ def process(placa):
                 ).text
             }
         )
-    return response
+    return [response]
 
 
 def ocr(img):
@@ -133,51 +219,77 @@ def ocr(img):
     return result[0][1] if len(result) > 0 and len(result[0]) > 0 else ""
 
 
+def backup_database():
+    shutil.copyfile(
+        "rtec_data.json",
+        f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json",
+        follow_symlinks=True,
+    )
+
+
 def load_database():
     with open("rtec_data.json", mode="r") as file:
         return json.load(file)
 
 
 def update_database(scrape_data, database, record, pos):
-    # TODO: request lock for threading
+    # update record of entire database with new rtec info and last update date
     database[record]["vehiculos"][pos]["rtecs"] = scrape_data
+    database[record]["vehiculos"][pos]["rtecs_actualizado"] = dt.now().strftime(
+        "%d/%m/%Y"
+    )
     return database
 
 
-def main():
-    url = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
-    WEBD.get(url)
-    time.sleep(2)
+def write_database(database):
+    LOCK.acquire()
+    with open("rtec_data.json", "w+") as file:
+        json.dump(database, file, indent=4)
+    LOCK.release()
 
+
+def update_database_correlatives():
     database = load_database()
-    print(database[67])
-    data = [
-        {
-            "certificadora": "REVISIONES MAKALU S.A.C.",
-            "placa": "C9K342",
-            "certificado": "C-2023-218-331-007833",
-            "desde": "24/06/2023",
-            "hasta": "24/06/2024",
-            "resultado": "APROBADO",
-            "vigencia": "VIGENTE",
-        }
-    ]
-    database = update_database(data, database, 67, 0)
-    print(database[67])
-    quit()
-    for record in database[667:670]:
-        for pos, vehiculo in enumerate(record["vehiculos"]):
-            update_database(
-                scrape_data=process(vehiculo["placa"]),
-                database=database,
-                record=record,
-                pos=pos,
-            )
-            WEBD.get(url)
-            time.sleep(2)
+    for k, _ in enumerate(database):
+        database[k]["correlative"] = k
+    write_database(database)
 
+
+def main():
+
+    # create copy of database with distinct name before manipulating
+    backup_database()
+
+    # load current database into memory
+    database = load_database()
+
+    # iterate on all records in database and update the necessary ones, open n threads
+    _block = len(database) // NUMBER_THREADS
+    active_threads = []
+    for thread in range(NUMBER_THREADS):
+        _start = thread * _block
+        _end = (
+            len(database) if thread == (NUMBER_THREADS - 1) else (thread + 1) * _block
+        )
+        _t = threading.Thread(target=run_full_update, args=(database, _start, _end))
+        active_threads.append(_t)
+        _t.start()
+    for single_thread in active_threads:
+        single_thread.join()
+
+    # once database has been updated, reset the correlatives
+    # update_database_correlatives()
+
+
+# define constants
+WRITE_FREQUENCY = 50
+DAYS_BEFORE_UPDATE = 7
+DAYS_BEFORE_EXPIRY = 15
+NUMBER_THREADS = 2
 
 READER = easyocr.Reader(["es"], gpu=False)
-WEBD = ChromeUtils().init_driver(headless=True, verbose=True, maximized=True)
+URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
+LOCK = threading.Lock()
+GLOBAL = Central()
 
 main()
