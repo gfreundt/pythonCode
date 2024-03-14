@@ -10,6 +10,8 @@ import uuid
 import threading
 import easyocr
 
+from google.cloud import vision
+
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
