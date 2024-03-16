@@ -13,12 +13,12 @@ import easyocr
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
-from gft_utils import ChromeUtils
+from gft_utils import ChromeUtils, GoogleUtils
 
 
 class Monitor:
     def __init__(self) -> None:
-        self.UPDATE_FREQUENCY = 3
+        self.UPDATE_FREQUENCY = 5
         self.progress = 0
         self.correct_captcha = self.wrong_captcha = 0
         self.errors = 0
@@ -38,7 +38,7 @@ class Monitor:
             print(status, end="\r")
             time.sleep(self.UPDATE_FREQUENCY)
 
-    def monitor_without_threads(self):
+    def monitor(self):
         self.last_pending = 0
         self.last_change = dt.now()
         self.start_time = dt.now() - td(seconds=1)  # add second to avoid div by zero
@@ -59,25 +59,44 @@ class Monitor:
                     self.correct_captcha + self.wrong_captcha
                 )
 
-            status = f"[{str(dt.now()-self.start_time)[:-7]}] Process: {self.progress} / {DATABASE.len_database}\n"
+            _nrr = (
+                (self.writes + self.pending_writes)
+                * 60
+                / (dt.now() - self.start_time).total_seconds()
+            )
+
+            status = f"[{str(dt.now()-self.start_time)[:-7]}] Process: {self.progress} / {DATABASE.len_database} [{(DATABASE.len_database-self.progress)/(_nrr+0.0001):.0f} min left]\n"
             status += f"[Written: {str(self.writes)}] [Pending Write: {str(self.pending_writes)}]\n"
             status += f"[Since Last Change: {(dt.now()-self.last_change).total_seconds():.0f} sec]\n"
             status += f"[Captcha Rate: {_captcha_rate*100:.1f}%] [Errors: {str(self.errors)}]\n"
-            status += f"[New Record Rate: {((self.writes+self.pending_writes)*60/(dt.now()-self.start_time).total_seconds()):.1f} rec/m]\n"
+            status += f"[New Record Rate: {_nrr:.1f} rec/m]\n"
             status += f'[{"STALLED" if self.stalled else "ACTIVE"}]'
-            print(status)
+            # print(status)
 
             time.sleep(self.UPDATE_FREQUENCY)
-            os.system("cls")
+            # os.system("cls")
+
+    def send_gmail(self):
+        print("Sending Email.....")
+        try:
+            GOOGLE_UTILS.send_gmail(
+                "gfreundt@gmail.com",
+                "UserData Process",
+                f"Finished Process on {dt.now()}",
+            )
+            print("<<< Email Sent >>>")
+        except:
+            print("!!! Error Sending Email !!!")
 
 
 class Database:
-    def __init__(self):
+    def __init__(self, no_backup=False):
         # define database constants
-        self.DATABASE_NAME = os.path.join(os.curdir, "data", "rtec_data.json")
+        self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
         self.LOCK = threading.Lock()
         # backup database and load in memory
-        self.backup_database()
+        if not no_backup:
+            self.backup_database()
         self.load_database()
         self.len_database = len(self.database)
 
@@ -161,6 +180,37 @@ class Database:
 
     def dashboard(self):
         self.load_database()
+        # Brevete Dashboard
+        _tu = [[] for _ in range(3)]
+        for record_index, record in enumerate(DATABASE.database):
+            brevete = record["documento"]["brevete"]
+            actualizado = dt.strptime(
+                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
+            )
+            # Skip all records than have already been updated in last 24 hours
+            if dt.now() - actualizado < td(days=1):
+                continue
+            # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
+            if brevete:
+                hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
+                if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                    _tu[0].append(record_index)
+            # Priority 1: no brevete information and last update was 10+ days ago
+            if not brevete and dt.now() - actualizado >= td(days=10):
+                _tu[1].append(record_index)
+            # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(days=10):
+                _tu[2].append(record_index)
+        print("-" * 40)
+        print("Brevete Updating Statistics")
+        print("-" * 40)
+        print(
+            f"To Update:\n     Expiration Recent: {len(_tu[0])}\n     No Data: {len(_tu[1])}\n     Expiration Outdated: {len(_tu[2])}"
+        )
+        print(f"TOTAL: {sum([len(i) for i in _tu])}")
+        print(f"No Update: {DATABASE.len_database - sum([len(i) for i in _tu])}")
+
+        return
         with_documento = with_brevete = with_rtec = 0
         brevete_actualizado = rtec_actualizado = total_rtecs = 0
         brevete_null = 0
@@ -195,6 +245,17 @@ class Database:
 
         print(text)
 
+    def upload_to_drive(self):
+        print("Uploading to GDrive.....")
+        try:
+            GOOGLE_UTILS.upload_to_drive(
+                local_path=self.DATABASE_NAME,
+                drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
+            )
+            print("<<< Upload Successful >>>")
+        except:
+            print("!!! Error in Upload !!!")
+
 
 class RevTec:
     # define class constants
@@ -219,7 +280,7 @@ class RevTec:
                 if thread == (self.NUMBER_THREADS - 1)
                 else (thread + 1) * _block
             )
-            _t = threading.Thread(target=self.full_update, args=(DATABASE._start, _end))
+            _t = threading.Thread(target=self.run_full_update, args=(_start, _end))
             active_threads.append(_t)
             _t.start()
 
@@ -231,15 +292,12 @@ class RevTec:
         for single_thread in active_threads:
             single_thread.join()
 
-        # once database has been updated, reset the correlatives
-        DATABASE.update_database_correlatives()
-
-    def full_update(self, start_record, end_record):
+    def run_full_update(self, start_record, end_record):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
         # define Chromedriver
-        WEBD = ChromeUtils().init_driver(headless=True, verbose=False, maximized=True)
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
 
         # open url for first time
         WEBD.get(self.URL)
@@ -283,6 +341,33 @@ class RevTec:
 
         # last write in case there are pending changes in memory
         DATABASE.write_database()
+
+    def list_records_to_update(self):
+        to_update = [[] for _ in range(3)]
+        for record_index, record in enumerate(DATABASE.database):
+            vehiculos = record["vehiculos"]
+            for veh_index, vehiculo in enumerate(vehiculos):
+                actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
+                rtecs = vehiculo["rtecs"]
+                # Skip all records than have already been updated in last 24 hours
+                if dt.now() - actualizado < td(days=1):
+                    continue
+                # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
+                if rtecs:
+                    hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
+                    if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                        to_update[0].append((record_index, veh_index))
+                # Priority 1: no brevete information and last update was 10+ days ago
+                if not rtecs and dt.now() - actualizado >= td(days=10):
+                    to_update[1].append((record_index, veh_index))
+                # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+                if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
+                    days=10
+                ):
+                    to_update[2].append((record_index, veh_index))
+
+        # return flat list of records in order
+        return [i for j in to_update for i in j]
 
     def record_needs_updating(self, rtecs, actualizado):
         """Checks if record meets criteria for updating"""
@@ -368,121 +453,113 @@ class RevTec:
 
 
 class Brevete:
-    # define class constants
-    WRITE_FREQUENCY = 20
-    DAYS_BEFORE_UPDATE = 7
-    DAYS_BEFORE_EXPIRY = 15
-    NUMBER_THREADS = 1
-    MAX_CHROMEDRIVER_EXCEPTIONS = 120
     URL = "https://licencias.mtc.gob.pe/#/index"
 
     def __init__(self) -> None:
+        # define class constants
+        self.WRITE_FREQUENCY = 20
+        # define OCR
         self.READER = easyocr.Reader(["es"], gpu=False)
 
-    def run(self):
-        # start monitor in new thread
-        _monitor = threading.Thread(target=MONITOR.monitor_without_threads, daemon=True)
-        _monitor.start()
-
-        # iterate on all records in database and update the necessary ones, no threading
-        self.full_update(0, DATABASE.len_database)
-
-        # once database has been updated, reset the correlatives
-        DATABASE.update_database_correlatives()
-
-    def full_update(self, start_record, end_record):
+    def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
-        MONITOR.stalled = True
-        while MONITOR.stalled:
-            MONITOR.stalled = False
-            MONITOR.progress = 0
+        # create list of all records that need updating with priorities
+        records_to_update = self.list_records_to_update()
 
-            # define Chromedriver
+        process_complete = False
+        while not process_complete:
+            # set complete flag to True, changed if process stalled
+            process_complete = True
+
+            # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
                 headless=True, verbose=False, incognito=True
             )
-
-            # open url for first time
             self.WEBD.get(self.URL)
             time.sleep(2)
 
-            # iterate on every DNI in every record in indicated range, update if necessary
-            for record_index, record in enumerate(
-                DATABASE.database[start_record:end_record], start=start_record
-            ):
-                # check if record requires update and proceed with update
+            # iterate on all records that require updating
+            for rec, record_index in enumerate(records_to_update):
+                MONITOR.progress = rec
+
+                # get scraper data, if webpage fails skip record
+                _dni = DATABASE.database[record_index]["documento"]["numero"]
                 try:
+                    new_record = self.scraper(dni=_dni)
+                except:
+                    continue
 
-                    if self.record_needs_updating(
-                        record["documento"]["brevete"],
-                        dt.strptime(
-                            record["documento"]["brevete_actualizado"], "%d/%m/%Y"
-                        ),
-                    ):
-                        # update brevete data
-                        DATABASE.database[record_index]["documento"]["brevete"] = (
-                            self.scraper(dni=record["documento"]["numero"])
-                        )
-                        # update last update data
-                        DATABASE.database[record_index]["documento"][
-                            "brevete_actualizado"
-                        ] = dt.now().strftime("%d/%m/%Y")
+                # if database has data and response is None, do not overwrite database
+                if (
+                    not new_record
+                    and DATABASE.database[record_index]["documento"]["brevete"]
+                ):
+                    continue
 
-                        # update monitor stats
-                        MONITOR.pending_writes += 1
+                # update brevete data and last update in database
+                DATABASE.database[record_index]["documento"]["brevete"] = new_record
+                DATABASE.database[record_index]["documento"][
+                    "brevete_actualizado"
+                ] = dt.now().strftime("%d/%m/%Y")
 
-                        # write database to disk every n captures
-                        if MONITOR.pending_writes % self.WRITE_FREQUENCY == 0:
-                            MONITOR.pending_writes = 0
-                            MONITOR.writes += self.WRITE_FREQUENCY
-                            DATABASE.write_database()
+                # update monitor stats
+                MONITOR.pending_writes += 1
 
-                        # if monitor detects that process is stalled, restart
-                        if MONITOR.stalled:
-                            self.WEBD.close()
-                            time.sleep(10)
-                            MONITOR.last_change = dt.now()
-                            break
-                    MONITOR.progress += 1
+                # write database to disk every n captures
+                if MONITOR.pending_writes % self.WRITE_FREQUENCY == 0:
+                    MONITOR.pending_writes = 0
+                    MONITOR.writes += self.WRITE_FREQUENCY
+                    DATABASE.write_database()
 
-                except (NoSuchElementException, ElementNotInteractableException):
-                    # error with webpage, reload
-                    time.sleep(3)
-                    self.WEBD.get(self.URL)
-                    time.sleep(3)
+                # if monitor detects that process is stalled, restart
+                if MONITOR.stalled:
+                    # set complete flag to False to force restart of updating process
+                    process_complete = False
+                    # close current webdriver session and wait
+                    self.WEBD.close()
+                    time.sleep(1)
+                    # update monitor stats
+                    MONITOR.last_change = dt.now()
+                    break
 
-            # last write in case there are pending changes in memory
+            # last write to capture any pending changes in database
             DATABASE.write_database()
 
-    def record_needs_updating(self, brevete, actualizado):
-        """Checks if record meets criteria for updating"""
+    def list_records_to_update(self):
+        to_update = [[] for _ in range(3)]
+        for record_index, record in enumerate(DATABASE.database):
+            brevete = record["documento"]["brevete"]
+            actualizado = dt.strptime(
+                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
+            )
+            # Skip all records than have already been updated in last 24 hours
+            if dt.now() - actualizado < td(days=1):
+                continue
+            # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
+            if brevete:
+                hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
+                if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                    to_update[0].append(record_index)
+            # Priority 1: no brevete information and last update was 10+ days ago
+            if not brevete and dt.now() - actualizado >= td(days=10):
+                to_update[1].append(record_index)
+            # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(days=10):
+                to_update[2].append(record_index)
 
-        # Check: last update was longer than n days from today
-        if dt.now() - actualizado < td(days=self.DAYS_BEFORE_UPDATE):
-            return False
-
-        # Check: there is no data for rtecs
-        if not brevete:
-            return True
-
-        # Check: fecha_hasta is in the past (with margin)
-        if dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y") > dt.now() - td(
-            days=self.DAYS_BEFORE_EXPIRY
-        ):
-            return False
-
-        # All else update record
-        return True
+        # return flat list of records in order
+        return [i for j in to_update for i in j]
 
     def scraper(self, dni):
-        retry = False
+        retry_captcha = False
+        # outer loop: in case captcha is not accepted by webpage, try with a new one
         while True:
-            # get captcha in string format
             captcha_txt = ""
+            # inner loop: in case OCR cannot figure out captcha, retry new captcha
             while not captcha_txt:
-                if retry:
+                if retry_captcha:
                     self.WEBD.refresh()
                     time.sleep(1)
                 # if monitor detects that process is stalled, exit scraper
@@ -505,7 +582,7 @@ class Brevete:
                         if len(_captcha) > 0 and len(_captcha[0]) > 0
                         else ""
                     )
-                    retry = True
+                    retry_captcha = True
                 except ValueError:
                     # captcha image did not load, reset webpage
                     MONITOR.errors += 1
@@ -513,7 +590,6 @@ class Brevete:
                     time.sleep(1.5)
                     self.WEBD.get(self.URL)
                     time.sleep(1.5)
-                    # self.WEBD.refresh()
 
             # enter data into fields and run
             self.WEBD.find_element(By.ID, "mat-input-1").send_keys(dni)
@@ -569,11 +645,10 @@ class Brevete:
                     }
                 )
         except NoSuchElementException:
-            # if element is not present, there is no data for that DOCUMENTO
             response = None
 
         # clear webpage for next iteration and small wait
-        time.sleep(1)
+        time.sleep(2)
         self.WEBD.back()
         time.sleep(0.5)
         self.WEBD.refresh()
@@ -589,18 +664,60 @@ class Sunarp:
     DAYS_BEFORE_EXPIRY = 15
     NUMBER_THREADS = 1
     MAX_CHROMEDRIVER_EXCEPTIONS = 120
-    URL = "https://www.sunarp.gob.pe/ConsultaVehicular/"
+    URL = "https://licencias.mtc.gob.pe/#/index"
 
 
 def main():
-    os.system("cls")
+
+    r = RevTec()
+    print(r.list_records_to_update())
+    # DATABASE.write_database()
+    return
+
+    # show database stats
     DATABASE.dashboard()
-    # revtec = RevTec()
     brevete = Brevete()
-    brevete.run()
+    # brevete.run()
+
+    arguments = sys.argv
+    # default value if no arguments entered
+    if len(arguments) == 1:
+        # arguments = ["RTEC", "BREVETE"]
+        arguments = ["BREVETE"]
+
+    # start monitor in daemon thread
+    _monitor = threading.Thread(target=MONITOR.monitor, daemon=True)
+    _monitor.start()
+
+    # run all services requested
+    threads = []
+    if "RTEC" in arguments:
+        revtec = RevTec()
+        threads.append(threading.Thread(target=revtec.run))
+    if "BREVETE" in arguments:
+        brevete = Brevete()
+        # launch BREVETE updates (non-thread)
+        brevete.run_full_update()
+        # threads.append(threading.Thread(target=brevete.run))
+
+    # TODO: start and join threads
+    # for thread in threads:
+    #     print("cc")
+    #     thread.start()
+    # for thread in threads:
+    #     print("dd")
+    #     thread.join()
+
+    # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
+    DATABASE.update_database_correlatives()
+    # DATABASE.upload_to_drive()
+    MONITOR.send_gmail()
+
+    DATABASE.dashboard()
 
 
 if __name__ == "__main__":
-    DATABASE = Database()
+    DATABASE = Database(no_backup=False)
     MONITOR = Monitor()
+    GOOGLE_UTILS = GoogleUtils()
     main()
