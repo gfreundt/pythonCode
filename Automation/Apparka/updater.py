@@ -9,6 +9,9 @@ from copy import deepcopy as copy
 import uuid
 import threading
 import easyocr
+from tqdm import tqdm
+import logging
+import random
 
 
 # Custom imports
@@ -17,7 +20,7 @@ from gft_utils import ChromeUtils, GoogleUtils
 
 
 class Monitor:
-    def __init__(self) -> None:
+    def __init__(self, nolog=False) -> None:
         self.UPDATE_FREQUENCY = 5
         self.progress = 0
         self.correct_captcha = self.wrong_captcha = 0
@@ -25,6 +28,8 @@ class Monitor:
         self.writes = 0
         self.pending_writes = 0
         self.stalled = False
+        if not nolog:
+            self.start_logger()
 
     def monitor_with_threads(self, threads):
         while True:
@@ -82,11 +87,20 @@ class Monitor:
             GOOGLE_UTILS.send_gmail(
                 "gfreundt@gmail.com",
                 "UserData Process",
-                f"Finished Process on {dt.now()}",
+                f"Finished Process on {dt.now()}.\nRevTec: {MONITOR.total_records_revtec}\nBrevete: {MONITOR.total_records_brevete}",
             )
-            print("<<< Email Sent >>>")
+            MONITOR.log.info(f"GMail sent.")
         except:
-            print("!!! Error Sending Email !!!")
+            MONITOR.log.warning(f"Gmail ERROR.")
+
+    def start_logger(self):
+        logging.basicConfig(
+            filename="updater.log",
+            filemode="a",
+            format="%(asctime)s | %(levelname)s | %(message)s",
+        )
+        self.log = logging.getLogger()
+        self.log.setLevel(logging.INFO)
 
 
 class Database:
@@ -149,14 +163,13 @@ class Database:
 
     def backup_database(self):
         """Create local copy of database with random 8-letter text to avoid overwriting"""
+        _filename = f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json"
         shutil.copyfile(
             self.DATABASE_NAME,
-            os.path.join(
-                os.curdir, "data", f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json"
-            ),
+            os.path.join(os.curdir, "data", _filename),
             follow_symlinks=True,
         )
-        print("<<< Database Backup Complete >>>")
+        MONITOR.log.info(f"Database backup complete. File = {_filename}.")
 
     def load_database(self):
         """Opens database and stores into to memory as a list of dictionaries"""
@@ -170,12 +183,14 @@ class Database:
             json.dump(self.database, file, indent=4)
         self.LOCK.release()
         MONITOR.last_pending = 0
+        MONITOR.log.info(f"Database write.")
 
     def update_database_correlatives(self):
         """Opens database, updates correlatives for all records, writes database and closes"""
         self.load_database()
         for k, _ in enumerate(self.database):
             self.database[k]["correlative"] = k
+        MONITOR.log.info(f"Correlatives updated.")
         self.write_database()
 
     def dashboard(self):
@@ -252,17 +267,14 @@ class Database:
                 local_path=self.DATABASE_NAME,
                 drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
             )
-            print("<<< Upload Successful >>>")
+            MONITOR.log.info(f"GDrive upload complete.")
         except:
-            print("!!! Error in Upload !!!")
+            MONITOR.log.warning(f"GDrive upload ERROR.")
 
 
 class RevTec:
     # define class constants
-    WRITE_FREQUENCY = 50
-    DAYS_BEFORE_UPDATE = 7
-    DAYS_BEFORE_EXPIRY = 15
-    NUMBER_THREADS = 10
+    WRITE_FREQUENCY = 200
     URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
 
     def __init__(self) -> None:
@@ -292,111 +304,129 @@ class RevTec:
         for single_thread in active_threads:
             single_thread.join()
 
-    def run_full_update(self, start_record, end_record):
+    def run_full_update(self, start_record=0, end_record=0):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
-        # define Chromedriver
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        # log start of process
+        MONITOR.log.info(f"Begin RevTec Iteration {MONITOR.iteration}.")
 
-        # open url for first time
-        WEBD.get(self.URL)
-        time.sleep(5)
+        # create list of all records that need updating with priorities
+        records_to_update = self.list_records_to_update()
+        MONITOR.total_records_revtec = len(records_to_update)
+        MONITOR.log.info(f"Will process {MONITOR.total_records_revtec} records.")
 
-        # iterate on every record in indicated range, then on every PLACA in each record, update if necessary
-        _counter = 1
-        for record_index, record in enumerate(
-            DATABASE.database[start_record:end_record], start=start_record
-        ):
-            self.counter += 1
-            print(f"{self.counter/len(DATABASE.database)*100:.2f}%", end="\r")
-            for pos, vehiculo in enumerate(record["vehiculos"]):
+        process_complete = False
+        while not process_complete:
+            # set complete flag to True, changed if process stalled
+            process_complete = True
+
+            # define Chromedriver and open url for first time
+            self.WEBD = ChromeUtils().init_driver(
+                headless=True, verbose=False, maximized=True
+            )
+            self.WEBD.get(self.URL)
+            time.sleep(2)
+
+            # iterate on all records that require updating
+            for rec, (record_index, position) in tqdm(
+                enumerate(records_to_update), total=len(records_to_update)
+            ):
+                MONITOR.progress = rec
+                # get scraper data, if webpage fails, wait, reload page and skip record
+                _placa = DATABASE.database[record_index]["vehiculos"][position]["placa"]
                 try:
-                    actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
+                    new_record = self.scraper(placa=_placa)
+                except KeyboardInterrupt:
+                    quit()
                 except:
-                    print(f"**** Database Error with {vehiculo}. Skipping record.")
+                    time.sleep(0.5)
+                    self.WEBD.refresh()
+                    time.sleep(1)
                     continue
-                placa = vehiculo["placa"]
-                if self.record_needs_updating(vehiculo["rtecs"], actualizado):
-                    try:
-                        # update rtec data
-                        DATABASE.database[record_index]["vehiculos"][pos]["rtecs"] = (
-                            self.scraper(placa)
-                        )
-                        # update last update data
-                        DATABASE.database[record_index]["vehiculos"][pos][
-                            "rtecs_actualizado"
-                        ] = dt.now().strftime("%d/%m/%Y")
-                        # clear url for next iteration and small wait
-                        WEBD.get(self.URL)
-                        time.sleep(0.5)
-                        _counter += 1
-                    except (NoSuchElementException, ElementNotInteractableException):
-                        MONITOR.errors += 1
-                        time.sleep(5)
 
-            # write database to disk every n captures
-            if _counter % self.WRITE_FREQUENCY == 0:
-                DATABASE.write_database()
+                # if database has data and response is None, do not overwrite database
+                if (
+                    not new_record
+                    and DATABASE.database[record_index]["vehiculos"][position]["rtecs"]
+                ):
+                    continue
+                # update brevete data and last update in database
+                DATABASE.database[record_index]["vehiculos"][position][
+                    "rtecs"
+                ] = new_record
+                DATABASE.database[record_index]["vehiculos"][position][
+                    "rtecs_actualizado"
+                ] = dt.now().strftime("%d/%m/%Y")
+
+                MONITOR.pending_writes += 1
+
+                # write database to disk every n captures
+                if MONITOR.pending_writes % self.WRITE_FREQUENCY == 0:
+                    MONITOR.pending_writes = 0
+                    MONITOR.writes += self.WRITE_FREQUENCY
+                    DATABASE.write_database()
+
+                # if monitor detects that process is stalled, restart
+                if MONITOR.stalled:
+                    # set complete flag to False to force restart of updating process
+                    process_complete = False
+                    # close current webdriver session and wait
+                    self.WEBD.close()
+                    time.sleep(1)
+                    # update monitor stats
+                    MONITOR.last_change = dt.now()
+                    break
 
         # last write in case there are pending changes in memory
         DATABASE.write_database()
+        # log end of process
+        MONITOR.log.info(f"End RevTec Iteration {MONITOR.iteration}.")
 
     def list_records_to_update(self):
-        to_update = [[] for _ in range(3)]
+        to_update = [[] for _ in range(5)]
         for record_index, record in enumerate(DATABASE.database):
             vehiculos = record["vehiculos"]
             for veh_index, vehiculo in enumerate(vehiculos):
                 actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
                 rtecs = vehiculo["rtecs"]
+
                 # Skip all records than have already been updated in last 24 hours
                 if dt.now() - actualizado < td(days=1):
                     continue
-                # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
-                if rtecs:
+
+                # Priority 0: rtec will expire in 3 days or has expired in the last 30 days
+                if rtecs and rtecs[0]["fecha_hasta"]:
                     hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
                     if td(days=-3) <= dt.now() - hasta <= td(days=30):
                         to_update[0].append((record_index, veh_index))
-                # Priority 1: no brevete information and last update was 10+ days ago
-                if not rtecs and dt.now() - actualizado >= td(days=10):
+
+                # Priority 1: rtecs with no fecha hasta
+                if rtecs and not rtecs[0]["fecha_hasta"]:
                     to_update[1].append((record_index, veh_index))
-                # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+
+                # Priority 2: no rtec information and last update was 10+ days ago
+                if not rtecs and dt.now() - actualizado >= td(days=10):
+                    to_update[2].append((record_index, veh_index))
+
+                # Priority 3: rtec will expire in more than 30 days and last update was 10+ days ago
                 if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
                     days=10
                 ):
-                    to_update[2].append((record_index, veh_index))
+                    to_update[3].append((record_index, veh_index))
 
         # return flat list of records in order
         return [i for j in to_update for i in j]
 
-    def record_needs_updating(self, rtecs, actualizado):
-        """Checks if record meets criteria for updating"""
-
-        # Check: last update was longer than n days from today
-        if dt.now() - actualizado < td(days=self.DAYS_BEFORE_UPDATE):
-            return False
-
-        # Check: there is no data for rtecs
-        if not rtecs:
-            return True
-
-        # Check: fecha_hasta is in the past (with margin)
-        if dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y") > dt.now() - td(
-            days=self.DAYS_BEFORE_EXPIRY
-        ):
-            return False
-
-        # If all tests succeed, update record
-        return True
-
     def scraper(self, placa):
-        retry = False
+        retry_captcha = False
         while True:
             # get captcha in string format
             captcha_txt = ""
             while not captcha_txt:
-                if retry:
+                if retry_captcha:
                     self.WEBD.refresh()
+                    time.sleep(1)
                 # captura captcha image from webpage store in variable
                 _captcha_img_url = self.WEBD.find_element(
                     By.ID, "imgCaptcha"
@@ -409,7 +439,7 @@ class RevTec:
                 captcha_txt = (
                     _captcha[0][1] if len(_captcha) > 0 and len(_captcha[0]) > 0 else ""
                 )
-                retry = True
+                retry_captcha = True
 
             # enter data into fields and run
             self.WEBD.find_element(By.ID, "txtPlaca").send_keys(placa)
@@ -424,6 +454,9 @@ class RevTec:
             if "no es correcto" in _alerta:
                 continue
             elif "encontraron resultados" in _alerta:
+                # clear webpage for next iteration and return None
+                self.WEBD.refresh()
+                time.sleep(0.5)
                 return None
             else:
                 break
@@ -449,6 +482,11 @@ class RevTec:
                     ).text
                 }
             )
+        # clear webpage for next iteration and small wait
+        time.sleep(1)
+        self.WEBD.refresh()
+        time.sleep(1)
+
         return [response]
 
 
@@ -457,7 +495,7 @@ class Brevete:
 
     def __init__(self) -> None:
         # define class constants
-        self.WRITE_FREQUENCY = 20
+        self.WRITE_FREQUENCY = 50
         # define OCR
         self.READER = easyocr.Reader(["es"], gpu=False)
 
@@ -465,8 +503,13 @@ class Brevete:
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
+        # log start of process
+        MONITOR.log.info(f"Begin Brevete Iteration {MONITOR.iteration}.")
+
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+        MONITOR.total_records_brevete = len(records_to_update)
+        MONITOR.log.info(f"Will process {MONITOR.total_records_brevete} records.")
 
         process_complete = False
         while not process_complete:
@@ -475,20 +518,26 @@ class Brevete:
 
             # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, incognito=True
+                headless=False, verbose=False, incognito=True
             )
             self.WEBD.get(self.URL)
             time.sleep(2)
 
             # iterate on all records that require updating
-            for rec, record_index in enumerate(records_to_update):
+            for rec, record_index in tqdm(
+                enumerate(records_to_update), total=len(records_to_update)
+            ):
                 MONITOR.progress = rec
 
-                # get scraper data, if webpage fails skip record
+                # get scraper data, if webpage fails, refresh and skip record
                 _dni = DATABASE.database[record_index]["documento"]["numero"]
                 try:
                     new_record = self.scraper(dni=_dni)
                 except:
+                    self.WEBD.refresh()
+                    time.sleep(1.5)
+                    self.WEBD.get(self.URL)
+                    time.sleep(1.5)
                     continue
 
                 # if database has data and response is None, do not overwrite database
@@ -524,8 +573,10 @@ class Brevete:
                     MONITOR.last_change = dt.now()
                     break
 
-            # last write to capture any pending changes in database
-            DATABASE.write_database()
+        # last write to capture any pending changes in database
+        DATABASE.write_database()
+        # log end of process
+        MONITOR.log.info(f"End Brevete Iteration {MONITOR.iteration}.")
 
     def list_records_to_update(self):
         to_update = [[] for _ in range(3)]
@@ -657,67 +708,197 @@ class Brevete:
         return response
 
 
-class Sunarp:
+class Sutran:
     # define class constants
-    WRITE_FREQUENCY = 20
-    DAYS_BEFORE_UPDATE = 7
-    DAYS_BEFORE_EXPIRY = 15
-    NUMBER_THREADS = 1
-    MAX_CHROMEDRIVER_EXCEPTIONS = 120
-    URL = "https://licencias.mtc.gob.pe/#/index"
+    URL = "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
+
+    def __init__(self) -> None:
+        self.WRITE_FREQUENCY = 200
+        self.READER = easyocr.Reader(["es"], gpu=False)
+
+    def run_full_update(self):
+
+        # log start of process
+        MONITOR.log.info("Begin Sutran.")
+
+        # create list of all records that need updating with priorities
+        records_to_update = self.list_records_to_update()
+        MONITOR.total_records_sutran = len(records_to_update)
+        MONITOR.log.info(f"Will process {MONITOR.total_records_sutran} records.")
+
+        process_complete = False
+        while not process_complete:
+            # set complete flag to True, changed if process stalled
+            process_complete = True
+
+            # define Chromedriver and open url for first time
+            self.WEBD = ChromeUtils().init_driver(
+                headless=True, verbose=False, maximized=True
+            )
+            self.WEBD.get(self.URL)
+            time.sleep(2)
+
+        # iterate on all records that require updating
+        for rec, (record_index, position) in tqdm(
+            enumerate(records_to_update), total=len(records_to_update)
+        ):
+
+            MONITOR.progress = rec
+            # get scraper data, if webpage fails skip record
+            _placa = DATABASE.database[record_index]["vehiculos"][position]["placa"]
+            try:
+                new_record = self.scraper(placa=_placa)
+            except KeyboardInterrupt:
+                quit()
+            except:
+                continue
+
+            # if database has data and response is None, do not overwrite database
+            if (
+                not new_record
+                and DATABASE.database[record_index]["vehiculos"][position]["multas"][
+                    "sutran"
+                ]
+            ):
+                continue
+
+            # update sutran data and last update in database
+            DATABASE.database[record_index]["vehiculos"][position]["multas"][
+                "sutran"
+            ] = new_record
+            DATABASE.database[record_index]["vehiculos"][position]["multas"][
+                "sutran_actualizado"
+            ] = (dt.now() - td(days=random.randrange(0, 30))).strftime("%d/%m/%Y")
+
+            MONITOR.pending_writes += 1
+
+            # write database to disk every n captures
+            if MONITOR.pending_writes % self.WRITE_FREQUENCY == 0:
+                MONITOR.pending_writes = 0
+                MONITOR.writes += self.WRITE_FREQUENCY
+                DATABASE.write_database()
+
+        # last write in case there are pending changes in memory
+        DATABASE.write_database()
+
+    def list_records_to_update(self):
+        to_update = [[] for _ in range(2)]
+        for record_index, record in enumerate(DATABASE.database):
+            vehiculos = record["vehiculos"]
+            for veh_index, vehiculo in enumerate(vehiculos):
+                actualizado = dt.strptime(
+                    vehiculo["multas"]["sutran_actualizado"], "%d/%m/%Y"
+                )
+                # Skip all records than have already been updated in last 24 hours
+                if dt.now() - actualizado < td(days=1):
+                    continue
+                # Priority 0: last update over 30 days
+                if dt.now() - actualizado >= td(days=30):
+                    to_update[0].append((record_index, veh_index))
+
+        # return flat list of records in order
+        return [i for j in to_update for i in j]
+
+    def scraper(self, placa):
+        retry_captcha = False
+        while True:
+            # get captcha in string format
+            captcha_txt = ""
+            while not captcha_txt:
+                if retry_captcha:
+                    self.WEBD.refresh()
+                    time.sleep(0.5)
+                # capture captcha image from frame name
+                _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
+                self.WEBD.switch_to.frame(_iframe)
+                captcha_txt = (
+                    self.WEBD.find_element(By.ID, "iimage")
+                    .get_attribute("src")
+                    .split("=")[-1]
+                )
+                captcha_txt = captcha_txt.replace("%C3%91", "Ñ")
+
+            # enter data into fields and run
+            self.WEBD.find_element(By.ID, "txtPlaca").send_keys(placa)
+            time.sleep(0.5)
+            self.WEBD.find_element(By.ID, "TxtCodImagen").send_keys(captcha_txt)
+            time.sleep(0.5)
+            self.WEBD.find_element(By.ID, "BtnBuscar").click()
+            time.sleep(0.5)
+
+            # if captcha is not correct, refresh and restart cycle, if no data found, return None
+            _alerta = self.WEBD.find_element(By.ID, "LblMensaje").text
+            # self.WEBD.switch_to.default_content()
+
+            if "incorrecto" in _alerta:
+                continue
+            elif "pendientes" in _alerta:
+                self.WEBD.refresh()
+                time.sleep(0.5)
+                return None
+            else:
+                break
+
+        response = {}
+        data_index = (
+            ("documento", 1),
+            ("tipo", 2),
+            ("fecha_documento", 3),
+            ("codigo_infraccion", 4),
+            ("clasificacion", 5),
+        )
+        for data_unit, pos in data_index:
+            response.update(
+                {
+                    data_unit: self.WEBD.find_element(
+                        By.XPATH,
+                        f"/html/body/form/div[3]/div[3]/div/table/tbody/tr[2]/td[{pos}]",
+                    ).text
+                }
+            )
+        # clear webpage for next iteration and small wait
+        self.WEBD.refresh()
+        time.sleep(0.5)
+
+        return response
 
 
 def main():
-
-    r = RevTec()
-    print(r.list_records_to_update())
-    # DATABASE.write_database()
-    return
-
-    # show database stats
-    DATABASE.dashboard()
-    brevete = Brevete()
-    # brevete.run()
 
     arguments = sys.argv
     # default value if no arguments entered
     if len(arguments) == 1:
         # arguments = ["RTEC", "BREVETE"]
-        arguments = ["BREVETE"]
+        # arguments = ["BREVETE"]
+        arguments = ["SUTRAN"]
 
     # start monitor in daemon thread
     _monitor = threading.Thread(target=MONITOR.monitor, daemon=True)
     _monitor.start()
 
-    # run all services requested
-    threads = []
-    if "RTEC" in arguments:
-        revtec = RevTec()
-        threads.append(threading.Thread(target=revtec.run))
-    if "BREVETE" in arguments:
-        brevete = Brevete()
-        # launch BREVETE updates (non-thread)
-        brevete.run_full_update()
-        # threads.append(threading.Thread(target=brevete.run))
-
-    # TODO: start and join threads
-    # for thread in threads:
-    #     print("cc")
-    #     thread.start()
-    # for thread in threads:
-    #     print("dd")
-    #     thread.join()
+    # run all requested services 3 times to capture as many records as possible
+    for i in range(3):
+        MONITOR.iteration = i
+        if "RTEC" in arguments:
+            revtec = RevTec()
+            revtec.run_full_update()
+        if "BREVETE" in arguments:
+            brevete = Brevete()
+            brevete.run_full_update()
+        if "SUTRAN" in arguments:
+            sutran = Sutran()
+            sutran.run_full_update()
 
     # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
     DATABASE.update_database_correlatives()
     # DATABASE.upload_to_drive()
     MONITOR.send_gmail()
 
-    DATABASE.dashboard()
-
 
 if __name__ == "__main__":
-    DATABASE = Database(no_backup=False)
     MONITOR = Monitor()
+    MONITOR.log.info("Updater Begin.")
+    DATABASE = Database(no_backup=False)
     GOOGLE_UTILS = GoogleUtils()
     main()
+    MONITOR.log.info("Updater End.")

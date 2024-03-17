@@ -2,6 +2,8 @@ import os
 import platform
 import time
 import random
+from pydrive.drive import GoogleDrive
+from pydrive.auth import GoogleAuth
 
 
 class ChromeUtils:
@@ -227,3 +229,41 @@ class pygameUtils:
             )
             for i in _fonts
         }
+
+
+class GoogleUtils:
+    def __init__(self) -> None:
+
+        self.DRIVE_CREDENTIALS_PATH = os.path.join(
+            "d:\pythonCode", "Resources", "ConfigData"
+        )
+
+    def upload_to_drive(self, local_path, drive_filename):
+        # temporarily move current working directory to where credentials are stored
+        cwd = os.getcwd()
+        os.chdir(self.DRIVE_CREDENTIALS_PATH)
+
+        # authenticate
+        gauth = GoogleAuth()
+
+        # return to previous current working directory
+        os.chdir(cwd)
+
+        # connect to Drive
+        gauth.LocalWebserverAuth()
+        drive = GoogleDrive(gauth)
+
+        # select file to upload
+        f = drive.CreateFile({"title": drive_filename})
+        f.SetContentFile(local_path)
+
+        # execute and clean variable
+        f.Upload()
+        f = None
+
+    def send_gmail(self, to, subject, body, attachments=[]):
+        # must be imported close to sending email to avoid "broken pipe" error
+        import ezgmail
+
+        # sent from gfreundt@gmail.com
+        ezgmail.send(to, subject, body, attachments)
