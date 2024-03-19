@@ -109,6 +109,9 @@ class Database:
     def __init__(self, no_backup=False):
         # define database constants
         self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
+        self.GDRIVE_BACKUP_PATH = os.path.join(
+            "g:", "\My Drive", "pythonCoding", "Updater Data", "rtec_data.json"
+        )
         self.LOCK = threading.Lock()
         # backup database and load in memory
         if not no_backup:
@@ -263,26 +266,30 @@ class Database:
         print(text)
 
     def upload_to_drive(self):
-        print("Uploading to GDrive.....")
+        # first try a direct copy yo GDrive drive in PC, if not possible try direct upload to GDrive
         try:
-            GOOGLE_UTILS.upload_to_drive(
-                local_path=self.DATABASE_NAME,
-                drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
+            shutil.copy(
+                self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
             )
-            MONITOR.log.info(f"GDrive upload complete.")
         except:
-            MONITOR.log.warning(f"GDrive upload ERROR.")
+            try:
+                GOOGLE_UTILS.upload_to_drive(
+                    local_path=self.DATABASE_NAME,
+                    drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
+                )
+                MONITOR.log.info(f"GDrive upload complete.")
+            except:
+                MONITOR.log.warning(f"GDrive upload ERROR.")
 
 
 class RevTec:
     # define class constants
-    WRITE_FREQUENCY = 200
-
     URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
 
     def __init__(self) -> None:
-        self.counter = 0
         self.READER = easyocr.Reader(["es"], gpu=False)
+        self.WRITE_FREQUENCY = 200
+        self.timer_on = dt.now()
 
     def run(self):
         # iterate on all records in database and update the necessary ones, open n threads
@@ -384,7 +391,9 @@ class RevTec:
         # last write in case there are pending changes in memory
         DATABASE.write_database()
         # log end of process
-        MONITOR.log.info(f"End RevTec.")
+        MONITOR.log.info(
+            f"End Brevete. Total Process Time: {(dt.now()-self.timer_on).strftime('%H:%M:%S')}"
+        )
 
     def list_records_to_update(self):
         to_update = [[] for _ in range(5)]
@@ -501,6 +510,7 @@ class Brevete:
         self.WRITE_FREQUENCY = 50
         # define OCR
         self.READER = easyocr.Reader(["es"], gpu=False)
+        self.timer_on = dt.now()
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
@@ -593,7 +603,9 @@ class Brevete:
         # last write to capture any pending changes in database
         DATABASE.write_database()
         # log end of process
-        MONITOR.log.info(f"End Brevete.")
+        MONITOR.log.info(
+            f"End Brevete. Total Process Time: {(dt.now()-self.timer_on).strftime('%H:%M:%S')}"
+        )
 
     def list_records_to_update(self):
         # check for switch to force updating all
@@ -786,7 +798,7 @@ class Sutran:
     def __init__(self) -> None:
         self.WRITE_FREQUENCY = 200
         self.NUMBER_OF_THREADS = 7
-        # self.READER = easyocr.Reader(["es"], gpu=False)
+        self.timer_on = dt.now()
 
     def run_threads(self, nothreads=False):
         records_to_update = self.list_records_to_update()
@@ -853,6 +865,8 @@ class Sutran:
             except KeyboardInterrupt:
                 quit()
             except:
+                MONITOR.log.info(f"SUTRAN - Skipped Rec {rec}")
+                self.WEBD.refresh()
                 continue
 
             # if database has data and response is None, do not overwrite database
@@ -882,6 +896,11 @@ class Sutran:
 
         # last write in case there are pending changes in memory
         DATABASE.write_database()
+
+        # log end of process
+        MONITOR.log.info(
+            f"End Sutran. Total Process Time: {(dt.now()-self.timer_on).strftime('%H:%M:%S')}"
+        )
 
     def list_records_to_update(self):
         to_update = [[] for _ in range(2)]
@@ -917,31 +936,20 @@ class Sutran:
 
             self.WEBD.find_element(By.ID, "txtPlaca").send_keys(placa)
             time.sleep(0.2)
-            elements = (
-                self.WEBD.find_elements(By.ID, "TxtCodImagen"),
-                self.WEBD.find_elements(By.ID, "BtnBuscar"),
-            )
-            if not elements[0] or not elements[1]:
-                self.WEBD.refresh()
-                continue
-            else:
-                elements[0][0].send_keys(captcha_txt)
-                time.sleep(0.2)
-                elements[1][0].click()
-            time.sleep(0.5)
+            self.WEBD.find_element(By.ID, "TxtCodImagen").send_keys(captcha_txt)
+            time.sleep(0.2)
+            self.WEBD.find_element(By.ID, "BtnBuscar").click()
+            time.sleep(0.4)
 
             # if captcha is not correct, refresh and restart cycle, if no data found, return None
-            elements = self.WEBD.find_elements(By.ID, "LblMensaje")
-            if elements:
-                _alerta = self.WEBD.find_element(By.ID, "LblMensaje").text
-            else:
-                self.WEBD.refresh()
-                continue
+            _alerta = self.WEBD.find_element(By.ID, "LblMensaje").text
+
             # self.WEBD.switch_to.default_content()
 
+            # posible outcomes: captcha incorrect, no pending, placa not entered correctly, data shown
             if "incorrecto" in _alerta:
                 continue
-            elif "pendientes" in _alerta:
+            elif "pendientes" in _alerta or "letras" in _alerta:
                 self.WEBD.refresh()
                 time.sleep(0.2)
                 return None
