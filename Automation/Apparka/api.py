@@ -1,4 +1,5 @@
 from updater_dev import Brevete
+import json, os
 
 from flask import Flask, render_template, request
 
@@ -19,6 +20,13 @@ def rtec():
     return render_template("rtec.html")
 
 
-if __name__ == "__main__":
+@app.route("/dashboard")
+def dashboard():
+    with open(DASHBOARD_NAME, "r") as file:
+        dashboard = json.load(file)
+    return render_template("dashboard.html", data=dashboard)
 
+
+if __name__ == "__main__":
+    DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.json")
     app.run(host="0.0.0.0", port=8000, debug=True)

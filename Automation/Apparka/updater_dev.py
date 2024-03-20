@@ -2,419 +2,21 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-import time, sys, os
-import csv, json
+import time, sys
 from datetime import datetime as dt, timedelta as td
 from PIL import Image
-import io, urllib, shutil
-from copy import deepcopy as copy
-import uuid
+import io, urllib
 import threading
 import easyocr
 from tqdm import tqdm
 import logging
 import random
-import pyautogui
-
-from pprint import pprint as print
 
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils, GoogleUtils
-
-
-class Monitor:
-    def __init__(self, nolog=False) -> None:
-        self.UPDATE_FREQUENCY = 5
-        self.progress = 0
-        self.correct_captcha = self.wrong_captcha = 0
-        self.errors = 0
-        self.writes = 0
-        self.pending_writes = 0
-        self.stalled = False
-        if not nolog:
-            self.start_logger()
-
-    def monitor_with_threads(self, threads):
-        while True:
-            status = f"[{dt.now().strftime('%H:%M:%S')}] Processed: {self.progress} | Thread-"
-            for k, thread in enumerate(threads):
-                status += f"{k} ACTIVE" if thread.is_alive() else f"{k} STOPPED"
-                status += (
-                    f" [Errors: {str(self.errors[k])}] [Writes: {str(self.writes[k])}]"
-                )
-                status += " | "
-            print(status, end="\r")
-            time.sleep(self.UPDATE_FREQUENCY)
-
-    def monitor(self):
-        self.last_pending = 0
-        self.last_change = dt.now()
-        self.start_time = dt.now() - td(seconds=1)  # add second to avoid div by zero
-        return
-        # turn on permanent monitor
-        while True:
-            # determine if process has stalled if no new records written in time period, change flag
-            if self.pending_writes > self.last_pending:
-                self.last_pending = int(self.pending_writes)
-                self.last_change = dt.now()
-            if self.last_change + td(seconds=120) < dt.now():
-                self.stalled = True
-            # build and output status string (check for div by zero)
-            if self.correct_captcha + self.wrong_captcha == 0:
-                _captcha_rate = 1
-            else:
-                _captcha_rate = self.correct_captcha / (
-                    self.correct_captcha + self.wrong_captcha
-                )
-
-            _nrr = (
-                (self.writes + self.pending_writes)
-                * 60
-                / (dt.now() - self.start_time).total_seconds()
-            )
-
-            status = f"[{str(dt.now()-self.start_time)[:-7]}] Process: {self.progress} / {DATABASE.len_database} [{(DATABASE.len_database-self.progress)/(_nrr+0.0001):.0f} min left]\n"
-            status += f"[Written: {str(self.writes)}] [Pending Write: {str(self.pending_writes)}]\n"
-            status += f"[Since Last Change: {(dt.now()-self.last_change).total_seconds():.0f} sec]\n"
-            status += f"[Captcha Rate: {_captcha_rate*100:.1f}%] [Errors: {str(self.errors)}]\n"
-            status += f"[New Record Rate: {_nrr:.1f} rec/m]\n"
-            status += f'[{"STALLED" if self.stalled else "ACTIVE"}]'
-            # print(status)
-
-            time.sleep(self.UPDATE_FREQUENCY)
-            # os.system("cls")
-
-    def send_gmail(self):
-        print("Sending Email.....")
-        try:
-            GOOGLE_UTILS.send_gmail(
-                "gfreundt@gmail.com",
-                "UserData Process",
-                f"Finished Process on {dt.now()}.\nRevTec: {MONITOR.total_records_revtec}\nBrevete: {MONITOR.total_records_brevete}",
-            )
-            MONITOR.log.info(f"GMail sent.")
-        except:
-            MONITOR.log.warning(f"Gmail ERROR.")
-
-    def start_logger(self):
-        logging.basicConfig(
-            filename="updater(erase).log",
-            filemode="a",
-            format="%(asctime)s | %(levelname)s | %(message)s",
-        )
-        self.log = logging.getLogger()
-        self.log.setLevel(logging.INFO)
-
-
-class Database:
-    def __init__(self, no_backup=False):
-        # define database constants
-        self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
-        self.LOCK = threading.Lock()
-        # backup database and load in memory
-        if not no_backup:
-            self.backup_database()
-        self.load_database()
-        self.len_database = len(self.database)
-
-    def add_raw_csv_to_database(self, csv_path):
-        """Loads (adds) a basic csv file with structure NOMBRE, TIPODOC, DOCNUM, TELEFONO, PLACA
-        into the general database with the correct structure"""
-
-        # define local functions that create dictionary structure of vehiculo and record
-        create_record = lambda i: {
-            "nombre": i[0].strip(),
-            "documento": {
-                "tipo": i[1],
-                "numero": i[2],
-                "brevete": None,
-                "brevete_actualizado": "01/01/2018",
-            },
-            "telefono": i[3],
-            "vehiculos": vehiculos,
-        }
-        create_vehiculo = lambda i: {
-            "placa": i[4],
-            "rtecs": None,
-            "rtec_actualizado": "01/01/2019",
-            "multas": {
-                "sutran": None,
-                "sat": None,
-                "mtc": None,
-                "sutran_actualizado": "06/03/2024",
-                "sat_actualizado": "01/01/2021",
-                "mtc_actualizado": "01/01/2022",
-            },
-        }
-
-        # load raw csv data file with structure NOMBRE, TIPODOC, DOCNUM, TELEFONO, PLACA
-        with open(csv_path, mode="r", encoding="utf-8-sig") as csv_file:
-            csv_data = [
-                [i.strip().upper() for i in j]
-                for j in csv.reader(csv_file, delimiter=",")
-            ]
-        # process data to accumulate different placas for same person (record)
-        json_data = []
-        for k, row in enumerate(csv_data):
-            # if no name in date, ignore record
-            if not row[0]:
-                continue
-            # if first record, load into memory and go to next one
-            if k == 0:
-                previous_row = copy(row)
-                vehiculos = [create_vehiculo(row)]
-                continue
-            # if name is the same as previous, accumulate placa, else write record
-            if row[0] == previous_row[0]:
-                vehiculos.append(create_vehiculo(row))
-                continue
-            else:
-                json_data.append(create_record(previous_row))
-                vehiculos = [create_vehiculo(row)]
-                previous_row = copy(row)
-        # wrap-up with last pending record
-        json_data.append(create_record(previous_row))
-        # write (add) into json format file
-        with open(self.DATABASE_NAME, "a", encoding="utf-8") as json_file:
-            json.dump(json_data, json_file, indent=4)
-
-    def backup_database(self):
-        """Create local copy of database with random 8-letter text to avoid overwriting"""
-        _filename = f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json"
-        shutil.copyfile(
-            self.DATABASE_NAME,
-            os.path.join(os.curdir, "data", _filename),
-            follow_symlinks=True,
-        )
-        MONITOR.log.info(f"Database backup complete. File = {_filename}.")
-
-    def load_database(self):
-        """Opens database and stores into to memory as a list of dictionaries"""
-        with open(self.DATABASE_NAME, mode="r") as file:
-            self.database = json.load(file)
-
-    def write_database(self):
-        """Writes complete updated database file from memory. Locks file to avoid race conditions between threads"""
-        self.LOCK.acquire()
-        with open(self.DATABASE_NAME, "w+") as file:
-            json.dump(self.database, file, indent=4)
-        self.LOCK.release()
-        MONITOR.last_pending = 0
-        MONITOR.log.info(f"Database write.")
-
-    def update_database_correlatives(self):
-        """Opens database, updates correlatives for all records, writes database and closes"""
-        self.load_database()
-        for k, _ in enumerate(self.database):
-            self.database[k]["correlative"] = k
-        MONITOR.log.info(f"Correlatives updated.")
-        self.write_database()
-
-    def dashboard(self):
-        self.load_database()
-        # Brevete Dashboard
-        _tu = [[] for _ in range(3)]
-        for record_index, record in enumerate(DATABASE.database):
-            brevete = record["documento"]["brevete"]
-            actualizado = dt.strptime(
-                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
-            )
-            # Skip all records than have already been updated in last 24 hours
-            if dt.now() - actualizado < td(days=1):
-                continue
-            # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
-            if brevete:
-                hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
-                if td(days=-3) <= dt.now() - hasta <= td(days=30):
-                    _tu[0].append(record_index)
-            # Priority 1: no brevete information and last update was 10+ days ago
-            if not brevete and dt.now() - actualizado >= td(days=10):
-                _tu[1].append(record_index)
-            # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
-            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(days=10):
-                _tu[2].append(record_index)
-        print("-" * 40)
-        print("Brevete Updating Statistics")
-        print("-" * 40)
-        print(
-            f"To Update:\n     Expiration Recent: {len(_tu[0])}\n     No Data: {len(_tu[1])}\n     Expiration Outdated: {len(_tu[2])}"
-        )
-        print(f"TOTAL: {sum([len(i) for i in _tu])}")
-        print(f"No Update: {DATABASE.len_database - sum([len(i) for i in _tu])}")
-
-        return
-        with_documento = with_brevete = with_rtec = 0
-        brevete_actualizado = rtec_actualizado = total_rtecs = 0
-        brevete_null = 0
-        text = ""
-        for record in self.database:
-            if record["documento"]["numero"]:
-                with_documento += 1
-            if record["documento"]["brevete"]:
-                with_brevete += 1
-            if record["vehiculos"] and record["vehiculos"][0]["rtecs"]:
-                with_rtec += 1
-            if dt.strptime(
-                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
-            ) < dt.now() - td(days=7):
-                brevete_actualizado += 1
-            if dt.strptime(
-                record["vehiculos"][0]["rtecs_actualizado"], "%d/%m/%Y"
-            ) < dt.now() - td(days=7):
-                rtec_actualizado += 1
-            if record["documento"]["brevete"] == None and dt.now() - dt.strptime(
-                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
-            ) <= td(days=30):
-                brevete_null += 1
-
-        text += f"[Total Records: {self.len_database}]\n"
-        text += f"Tienen Documento: {with_documento} ({with_documento*100/self.len_database:.2f}%)\n"
-        text += f"Tienen Brevete: {with_brevete} ({with_brevete*100/self.len_database:.2f}%)\n"
-        text += f"Tienen RTec: {with_rtec} ({with_rtec*100/self.len_database:.2f}%)\n"
-        text += f"Brevete Actualizado: {brevete_actualizado} ({brevete_actualizado*100/self.len_database:.2f}%)\n"
-        text += f"RTec Actualizado: {rtec_actualizado} ({rtec_actualizado*100/self.len_database:.2f}%)\n"
-        text += f"Null Actualizado Last 30 days: {brevete_null}\n"
-
-        print(text)
-
-    def upload_to_drive(self):
-        print("Uploading to GDrive.....")
-        try:
-            GOOGLE_UTILS.upload_to_drive(
-                local_path=self.DATABASE_NAME,
-                drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
-            )
-            MONITOR.log.info(f"GDrive upload complete.")
-        except:
-            MONITOR.log.warning(f"GDrive upload ERROR.")
-
-    def export_dashboard(self):
-        a = [0 for _ in range(10)]
-        b = [0 for _ in range(10)]
-        c = [0 for _ in range(10)]
-        d = [0 for _ in range(10)]
-        e = [0 for _ in range(10)]
-        f = [0 for _ in range(10)]
-        g = [0 for _ in range(10)]
-        h = [0 for _ in range(10)]
-
-        for rec, record in enumerate(DATABASE.database):
-            a[0] += 1
-            # build documento
-            if record["documento"]["tipo"] == "DNI":
-                b[1] += 1
-            elif record["documento"]["tipo"] == "CE":
-                b[2] += 1
-            else:
-                b[3] += 1
-
-            # build brevete
-            if record["documento"]["brevete"]:
-                _fecha = (
-                    dt.strptime(
-                        record["documento"]["brevete"]["fecha_hasta"], "%d/%m/%Y"
-                    )
-                    - dt.now()
-                )
-                if td(days=0) <= _fecha <= td(days=180):
-                    c[2] += 1
-                if td(days=180) < _fecha <= td(days=360):
-                    c[3] += 1
-                if td(days=360) < _fecha <= td(days=540):
-                    c[4] += 1
-                if _fecha > td(days=540):
-                    c[5] += 1
-                c[1] = sum(c[2:6])  # Total Vigente
-                c[6] += _fecha < td(days=0)  # Total Vencido
-            else:
-                c[7] += 1  # Total sin data
-
-            # build vehiculos
-            for n in range(4):
-                if len(record["vehiculos"]) == n:
-                    d[n + 2] += 1
-
-            # build revisiones tecnicas
-            for vehiculo in record["vehiculos"]:
-                if vehiculo["rtecs"]:
-                    try:
-                        _fecha = (
-                            dt.strptime(vehiculo["rtecs"][0]["fecha_hasta"], "%d/%m/%Y")
-                            - dt.now()
-                        )
-                    except:
-                        print(record["correlative"])
-                    if td(days=0) <= _fecha <= td(days=90):
-                        e[3] += 1
-                    if td(days=90) < _fecha <= td(days=180):
-                        e[4] += 1
-                    if _fecha > td(days=180):
-                        e[5] += 1
-
-                    e[6] += _fecha < td(days=0)  # Total Vencido
-                else:
-                    e[7] += 1  # Total sin data
-
-                # build multas
-                _multas = vehiculo["multas"]
-                if _multas["sutran"]:
-                    f[1] += 1
-                if _multas["sat"]:
-                    f[2] += 1
-                if _multas["mtc"]:
-                    f[3] += 1
-
-            e[2] = sum(e[3:6])  # Total Vigente
-            e[1] = e[2] + e[6] + e[7]
-            f[0] = sum(f[1:])
-
-        # last update date and time
-        with open("updater.log", "r") as file:
-            logs = file.read()
-            for log in logs[::-1]:
-                if "database write" in log.lower():
-                    g[0] = log[:10]
-                    g[1] = log[11:19]
-                    break
-
-        response = (
-            {
-                "Usuarios Totales": a[0],
-                "Documento": sum(b[1:]),
-                "DNI": b[1],
-                "CE": b[2],
-                "DOC<otros>": b[3],
-                "Brevete": c[1] + c[6] + c[7],
-                "BRVigente": c[1],
-                "BRVenc6": c[2],
-                "BRVenc6-12": c[3],
-                "BRVenc12-18": c[4],
-                "BRVenc18+": c[5],
-                "BRVencido": c[6],
-                "BR<otros>": c[7],
-                "NoReg": d[1],
-                "Reg:": sum(d[3:6]),
-                "VR1": d[3],
-                "VR2": d[4],
-                "VR3": d[5],
-                "Promedio": f"{(d[1]+d[3]+d[4]*2+d[5]*3)/a[0]:.2f}",
-                "RTVigente": e[2],
-                "RT3": e[3],
-                "RT3-6": e[4],
-                "RT6+": e[5],
-                "RTVencida": e[6],
-                "NoRT": e[7],
-                "MulTOT": f[0],
-                "MulSUT": f[1],
-                "MulSAT": f[2],
-                "MulMTC": f[3],
-                "Creado": dt.now(),
-            },
-        )
-
-        return response
+import monitor, database, revtec
 
 
 class RevTec:
@@ -427,40 +29,20 @@ class RevTec:
         self.counter = 0
         self.READER = easyocr.Reader(["es"], gpu=False)
 
-    def run(self):
-        # iterate on all records in database and update the necessary ones, open n threads
-        _block = DATABASE.len_database // self.NUMBER_THREADS
-        active_threads = []
-        for thread in range(self.NUMBER_THREADS):
-            _start = thread * _block
-            _end = (
-                len(DATABASE.database)
-                if thread == (self.NUMBER_THREADS - 1)
-                else (thread + 1) * _block
-            )
-            _t = threading.Thread(target=self.run_full_update, args=(_start, _end))
-            active_threads.append(_t)
-            _t.start()
-
-        _monitor = threading.Thread(
-            target=MONITOR.monitor_with_threads, args=(active_threads,), daemon=True
-        )
-        _monitor.start()
-
-        for single_thread in active_threads:
-            single_thread.join()
-
-    def run_full_update(self, start_record=0, end_record=0):
+    def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
         # log start of process
-        MONITOR.log.info(f"Begin RevTec Iteration {MONITOR.iteration}.")
+        LOG.info(f"Begin RevTec Iteration {MONITOR.iteration}.")
 
         # create list of all records that need updating with priorities
-        records_to_update = self.list_records_to_update()
+        records_to_update, _threshold = self.list_records_to_update(target=2500)
         MONITOR.total_records_revtec = len(records_to_update)
-        MONITOR.log.info(f"Will process {MONITOR.total_records_revtec} records.")
+        LOG.info(
+            f"Will process {MONITOR.total_records_revtec} records. Threshold: {_threshold} days."
+        )
+        return
 
         process_complete = False
         while not process_complete:
@@ -527,42 +109,57 @@ class RevTec:
         # last write in case there are pending changes in memory
         DATABASE.write_database()
         # log end of process
-        MONITOR.log.info(f"End RevTec Iteration {MONITOR.iteration}.")
+        LOG.info(f"End RevTec Iteration {MONITOR.iteration}.")
 
-    def list_records_to_update(self):
-        to_update = [[] for _ in range(5)]
-        for record_index, record in enumerate(DATABASE.database):
-            vehiculos = record["vehiculos"]
-            for veh_index, vehiculo in enumerate(vehiculos):
-                actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
-                rtecs = vehiculo["rtecs"]
+    def list_records_to_update(self, target=2500):
 
-                # Skip all records than have already been updated in last 24 hours
-                if dt.now() - actualizado < td(days=1):
-                    continue
+        flat_list = ["." for _ in range(target + 1)]
+        last_update_threshhold = 5
+        iterations = 0
 
-                # Priority 0: rtec will expire in 3 days or has expired in the last 30 days
-                if rtecs and rtecs[0]["fecha_hasta"]:
-                    hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
-                    if td(days=-3) <= dt.now() - hasta <= td(days=30):
-                        to_update[0].append((record_index, veh_index))
+        while len(flat_list) >= target and iterations < 15:
+            to_update = [[] for _ in range(5)]
 
-                # Priority 1: rtecs with no fecha hasta
-                if rtecs and not rtecs[0]["fecha_hasta"]:
-                    to_update[1].append((record_index, veh_index))
+            for record_index, record in enumerate(DATABASE.database):
+                vehiculos = record["vehiculos"]
+                for veh_index, vehiculo in enumerate(vehiculos):
+                    actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
+                    rtecs = vehiculo["rtecs"]
 
-                # Priority 2: no rtec information and last update was 10+ days ago
-                if not rtecs and dt.now() - actualizado >= td(days=10):
-                    to_update[2].append((record_index, veh_index))
+                    # Skip all records than have already been updated in last 24 hours
+                    if dt.now() - actualizado < td(days=1):
+                        continue
 
-                # Priority 3: rtec will expire in more than 30 days and last update was 10+ days ago
-                if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
-                    days=10
-                ):
-                    to_update[3].append((record_index, veh_index))
+                    # Priority 0: rtec will expire in 3 days or has expired in the last 30 days
+                    if rtecs and rtecs[0]["fecha_hasta"]:
+                        hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
+                        if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                            to_update[0].append((record_index, veh_index))
 
-        # return flat list of records in order
-        return [i for j in to_update for i in j]
+                    # Priority 1: rtecs with no fecha hasta
+                    if rtecs and not rtecs[0]["fecha_hasta"]:
+                        to_update[1].append((record_index, veh_index))
+
+                    # Priority 2: no rtec information and last update was 10+ days ago
+                    if not rtecs and dt.now() - actualizado >= td(
+                        days=last_update_threshhold
+                    ):
+                        to_update[2].append((record_index, veh_index))
+
+                    # Priority 3: rtec will expire in more than 30 days and last update was 10+ days ago
+                    if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
+                        days=last_update_threshhold
+                    ):
+                        to_update[3].append((record_index, veh_index))
+
+            # build flat list of records in order
+            flat_list = [i for j in to_update for i in j]
+
+            # in case the amount of records exceed target, increase last update threshold days
+            last_update_threshhold += 1
+            iterations += 1
+
+        return flat_list, last_update_threshhold
 
     def scraper(self, placa):
         retry_captcha = False
@@ -651,12 +248,12 @@ class Brevete:
         Designed to work with Threading."""
 
         # log start of process
-        MONITOR.log.info(f"Begin Brevete Iteration {MONITOR.iteration}.")
+        LOG.info(f"Begin Brevete Iteration {MONITOR.iteration}.")
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
         MONITOR.total_records_brevete = len(records_to_update)
-        MONITOR.log.info(f"Will process {MONITOR.total_records_brevete} records.")
+        LOG.info(f"Will process {MONITOR.total_records_brevete} records.")
 
         process_complete = False
         while not process_complete:
@@ -728,12 +325,12 @@ class Brevete:
         # last write to capture any pending changes in database
         DATABASE.write_database()
         # log end of process
-        MONITOR.log.info(f"End Brevete Iteration {MONITOR.iteration}.")
+        LOG.info(f"End Brevete Iteration {MONITOR.iteration}.")
 
     def list_records_to_update(self):
         # switch to force updating all
         if "-all" in sys.argv:
-            MONITOR.log.warning("-all switch selected.")
+            LOG.warning("-all switch selected.")
             return [i for i in range(DATABASE.len_database)]
         to_update = [[] for _ in range(3)]
         for record_index, record in enumerate(DATABASE.database):
@@ -745,14 +342,17 @@ class Brevete:
             # Skip all records than have already been updated in last 24 hours
             if dt.now() - actualizado < td(days=1):
                 continue
+
             # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
             if brevete:
                 hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
                 if td(days=-3) <= dt.now() - hasta <= td(days=30):
                     to_update[0].append(record_index)
+
             # Priority 1: no brevete information and last update was 10+ days ago
             if not brevete and dt.now() - actualizado >= td(days=10):
                 to_update[1].append(record_index)
+
             # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
             if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(days=10):
                 to_update[2].append(record_index)
@@ -910,7 +510,7 @@ class Brevete:
             if "No se encontraron" in _pimpagas:
                 _pimpagas = None
             else:
-                MONITOR.log.info(f"papeletas impagas: {dni}")
+                LOG.info(f"papeletas impagas: {dni}")
             response.update({"papeletas_impagas": _pimpagas})
         except:
             return response
@@ -964,11 +564,11 @@ class Sutran:
 
         # log start of process
         if thread_num == -1:
-            MONITOR.log.info(
+            LOG.info(
                 f"Begin SUTRAN (No Threading). Will process {MONITOR.total_records_sutran} records."
             )
         else:
-            MONITOR.log.info(
+            LOG.info(
                 f"SUTRAN Thread {thread_num} begin. Will process {MONITOR.total_records_sutran} records."
             )
 
@@ -1003,7 +603,8 @@ class Sutran:
             ):
                 continue
 
-            # update sutran data and last update in database
+            # update sutran data and last update in database (introduce random delta days for even distribution)
+            # TODO: eliminate random in 30 days
             DATABASE.database[record_index]["vehiculos"][position]["multas"][
                 "sutran"
             ] = new_record
@@ -1023,7 +624,7 @@ class Sutran:
         DATABASE.write_database()
 
         # log end of process
-        MONITOR.log.info(f"End Sutran.")
+        LOG.info(f"End Sutran.")
 
     def list_records_to_update(self):
         to_update = [[] for _ in range(2)]
@@ -1114,50 +715,69 @@ class Sutran:
         return response
 
 
-def main():
+def start_logger(test=False):
+    _filename = "updater_dev.log" if test else "updater.log"
+    logging.basicConfig(
+        filename=_filename,
+        filemode="a",
+        format="%(asctime)s | %(levelname)s | %(message)s",
+    )
+    _log = logging.getLogger()
+    _log.setLevel(logging.INFO)
+    return _log
 
+
+def main():
+    # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv
-    # default value if no arguments entered
     VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
-    print(arguments)
 
-    # start monitor in daemon thread
-    _monitor = threading.Thread(target=MONITOR.monitor, daemon=True)
+    # start top-level monitor in daemon thread
+    _monitor = threading.Thread(target=MONITOR.top_level, daemon=True)
     _monitor.start()
 
-    # run all requested services 3 times to capture as many records as possible
-    for i in range(3):
-        MONITOR.iteration = i
-        if "RTEC" in arguments:
-            revtec = RevTec()
-            revtec.run_full_update()
-            quit()
-        if "BREVETE" in arguments:
-            brevete = Brevete()
-            brevete.run_full_update()
-            quit()
-        if "SUTRAN" in arguments:
-            sutran = Sutran()
-            sutran.run_threads(nothreads=True)
-            quit()
+    MONITOR.iteration = 0  # TODO: get rid of this variable
+
+    arguments = ["RTEC"]
+
+    # start required scrapers
+    if "RTEC" in arguments:
+        re = revtec.RevTec(database=DB, logger=LOG)
+        re.run_full_update()
+        quit()
+    if "BREVETE" in arguments:
+        br = Brevete()
+        br.run_full_update()
+        quit()
+    if "SUTRAN" in arguments:
+        su = Sutran()
+        su.run_threads(nothreads=True)
+        quit()
 
     # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
-    DATABASE.update_database_correlatives()
-    # DATABASE.upload_to_drive()
-    MONITOR.send_gmail()
+    DB.update_database_correlatives()
+    DB.upload_to_drive()
+    # MONITOR.send_gmail()
 
 
 if __name__ == "__main__":
-    MONITOR = Monitor()
-    MONITOR.log.info("Updater Begin.")
-    DATABASE = Database(no_backup=True)
+    # start logger and register program start
+    LOG = start_logger(test=True)
+    LOG.info("Updater Begin.")
 
-    print(DATABASE.export_dashboard())
-
-    quit()
-
+    # init monitor, database and Google functions (drive, gmail, etc)
+    MONITOR = monitor.Monitor()
+    DB = database.Database(no_backup=True, test=True, logger=LOG)
     GOOGLE_UTILS = GoogleUtils()
+
+    # DB.fix_database_errors()
+    # quit()
+
+    # DATABASE.export_dashboard()
+    # # DATABASE.add_raw_csv_to_database(r"data\raw_data2.csv")
+    # quit()
+
     main()
-    MONITOR.log.info("Updater End.")
+    LOG.info("Updater End.")
