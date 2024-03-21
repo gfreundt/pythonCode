@@ -122,8 +122,8 @@ class Database:
         """Opens database and stores into to memory as a list of dictionaries"""
         with open(self.DATABASE_NAME, mode="r") as file:
             self.database = json.load(file)
-        self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-        self.LOG.info(f"Database records: {len(self.database):,}.")
+        self.LOG.info(f"DATABASE > Database loaded: File = {str(self.DATABASE_NAME)}")
+        self.LOG.info(f"DATABASE > Database records: {len(self.database):,}.")
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.
@@ -141,7 +141,9 @@ class Database:
                         "rtecs_actualizado"
                     ] = "01/01/2000"
                     _fixes += 1
-        self.LOG.info(f"Database Checked. {_fixes} fixed made (requires write).")
+        self.LOG.info(
+            f"DATABASE > Database Checked. {_fixes} fixed made (requires write)."
+        )
 
     def write_database(self):
         """Writes complete updated database file from memory.
@@ -151,7 +153,7 @@ class Database:
             json.dump(self.database, file, indent=4)
         self.LOCK.release()
         # self.MONITOR.last_pending = 0
-        self.LOG.info(f"Database write.")
+        self.LOG.info(f"DATABASE > Database write.")
 
     def update_database_correlatives(self):
         """Updates correlatives for all records, writes database."""
@@ -164,24 +166,25 @@ class Database:
         for k, _ in enumerate(self.database):
             self.database[k]["correlative"] = k
         self.write_database()
-        self.LOG.info(f"Correlatives updated.")
+        self.LOG.info(f"DATABASE > Correlatives updated.")
 
     def upload_to_drive(self):
-        """Attempts to make a copy to GDrive folder in PC. If not possible,
+        """Attempts to make a copy to local GDrive folder in PC. If not possible,
         use Google Drive API to upload file directly."""
         try:
             shutil.copy(
                 self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
             )
+            self.LOG.info(f"DATABASE > Local GDrive folder upload complete.")
         except:
             try:
                 self.GOOGLE_UTILS.upload_to_drive(
                     local_path=self.DATABASE_NAME,
                     drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
                 )
-                self.LOG.info(f"GDrive upload complete.")
+                self.LOG.info(f"DATABASE > GDrive upload complete.")
             except:
-                self.LOG.warning(f"GDrive upload ERROR.")
+                self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
 
     def export_dashboard(self):
         """Aggregates and tabulates data from database to produce KPIs.
@@ -278,11 +281,11 @@ class Database:
                 if "Database write" in log and not kpis[40]:
                     kpis[40] = log[:10]
                     kpis[41] = log[11:19]
-                if "End Brevete" in log and not kpis[42]:
+                if "BREVETE > End" in log and not kpis[42]:
                     kpis[42] = int("".join([i for i in log[25:] if i.isdigit()]))
-                if "End RevTec" in log and not kpis[43]:
+                if "REVTEC > End" in log and not kpis[43]:
                     kpis[43] = int("".join([i for i in log[25:] if i.isdigit()]))
-                if "End Sutran" in log and not kpis[44]:
+                if "SUTRAN > End" in log and not kpis[44]:
                     kpis[44] = int("".join([i for i in log[25:] if i.isdigit()]))
 
         # format all items
@@ -302,4 +305,4 @@ class Database:
             _writer = csv.writer(file, delimiter="|", quotechar="'")
             _writer.writerow(response)
 
-        self.LOG.info(f"Dashboard data updated.")
+        self.LOG.info(f"DATABASE > Dashboard data updated.")

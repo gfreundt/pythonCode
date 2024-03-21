@@ -57,7 +57,7 @@ def main():
     # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
     DB.update_database_correlatives()
     DB.upload_to_drive()
-    DB.export_dashboard()
+    # DB.export_dashboard()
     # MONITOR.send_gmail()
 
 
@@ -67,8 +67,12 @@ if __name__ == "__main__":
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    MONITOR = monitor.Monitor()
     DB = database.Database(no_backup=False, test=False, logger=LOG)
+    br = brevete.Brevete(database=DB, logger=LOG)
+    br.run_full_update()
+    quit()
+
+    MONITOR = monitor.Monitor()
     GOOGLE_UTILS = GoogleUtils()
 
     main()

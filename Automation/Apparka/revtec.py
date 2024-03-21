@@ -44,6 +44,7 @@ class RevTec:
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+
         self.LOG.info(
             f"REVTEC > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )

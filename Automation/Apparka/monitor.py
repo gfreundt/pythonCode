@@ -31,10 +31,11 @@ class Monitor:
             # pause to reduce running speed
             time.sleep(5)
 
-    def top_level(self):
+    def top_level(self, write_time=900):
         self.last_pending = 0
         self.last_change = dt.now()
         self.start_time = dt.now() - td(seconds=1)  # add second to avoid div by zero
+        self.write_timer = time.time()
 
         # turn on permanent monitor
         while True:
@@ -44,6 +45,11 @@ class Monitor:
                 status += f"| {Back.GREEN + ' ACTIVE ' if thread.is_alive() else Back.RED + ' INACTIVE '} "
             print(status, end="\r")
             print(Style.RESET_ALL)
+
+            # write database to disk after elapsed time
+            if time.time() - self.write_timer > write_time:
+                self.DB.write_database()
+                write_time = time.time()
 
             time.sleep(5)
 
@@ -86,6 +92,6 @@ class Monitor:
                 "UserData Process",
                 f"Finished Process on {dt.now()}.\nRevTec: {self.total_records_revtec}\nBrevete: {self.total_records_brevete}",
             )
-            self.log.info(f"GMail sent.")
+            self.log.info(f"MONITOR > GMail sent.")
         except:
-            self.log.warning(f"Gmail ERROR.")
+            self.log.warning(f"MONITOR > Gmail ERROR.")

@@ -8,7 +8,6 @@ from PIL import Image
 import io, urllib
 import threading
 import easyocr
-from tqdm import tqdm
 import random
 
 
@@ -45,12 +44,17 @@ class Brevete:
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+
+        print(records_to_update)
+        print(len(records_to_update))
+        return
+
         # if volume is large, use less time-consuming scraper
         self.limited_scrape = (
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
         self.LOG.info(
-            f"BREVETE > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
+            f"BREVETE > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} data acquired."
         )
 
         # begin update
@@ -82,7 +86,7 @@ class Brevete:
                 except KeyboardInterrupt:
                     quit()
                 except:
-                    self.LOG.info(f"BREVETE > Skipped Record {rec}")
+                    self.LOG.info(f"BREVETE > Skipped Record {rec}.")
                     self.WEBD.refresh()
                     time.sleep(1)
                     self.WEBD.get(self.URL)
@@ -131,7 +135,7 @@ class Brevete:
         # last write in case there are pending changes in memory
         self.DB.write_database()
         # log end of process
-        self.LOG.info(f"BREVETE > End. (Complete). Processed: {rec} records.")
+        self.LOG.info(f"BREVETE > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
         # check for switch to force updating all records
@@ -314,7 +318,7 @@ class Brevete:
             if "se encontraron" in _pimpagas:
                 _pimpagas = None
             else:
-                self.LOG.info(f"papeletas impagas: {dni}")
+                self.LOG.info(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
             response.update({"papeletas_impagas": _pimpagas})
         except:
             return response
