@@ -1,0 +1,16 @@
+__pycache__/
+.vscode/
+Automation/Apparka/virtualenv/
+Automation/Apparka/data/
+Automation/Apparka/__pycache__/
+general/vision/virtualenv/
+Resources/ConfigData/adc.json
+Resources/ConfigData/application_default_credentials.json
+Resources/Scripts/Tesseract/
+erase*
+Automation/Apparka/updater.log
+Automation/Apparka/logs/*.log
+Resources/ConfigData/gmail_credentials.json
+Automation/Apparka/client_secrets.json
+Automation/Apparka/credentials.json
+Automation/Apparka/token.json
