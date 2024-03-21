@@ -7,6 +7,7 @@ import io, urllib
 import easyocr
 from tqdm import tqdm
 import threading
+import random
 
 
 # Custom imports
@@ -17,8 +18,7 @@ import monitor
 
 class RevTec:
     # define class constants
-    WRITE_FREQUENCY = 200
-
+    WRITE_FREQUENCY = 50
     URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
 
     def __init__(self, database, logger) -> None:
@@ -27,14 +27,14 @@ class RevTec:
         self.DB = database
         self.LOG = logger
         self.MONITOR = monitor.Monitor()
-        self.TIMEOUT = 30
+        self.TIMEOUT = 14460
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
         # log start of process
-        self.LOG.info(f"Begin RevTec.")
+        self.LOG.info(f"REVTEC > Begin.")
 
         # start individual-level monitor in daemon thread
         _monitor = threading.Thread(
@@ -45,7 +45,7 @@ class RevTec:
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
         self.LOG.info(
-            f"Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
+            f"REVTEC > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )
 
         # begin update
@@ -62,10 +62,9 @@ class RevTec:
             self.WEBD.get(self.URL)
             time.sleep(2)
 
+            rec = 0
             # iterate on all records that require updating
-            for rec, (record_index, position) in tqdm(
-                enumerate(records_to_update), total=len(records_to_update)
-            ):
+            for rec, (record_index, position) in enumerate(records_to_update):
                 # get scraper data, if webpage fails, wait, reload page and skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -78,7 +77,7 @@ class RevTec:
                     time.sleep(1)
                     continue
 
-                # if database has data and response is None, do not overwrite database
+                # if record has data and response is None, do not overwrite database
                 if (
                     not new_record
                     and self.DB.database[record_index]["vehiculos"][position]["rtecs"]
@@ -86,13 +85,13 @@ class RevTec:
                     continue
 
                 # update brevete data and last update in database
+                # TODO: eliminate random in 12 days
                 self.DB.database[record_index]["vehiculos"][position][
                     "rtecs"
                 ] = new_record
                 self.DB.database[record_index]["vehiculos"][position][
                     "rtecs_actualizado"
                 ] = dt.now().strftime("%d/%m/%Y")
-
                 # update counter
                 pending_writes += 1
 
@@ -114,7 +113,7 @@ class RevTec:
                     process_complete = False
                     # close current webdriver session and wait
                     self.WEBD.close()
-                    time.sleep(1)
+                    time.sleep(5)
                     # update monitor stats
                     # self.MONITOR.last_change = dt.now()
                     break
@@ -122,7 +121,7 @@ class RevTec:
         # last write in case there are pending changes in memory
         self.DB.write_database()
         # log end of process
-        self.LOG.info(f"End RevTec (Complete).")
+        self.LOG.info(f"REVTEC > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self, last_update_threshold=10):
 
@@ -134,8 +133,8 @@ class RevTec:
                 actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
                 rtecs = vehiculo["rtecs"]
 
-                # Skip all records than have already been updated in last 24 hours
-                if dt.now() - actualizado < td(days=1):
+                # Skip all records than have already been updated in same date
+                if dt.now() - actualizado <= td(days=1):
                     continue
 
                 # Priority 0: rtec will expire in 3 days or has expired in the last 30 days
@@ -228,7 +227,7 @@ class RevTec:
                 }
             )
 
-        # clear webpage for next iteration and small wait
+        # clear webpage for next response
         time.sleep(1)
         self.WEBD.refresh()
         time.sleep(1)

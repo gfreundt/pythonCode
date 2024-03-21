@@ -5,7 +5,6 @@ import shutil
 from copy import deepcopy as copy
 import uuid
 import threading
-from pprint import pprint
 
 
 # Custom imports
@@ -21,7 +20,7 @@ class Database:
             self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
         else:
             self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data_dev.json")
-        self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.json")
+        self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
         self.LOCK = threading.Lock()
         self.GOOGLE_UTILS = GoogleUtils()
         # create database backup (negative switch)
@@ -33,8 +32,8 @@ class Database:
 
     def add_raw_csv_to_database(self, csv_path):
         """
-        Loads (adds) a basic csv file with structure NOMBRE, TIPODOC, DOCNUM, TELEFONO, PLACA
-        into the general database with the correct structure.
+        Loads (adds) a basic csv file into the general database with the correct structure.
+        Fills dates with placeholder until data is scraped.
         CSV format: nombre, tipo_documento, num_documento, telefono, correo, placa.
         """
 
@@ -116,7 +115,8 @@ class Database:
         """Opens database and stores into to memory as a list of dictionaries"""
         with open(self.DATABASE_NAME, mode="r") as file:
             self.database = json.load(file)
-        self.LOG.info(f"Database loaded: File = {self.DASHBOARD_NAME}")
+        self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
+        self.LOG.info(f"Database records: {len(self.database):,}")
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.
@@ -174,29 +174,29 @@ class Database:
     def export_dashboard(self):
         """Aggregates and tabulates data from database to produce KPIs.
         Saves KPIs into file to be used by dashboard."""
-        a = [0 for _ in range(10)]
-        b = [0 for _ in range(10)]
-        c = [0 for _ in range(10)]
-        d = [0 for _ in range(10)]
-        e = [0 for _ in range(10)]
-        f = [0 for _ in range(10)]
-        g = [0 for _ in range(10)]
-        h = [0 for _ in range(10)]
+
+        self.LOG.info("database write")
+        self.LOG.info("End Sutran 7,844")
+
+        kpis = [0 for _ in range(50)]
 
         for record in self.database:
             # total records
-            a[0] += 1
+            kpis[0] += 1
 
             # build documento
+            if record["documento"]["tipo"]:
+                kpis[1] += 1
             if record["documento"]["tipo"] == "DNI":
-                b[1] += 1
+                kpis[2] += 1
             elif record["documento"]["tipo"] == "CE":
-                b[2] += 1
+                kpis[3] += 1
             else:
-                b[3] += 1
+                kpis[4] += 1
 
             # build brevete
             if record["documento"]["brevete"]:
+                kpis[5] += 1
                 _fecha = (
                     dt.strptime(
                         record["documento"]["brevete"]["fecha_hasta"], "%d/%m/%Y"
@@ -204,100 +204,93 @@ class Database:
                     - dt.now()
                 )
                 if td(days=0) <= _fecha <= td(days=180):
-                    c[2] += 1
+                    kpis[7] += 1
                 if td(days=180) < _fecha <= td(days=360):
-                    c[3] += 1
+                    kpis[8] += 1
                 if td(days=360) < _fecha <= td(days=540):
-                    c[4] += 1
+                    kpis[9] += 1
                 if _fecha > td(days=540):
-                    c[5] += 1
-                c[1] = sum(c[2:6])  # Total Vigente
-                c[6] += _fecha < td(days=0)  # Total Vencido
+                    kpis[10] += 1
+                kpis[6] = sum(kpis[2:6])  # Total Vigente
+                kpis[11] += _fecha < td(days=0)  # Total Vencido
             else:
-                c[7] += 1  # Total sin data
+                kpis[12] += 1  # Total sin data
 
             # build vehiculos
-            for n in range(4):
+            if not record["vehiculos"]:
+                kpis[14] += 1
+            for n in range(1, 4):
                 if len(record["vehiculos"]) == n:
-                    d[n + 1] += 1
+                    kpis[15] += n
+                    kpis[n + 15] += 1
 
             # build revisiones tecnicas
             for vehiculo in record["vehiculos"]:
-                if vehiculo["rtecs"]:
-                    try:
-                        _fecha = (
-                            dt.strptime(vehiculo["rtecs"][0]["fecha_hasta"], "%d/%m/%Y")
-                            - dt.now()
-                        )
-                    except:
-                        print(record["correlative"])
-                    if td(days=0) <= _fecha <= td(days=90):
-                        e[3] += 1
-                    if td(days=90) < _fecha <= td(days=180):
-                        e[4] += 1
-                    if _fecha > td(days=180):
-                        e[5] += 1
+                if vehiculo["rtecs"] and vehiculo["rtecs"][0]["fecha_hasta"]:
+                    kpis[20] += 1
+                    _fecha = (
+                        dt.strptime(vehiculo["rtecs"][0]["fecha_hasta"], "%d/%m/%Y")
+                        - dt.now()
+                    )
+                    if td(days=0) <= _fecha < td(days=90):
+                        kpis[22] += 1
+                    if td(days=90) <= _fecha < td(days=180):
+                        kpis[23] += 1
+                    if _fecha >= td(days=180):
+                        kpis[24] += 1
+                    else:
+                        kpis[21] += 1
 
-                    e[6] += _fecha < td(days=0)  # Total Vencido
+                    kpis[25] += _fecha < td(days=0)  # Total Vencido
                 else:
-                    e[7] += 1  # Total sin data
+                    kpis[26] += 1  # Total sin data
 
                 # build multas
                 _multas = vehiculo["multas"]
                 if _multas["sutran"]:
-                    f[1] += 1
+                    kpis[27] += 1
                 if _multas["sat"]:
-                    f[2] += 1
+                    kpis[28] += 1
                 if _multas["mtc"]:
-                    f[3] += 1
+                    kpis[29] += 1
 
-            d[0] = d[1] + d[2]
-            e[2] = sum(e[3:6])  # Total Vigente
-            e[1] = e[2] + e[6] + e[7]
-            f[0] = sum(f[1:])
+        kpis[19] = kpis[15] / kpis[0]  # Promedio vehiculos/usuario
+        kpis[27] = sum(kpis[28:31])  # Total multas impagas
 
         # last update date and time
-        with open("updater.log", "r") as file:
-            logs = file.read()
-            for log in logs[::-1]:
-                if "database write" in log.lower():
-                    g[0] = log[:10]
-                    g[1] = log[11:19]
-                    break
+        _all_logs = sorted(
+            os.scandir(os.path.join(os.getcwd(), "logs")),
+            key=lambda i: os.path.getctime(i),
+        )
 
-        response = {
-            "a0": f"{a[0]:,}",
-            "b0": f"{sum(b[1:]):,}",
-            "b1": f"{b[1]:,}",
-            "b2": f"{b[2]:,}",
-            "b3": f"{b[3]:,}",
-            "c0": f"{c[1] + c[6] + c[7]:,}",
-            "c1": f"{c[1]:,}",
-            "c2": f"{c[2]:,}",
-            "c3": f"{c[3]:,}",
-            "c4": f"{c[4]:,}",
-            "c5": f"{c[5]:,}",
-            "c6": c[6],
-            "c7": c[7],
-            "d1": d[1],
-            "d2:": sum(d[3:6]),
-            "d3": d[3],
-            "d17": d[4],
-            "d18": d[5],
-            "d19": f"{(d[1]+d[3]+d[4]*2+d[5]*3)/a[0]:.2f}",
-            "RTVigente": e[2],
-            "RT3": e[3],
-            "RT3-6": e[4],
-            "RT6+": e[5],
-            "RTVencida": e[6],
-            "NoRT": e[7],
-            "MulTOT": f[0],
-            "MulSUT": f[1],
-            "MulSAT": f[2],
-            "MulMTC": f[3],
-            "Creado": str(dt.now()),
-        }
+        with open(_all_logs[-1], "r") as file:
+            logs = file.readlines()
+            for log in logs[::-1]:
+                if "Database write" in log and not kpis[40]:
+                    kpis[40] = log[:10]
+                    kpis[41] = log[11:19]
+                if "End Brevete" in log and not kpis[42]:
+                    kpis[42] = int("".join([i for i in log[25:] if i.isdigit()]))
+                if "End RevTec" in log and not kpis[43]:
+                    kpis[43] = int("".join([i for i in log[25:] if i.isdigit()]))
+                if "End Sutran" in log and not kpis[44]:
+                    kpis[44] = int("".join([i for i in log[25:] if i.isdigit()]))
+
+        # format all items
+        response = []
+        for item in kpis:
+            if type(item) == int:
+                response.append(f"{item:,}")
+            elif type(item) == float:
+                response.append(f"{item:.2f}")
+            elif type(item) == dt:
+                response.append(str(item))
+            else:
+                response.append(item)
 
         # write data to file to be used by dashboard
         with open(self.DASHBOARD_NAME, "w") as file:
-            json.dump(response, file, indent=4)
+            _writer = csv.writer(file, delimiter="|", quotechar="'")
+            _writer.writerow(response)
+
+        self.LOG.info(f"Dashboard data updated.")
