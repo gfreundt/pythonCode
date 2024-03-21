@@ -1,6 +1,7 @@
 import sys
 import time
 from datetime import datetime as dt, timedelta as td
+from colorama import Fore, Back, Style
 
 # custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
@@ -10,12 +11,11 @@ from gft_utils import GoogleUtils
 class Monitor:
     def __init__(self) -> None:
         self.UPDATE_FREQUENCY = 5  # seconds
-        # self.progress = 0
-        # self.correct_captcha = self.wrong_captcha = 0
-        # self.errors = 0
         self.writes = 0
         self.pending_writes = 0
         self.DEFAULT_TIMEOUT = 7200
+        self.GOOGLE_UTILS = GoogleUtils()
+        self.threads = []
 
     def individual(self, timeout_time=7200):
         # register start of process and off flag
@@ -28,8 +28,14 @@ class Monitor:
             if time.time() - self.timer_on > timeout_time:
                 self.timeout_flag = True
 
+            # display status of threads on console
+            status = "Status: "
+            for thread in self.threads:
+                status += f"| {Back.GREEN + ' ACTIVE ' if thread.is_alive() else Back.RED + ' INACTIVE '} "
+            print(status, end="\r")
+
             # pause to reduce running speed
-            time.sleep(3)
+            time.sleep(5)
 
     def top_level(self):
         self.last_pending = 0
@@ -70,7 +76,6 @@ class Monitor:
             # os.system("cls")
 
     def send_gmail(self):
-        print("Sending Email.....")
         try:
             self.GOOGLE_UTILS.send_gmail(
                 "gfreundt@gmail.com",

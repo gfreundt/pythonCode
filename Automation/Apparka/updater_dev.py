@@ -37,23 +37,21 @@ def main():
     _monitor = threading.Thread(target=MONITOR.top_level, daemon=True)
     _monitor.start()
 
-    MONITOR.iteration = 0  # TODO: get rid of this variable
-
-    threads = []
+    MONITOR.threads = []
     # start required scrapers
     if "RTEC" in arguments:
         re = revtec.RevTec(database=DB, logger=LOG)
-        threads.append(threading.Thread(target=re.run_full_update))
+        MONITOR.threads.append(threading.Thread(target=re.run_full_update))
     if "BREVETE" in arguments:
         br = brevete.Brevete(database=DB, logger=LOG)
-        threads.append(threading.Thread(target=br.run_full_update))
+        MONITOR.threads.append(threading.Thread(target=br.run_full_update))
     if "SUTRAN" in arguments:
         su = sutran.Sutran(database=DB, logger=LOG)
-        threads.append(threading.Thread(target=su.run_full_update))
+        MONITOR.threads.append(threading.Thread(target=su.run_full_update))
 
-    for thread in threads:
+    for thread in MONITOR.threads:
         thread.start()
-    for thread in threads:
+    for thread in MONITOR.threads:
         thread.join()
 
     # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
@@ -75,4 +73,3 @@ if __name__ == "__main__":
 
     main()
     LOG.info("Updater End.")
-    

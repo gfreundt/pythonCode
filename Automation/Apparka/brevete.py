@@ -29,7 +29,7 @@ class Brevete:
         self.LOG = logger
         self.MONITOR = monitor.Monitor()
         self.TIMEOUT = 14400
-        self.SWITCH_TO_LIMITED = 1200  # records
+        self.SWITCH_TO_LIMITED = 800  # records
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates Brevete data for each PLACA."""
@@ -50,7 +50,7 @@ class Brevete:
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
         self.LOG.info(
-            f"BREVETE > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape"
+            f"BREVETE > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
         )
 
         # begin update

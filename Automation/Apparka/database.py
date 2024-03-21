@@ -21,6 +21,13 @@ class Database:
         else:
             self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data_dev.json")
         self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
+        self.GDRIVE_BACKUP_PATH = os.path.join(
+            "G:",
+            "My Drive",
+            "pythonCoding",
+            "Updater Data",
+            f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
+        )
         self.LOCK = threading.Lock()
         self.GOOGLE_UTILS = GoogleUtils()
         # create database backup (negative switch)
@@ -116,7 +123,7 @@ class Database:
         with open(self.DATABASE_NAME, mode="r") as file:
             self.database = json.load(file)
         self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-        self.LOG.info(f"Database records: {len(self.database):,}")
+        self.LOG.info(f"Database records: {len(self.database):,}.")
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.
@@ -147,12 +154,17 @@ class Database:
         self.LOG.info(f"Database write.")
 
     def update_database_correlatives(self):
-        """Opens database, updates correlatives for all records, writes database and closes"""
-        self.load_database()
+        """Updates correlatives for all records, writes database."""
+        # open database if not loaded in memory
+        try:
+            self.database
+        except:
+            self.load_database()
+        # assign correlatives 0-->
         for k, _ in enumerate(self.database):
             self.database[k]["correlative"] = k
-        self.LOG.info(f"Correlatives updated.")
         self.write_database()
+        self.LOG.info(f"Correlatives updated.")
 
     def upload_to_drive(self):
         """Attempts to make a copy to GDrive folder in PC. If not possible,
@@ -174,9 +186,6 @@ class Database:
     def export_dashboard(self):
         """Aggregates and tabulates data from database to produce KPIs.
         Saves KPIs into file to be used by dashboard."""
-
-        self.LOG.info("database write")
-        self.LOG.info("End Sutran 7,844")
 
         kpis = [0 for _ in range(50)]
 
