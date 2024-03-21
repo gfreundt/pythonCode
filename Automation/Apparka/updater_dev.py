@@ -37,7 +37,7 @@ def main():
     _monitor = threading.Thread(target=MONITOR.top_level, daemon=True)
     _monitor.start()
 
-    MONITOR.threads = []
+    # MONITOR.threads = []
     # start required scrapers
     if "RTEC" in arguments:
         re = revtec.RevTec(database=DB, logger=LOG)

@@ -28,12 +28,6 @@ class Monitor:
             if time.time() - self.timer_on > timeout_time:
                 self.timeout_flag = True
 
-            # display status of threads on console
-            status = "Status: "
-            for thread in self.threads:
-                status += f"| {Back.GREEN + ' ACTIVE ' if thread.is_alive() else Back.RED + ' INACTIVE '} "
-            print(status, end="\r")
-
             # pause to reduce running speed
             time.sleep(5)
 
@@ -41,8 +35,18 @@ class Monitor:
         self.last_pending = 0
         self.last_change = dt.now()
         self.start_time = dt.now() - td(seconds=1)  # add second to avoid div by zero
-        return
+
         # turn on permanent monitor
+        while True:
+            # display status of threads on console
+            status = "Status: "
+            for thread in self.threads:
+                status += f"| {Back.GREEN + ' ACTIVE ' if thread.is_alive() else Back.RED + ' INACTIVE '} "
+            print(status, end="\r")
+            print(Style.RESET_ALL)
+
+            time.sleep(5)
+
         while True:
             # determine if process has stalled if no new records written in time period, change flag
             if self.pending_writes > self.last_pending:
