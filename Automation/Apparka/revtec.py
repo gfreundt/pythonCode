@@ -62,7 +62,7 @@ class RevTec:
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
                 # update monitor dashboard data
-                self.MONITOR.current_record[1] = rec
+                self.MONITOR.current_record[1] = rec + 1
                 # get scraper data, if webpage fails, wait, reload page and skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -93,11 +93,13 @@ class RevTec:
                 # update counter
                 pending_writes += 1
 
+                """
                 # write database to disk every n captures
                 if pending_writes % self.WRITE_FREQUENCY == 0:
                     pending_writes = 0
                     # MONITOR.writes += self.WRITE_FREQUENCY
                     self.DB.write_database()
+                """
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:

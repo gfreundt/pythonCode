@@ -14,3 +14,5 @@ Resources/ConfigData/gmail_credentials.json
 Automation/Apparka/client_secrets.json
 Automation/Apparka/credentials.json
 Automation/Apparka/token.json
+Resources/ConfigData/settings.yaml
+Resources/chromedriver.exe

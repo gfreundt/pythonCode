@@ -8,7 +8,6 @@ from PIL import Image
 import io, urllib
 import threading
 import easyocr
-from tqdm import tqdm
 import random
 
 
@@ -70,7 +69,7 @@ class Brevete:
             # iterate on all records that require updating
             for rec, record_index in enumerate(records_to_update):
                 # update monitor dashboard data
-                self.MONITOR.current_record[0] = rec
+                self.MONITOR.current_record[0] = rec + 1
 
                 # get scraper data, if webpage fails, refresh and skip record
                 _dni = self.DB.database[record_index]["documento"]["numero"]
@@ -84,7 +83,7 @@ class Brevete:
                 except KeyboardInterrupt:
                     quit()
                 except:
-                    self.LOG.info(f"BREVETE > Skipped Record {rec}")
+                    self.LOG.info(f"BREVETE > Skipped Record {rec}.")
                     self.WEBD.refresh()
                     time.sleep(1)
                     self.WEBD.get(self.URL)
@@ -106,12 +105,13 @@ class Brevete:
 
                 # update counter
                 pending_writes += 1
-
+                """
                 # write database to disk every n captures
                 if pending_writes % self.WRITE_FREQUENCY == 0:
                     pending_writes = 0
                     # MONITOR.writes += self.WRITE_FREQUENCY
                     self.DB.write_database()
+                """
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
@@ -133,7 +133,7 @@ class Brevete:
         # last write in case there are pending changes in memory
         self.DB.write_database()
         # log end of process
-        self.LOG.info(f"BREVETE > End. (Complete). Processed: {rec} records.")
+        self.LOG.info(f"BREVETE > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
         # check for switch to force updating all records
@@ -316,7 +316,7 @@ class Brevete:
             if "se encontraron" in _pimpagas:
                 _pimpagas = None
             else:
-                self.LOG.info(f"papeletas impagas: {dni}")
+                self.LOG.info(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
             response.update({"papeletas_impagas": _pimpagas})
         except:
             return response

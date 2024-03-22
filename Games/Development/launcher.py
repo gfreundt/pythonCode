@@ -11,7 +11,7 @@ from gft_utils import pygameUtils
 
 class Game:
     def __init__(self):
-        self.app = os.path.split(sys.argv[0])[1].split(".")[0]
+        # self.app = os.path.split(sys.argv[0])[1].split(".")[0]
         # load general presets
         pygameUtils.__init__(self)
         # load palette and colors
