@@ -18,11 +18,11 @@ class Sutran:
     URL = "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
     WRITE_FREQUENCY = 50
 
-    def __init__(self, database, logger) -> None:
+    def __init__(self, database, logger, monitor, options) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.DB = database
         self.LOG = logger
-        self.MONITOR = monitor.Monitor()
+        self.MONITOR = monitor
         self.TIMEOUT = 14430
 
     def run_full_update(self):
@@ -32,14 +32,10 @@ class Sutran:
         # log start of process
         self.LOG.info(f"SUTRAN > Begin.")
 
-        # start individual-level monitor in daemon thread
-        _monitor = threading.Thread(
-            target=self.MONITOR.individual, args=(self.TIMEOUT,), daemon=True
-        )
-        _monitor.start()
-
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+        self.MONITOR.total_records[2] = len(records_to_update)
+
         self.LOG.info(
             f"SUTRAN > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )
@@ -61,6 +57,8 @@ class Sutran:
             rec = 0
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
+                # update monitor dashboard data
+                self.MONITOR.current_record[2] = rec
                 # get scraper data, if webpage fails skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:

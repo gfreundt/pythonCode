@@ -89,7 +89,7 @@ class Database:
             # if first record, load into memory and go to next one
             if k == 0:
                 previous_row = copy(row)
-                vehiculos = [create_vehiculo(row)]
+                vehiculos = [create_vehiculo(row)] if row[5] else []
                 continue
             # if name is the same as previous, accumulate placa, else write record
             if row[0] == previous_row[0]:
@@ -120,10 +120,14 @@ class Database:
 
     def load_database(self):
         """Opens database and stores into to memory as a list of dictionaries"""
-        with open(self.DATABASE_NAME, mode="r") as file:
-            self.database = json.load(file)
-        self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-        self.LOG.info(f"Database records: {len(self.database):,}.")
+        try:
+            with open(self.DATABASE_NAME, mode="r") as file:
+                self.database = json.load(file)
+            self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
+            self.LOG.info(f"Database records: {len(self.database):,}.")
+        except:
+            self.LOG.error(f"Database corrupted. End Updater.")
+            quit()
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.

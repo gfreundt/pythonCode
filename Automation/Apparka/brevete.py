@@ -17,19 +17,22 @@ sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils, GoogleUtils
 import monitor, database, revtec, sutran
 
+# Brevete = 0
+
 
 class Brevete:
     WRITE_FREQUENCY = 50
     URL = "https://licencias.mtc.gob.pe/#/index"
 
-    def __init__(self, database, logger) -> None:
+    def __init__(self, database, logger, monitor, options) -> None:
         self.counter = 0
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.DB = database
         self.LOG = logger
-        self.MONITOR = monitor.Monitor()
-        self.TIMEOUT = 14400
-        self.SWITCH_TO_LIMITED = 800  # records
+        self.MONITOR = monitor
+        self.TIMEOUT = 21600
+        self.SWITCH_TO_LIMITED = 1200  # records
+        self.options = options
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates Brevete data for each PLACA."""
@@ -37,20 +40,16 @@ class Brevete:
         # log start of process
         self.LOG.info(f"BREVETE > Begin.")
 
-        # start individual-level monitor in daemon thread
-        _monitor = threading.Thread(
-            target=self.MONITOR.individual, args=(self.TIMEOUT,), daemon=True
-        )
-        _monitor.start()
-
-        # create list of all records that need updating with priorities
+        # create list of all records that need updating with priorities, add to monitor dashboard variable
         records_to_update = self.list_records_to_update()
+        self.MONITOR.total_records[0] = len(records_to_update)
+
         # if volume is large, use less time-consuming scraper
         self.limited_scrape = (
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
         self.LOG.info(
-            f"BREVETE > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
+            f"BREVETE > Will process {len(records_to_update):,} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
         )
 
         # begin update
@@ -67,9 +66,12 @@ class Brevete:
             self.WEBD.get(self.URL)
             time.sleep(2)
 
-            rec = 0
+            rec = 0  # only in case for loop doesn't run
             # iterate on all records that require updating
             for rec, record_index in enumerate(records_to_update):
+                # update monitor dashboard data
+                self.MONITOR.current_record[0] = rec
+
                 # get scraper data, if webpage fails, refresh and skip record
                 _dni = self.DB.database[record_index]["documento"]["numero"]
                 try:

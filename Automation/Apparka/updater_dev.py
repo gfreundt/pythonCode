@@ -26,6 +26,32 @@ def start_logger(test=False):
     return _log
 
 
+def scraper_options():
+    options = {"timeout_time": 3600 * 17}  # 72000}
+    # no options entered
+    if len(sys.argv) == 1:
+        return options
+    # iterate all options entered and build options dictionary (start with default values)
+
+    for arg in sys.argv[1:]:
+        if "-time:" in arg:
+            options["timeout_time"] = int(arg.split(":")[1])
+
+    return options
+
+
+def send_gmail():
+    try:
+        GOOGLE_UTILS.send_gmail(
+            "gfreundt@gmail.com",
+            "UserData Process",
+            f"Finished Process on {dt.now()}.\nRevTec: {MONITOR.total_records_revtec}\nBrevete: {MONITOR.total_records_brevete}",
+        )
+        LOG.info(f"GMail sent.")
+    except:
+        LOG.warning(f"Gmail ERROR.")
+
+
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv
@@ -33,20 +59,23 @@ def main():
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
+    options = scraper_options()
+
     # start top-level monitor in daemon thread
-    _monitor = threading.Thread(target=MONITOR.top_level, daemon=True)
+    _monitor = threading.Thread(target=MONITOR.supervisor, args=(options,), daemon=True)
     _monitor.start()
 
-    # MONITOR.threads = []
     # start required scrapers
-    if "RTEC" in arguments:
-        re = revtec.RevTec(database=DB, logger=LOG)
-        MONITOR.threads.append(threading.Thread(target=re.run_full_update))
     if "BREVETE" in arguments:
-        br = brevete.Brevete(database=DB, logger=LOG)
+        br = brevete.Brevete(database=DB, logger=LOG, monitor=MONITOR, options=options)
         MONITOR.threads.append(threading.Thread(target=br.run_full_update))
+
+    if "RTEC" in arguments:
+        re = revtec.RevTec(database=DB, logger=LOG, monitor=MONITOR, options=options)
+        MONITOR.threads.append(threading.Thread(target=re.run_full_update))
+
     if "SUTRAN" in arguments:
-        su = sutran.Sutran(database=DB, logger=LOG)
+        su = sutran.Sutran(database=DB, logger=LOG, monitor=MONITOR, options=options)
         MONITOR.threads.append(threading.Thread(target=su.run_full_update))
 
     for thread in MONITOR.threads:
@@ -61,15 +90,31 @@ def main():
     # MONITOR.send_gmail()
 
 
+def side():
+    import time
+
+    for rec, record in enumerate(DB.database):
+        if record["vehiculos"] == None:
+            DB.database[rec]["vehiculos"] = []
+
+    DB.write_database()
+
+
 if __name__ == "__main__":
     # start logger and register program start
     LOG = start_logger(test=False)
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    MONITOR = monitor.Monitor()
     DB = database.Database(no_backup=False, test=False, logger=LOG)
+    MONITOR = monitor.Monitor(database=DB)
     GOOGLE_UTILS = GoogleUtils()
 
+    # side()
+    # quit()
+
+    # run main code
     main()
+
+    # register program end
     LOG.info("Updater End.")

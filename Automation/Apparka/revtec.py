@@ -21,12 +21,12 @@ class RevTec:
     WRITE_FREQUENCY = 50
     URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
 
-    def __init__(self, database, logger) -> None:
+    def __init__(self, database, logger, monitor, options) -> None:
         self.counter = 0
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.DB = database
         self.LOG = logger
-        self.MONITOR = monitor.Monitor()
+        self.MONITOR = monitor
         self.TIMEOUT = 14460
 
     def run_full_update(self):
@@ -36,14 +36,10 @@ class RevTec:
         # log start of process
         self.LOG.info(f"REVTEC > Begin.")
 
-        # start individual-level monitor in daemon thread
-        _monitor = threading.Thread(
-            target=self.MONITOR.individual, args=(self.TIMEOUT,), daemon=True
-        )
-        _monitor.start()
-
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+        self.MONITOR.total_records[1] = len(records_to_update)
+
         self.LOG.info(
             f"REVTEC > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )
@@ -65,6 +61,8 @@ class RevTec:
             rec = 0
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
+                # update monitor dashboard data
+                self.MONITOR.current_record[1] = rec
                 # get scraper data, if webpage fails, wait, reload page and skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -129,6 +127,7 @@ class RevTec:
 
         for record_index, record in enumerate(self.DB.database):
             vehiculos = record["vehiculos"]
+
             for veh_index, vehiculo in enumerate(vehiculos):
                 actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
                 rtecs = vehiculo["rtecs"]
