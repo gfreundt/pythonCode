@@ -8,7 +8,7 @@ import threading
 
 
 # Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
+# sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import GoogleUtils
 
 
@@ -25,7 +25,7 @@ class Database:
         self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
         self.GDRIVE_BACKUP_PATH = os.path.join(
             "G:",
-            "My Drive",
+            "\My Drive",
             "pythonCoding",
             "Updater Data",
             f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
@@ -118,15 +118,15 @@ class Database:
             os.path.join(os.curdir, "data", _filename),
             follow_symlinks=True,
         )
-        self.LOG.warning(f"Database backup complete. File = {_filename}.")
+        self.LOG.info(f"Database backup complete. File = {_filename}.")
 
     def load_database(self):
         """Opens database and stores into to memory as a list of dictionaries"""
         try:
             with open(self.DATABASE_NAME, mode="r") as file:
                 self.database = json.load(file)
-            self.LOG.warning(f"Database loaded: File = {self.DATABASE_NAME}")
-            self.LOG.warning(f"Database records: {len(self.database):,}.")
+            self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
+            self.LOG.info(f"Database records: {len(self.database):,}.")
         except:
             self.LOG.error(f"Database corrupted. End Updater.")
             raise "Database corrupted. End Updater."
@@ -147,7 +147,7 @@ class Database:
                         "rtecs_actualizado"
                     ] = "01/01/2000"
                     _fixes += 1
-        self.LOG.warning(
+        self.LOG.info(
             f"DATABASE > Database Checked. {_fixes} fixed made (requires write)."
         )
 
@@ -159,7 +159,7 @@ class Database:
             json.dump(self.database, file, indent=4)
         self.LOCK.release()
         # self.MONITOR.last_pending = 0
-        self.LOG.warning(f"DATABASE > Database write.")
+        self.LOG.info(f"DATABASE > Database write.")
 
     def update_database_correlatives(self):
         """Updates correlatives for all records, writes database."""
@@ -172,24 +172,24 @@ class Database:
         for k, _ in enumerate(self.database):
             self.database[k]["correlative"] = k
         self.write_database()
-        self.LOG.warning(f"DATABASE > Correlatives updated.")
+        self.LOG.info(f"DATABASE > Correlatives updated.")
 
     def upload_to_drive(self):
         """Attempts to make a copy to local GDrive folder in PC. If not possible,
         use Google Drive API to upload file directly."""
         try:
-            self.LOG.warning(f"{self.DATABASE_NAME=} {self.GDRIVE_BACKUP_PATH=}")
+            self.LOG.info(f"{self.DATABASE_NAME=} {self.GDRIVE_BACKUP_PATH=}")
             shutil.copy(
                 self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
             )
-            self.LOG.warning(f"DATABASE > Local GDrive folder upload complete.")
+            self.LOG.info(f"DATABASE > Local GDrive folder upload complete.")
         except:
             try:
                 self.GOOGLE_UTILS.upload_to_drive(
                     local_path=self.DATABASE_NAME,
                     drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
                 )
-                self.LOG.warning(f"DATABASE > GDrive upload complete.")
+                self.LOG.info(f"DATABASE > GDrive upload complete.")
             except:
                 self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
 
@@ -312,4 +312,4 @@ class Database:
             _writer = csv.writer(file, delimiter="|", quotechar="'")
             _writer.writerow(response)
 
-        self.LOG.warning(f"DATABASE > Dashboard data updated.")
+        self.LOG.info(f"DATABASE > Dashboard data updated.")

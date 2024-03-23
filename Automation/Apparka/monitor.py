@@ -3,12 +3,14 @@ import time
 from datetime import datetime as dt, timedelta as td
 from colorama import Fore, Back, Style
 import threading
+import logging
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 # custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
+# sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import GoogleUtils
 
 
@@ -52,9 +54,9 @@ class Monitor:
             # display status of threads on console
             api_data = self.generate_thread_status()
 
-            # wait and clear screen
+            # wait
             time.sleep(self.UPDATE_FREQUENCY)
-            os.system("cls")
+            # os.system("cls")
 
     def generate_thread_status(self):
         _elapsed = time.time() - self.timer_on

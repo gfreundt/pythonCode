@@ -30,13 +30,13 @@ class Sutran:
         Designed to work with Threading."""
 
         # log start of process
-        self.LOG.warning(f"SUTRAN > Begin.")
+        self.LOG.info(f"SUTRAN > Begin.")
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
         self.MONITOR.total_records[2] = len(records_to_update)
 
-        self.LOG.warning(
+        self.LOG.info(
             f"SUTRAN > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )
 
@@ -101,9 +101,7 @@ class Sutran:
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
                     self.DB.write_database()
-                    self.LOG.warning(
-                        f"SUTRAN > End (Timeout). Processed {rec} records."
-                    )
+                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec} records.")
                     return
 
                 # check monitor flags: stalled
@@ -121,7 +119,7 @@ class Sutran:
         if rec:
             self.DB.write_database()
         # log end of process
-        self.LOG.warning(f"SUTRAN > End (Complete). Processed: {rec} records.")
+        self.LOG.info(f"SUTRAN > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
 

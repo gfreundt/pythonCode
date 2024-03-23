@@ -6,9 +6,9 @@ import time, sys
 from datetime import datetime as dt, timedelta as td
 from PIL import Image
 import io, urllib
-import threading
 import easyocr
 import random
+import logging
 
 
 # Custom imports
@@ -17,6 +17,9 @@ from gft_utils import ChromeUtils, GoogleUtils
 import monitor, database, revtec, sutran
 
 # Brevete = 0
+
+
+logging.getLogger("easyocr").setLevel(logging.ERROR)
 
 
 class Brevete:
@@ -37,7 +40,7 @@ class Brevete:
         """Iterates through a certain portion of database and updates Brevete data for each PLACA."""
 
         # log start of process
-        self.LOG.warning(f"BREVETE > Begin.")
+        self.LOG.info(f"BREVETE > Begin.")
 
         # create list of all records that need updating with priorities, add to monitor dashboard variable
         records_to_update = self.list_records_to_update()
@@ -47,7 +50,7 @@ class Brevete:
         self.limited_scrape = (
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
-        self.LOG.warning(
+        self.LOG.info(
             f"BREVETE > Will process {len(records_to_update):,} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
         )
 
@@ -116,7 +119,7 @@ class Brevete:
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
                     self.DB.write_database()
-                    self.LOG.warning(f"BREVETE > End (Timeout). Processed {rec} records.")
+                    self.LOG.info(f"BREVETE > End (Timeout). Processed {rec} records.")
                     return
 
                 # check monitor flags: stalled
@@ -134,12 +137,12 @@ class Brevete:
         if rec:
             self.DB.write_database()
         # log end of process
-        self.LOG.warning(f"BREVETE > End (Complete). Processed: {rec} records.")
+        self.LOG.info(f"BREVETE > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
         # check for switch to force updating all records
         if "-all" in sys.argv:
-            self.LOG.warning("-all switch selected.")
+            self.LOG.info("-all switch selected.")
             return [i for i in range(self.DB.len_database)]
 
         to_update = [[] for _ in range(3)]
@@ -317,7 +320,7 @@ class Brevete:
             if "se encontraron" in _pimpagas:
                 _pimpagas = None
             else:
-                self.LOG.warning(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
+                self.LOG.info(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
             response.update({"papeletas_impagas": _pimpagas})
         except:
             return response

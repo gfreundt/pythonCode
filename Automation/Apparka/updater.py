@@ -4,7 +4,7 @@ import threading
 import logging
 
 # Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
+# sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import GoogleUtils
 import monitor, database, revtec, sutran, brevete
 
@@ -21,8 +21,9 @@ def start_logger(test=False):
         filemode="w",
         format="%(asctime)s | %(levelname)s | %(message)s",
     )
+
     _log = logging.getLogger(__name__)
-    _log.setLevel(logging.WARNING)
+    _log.setLevel(logging.INFO)
     return _log
 
     """import logging.config
@@ -118,7 +119,7 @@ def side():
 if __name__ == "__main__":
     # start logger and register program start
     LOG = start_logger(test=False)
-    LOG.warning("Updater Begin.")
+    LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
     DB = database.Database(no_backup=False, test=False, logger=LOG)
