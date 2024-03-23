@@ -1,6 +1,39 @@
 <head>
-    <title>Apparka User Data Dashboard</title>
+    <title>Updater Run Status</title>
 </head>
 <body>
-    {{data}}
-</body>
+    <table style="color: white; background-color: blue;">
+        <tr>
+            <td>Elapsed Time: {{data[0]["elapsed"]}}</td>
+            <td>Timeout in: {{data[0]["timeout"]}}</td>
+            <td>Last Write: {{data[0]["last_write"]}}</td>
+        </tr>
+    </table>
+    </br>
+    <table style="text-align:center;">
+        <tr>
+            <th>Process</th>
+            <th>Current Rec</th>
+            <th>Total Recs</th>
+            <th>Completion</th>
+            <th>Status</th>
+            <th>Rate (it/hr)</th>
+            <th>ETA</th>
+        </tr>
+        {%for line in data[1:]%}
+            {%if line["active"]%}
+        <tr style="color: black;background-color:rgb(45, 193, 45)">
+            {%else%}
+            <tr style="color: white;background-color:maroon">
+                {%endif%}
+                <td>{{line["process"]}}</td>
+                <td>{{line["cur_rec"]}}</td>
+                <td>{{line["tot_recs"]}}</td>
+                <td>{{line["complet"]}}</td>
+                <td>{{line["status"]}}</td>
+                <td>{{line["rate"]}}</td>
+                <td>{{line["eta"]}}</td>
+            </tr>
+            {%endfor%}
+        </table>
+    </body>

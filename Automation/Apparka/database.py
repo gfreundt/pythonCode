@@ -17,7 +17,9 @@ class Database:
         # define database constants
         self.LOG = logger
         if not test:
-            self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
+            self.DATABASE_NAME = os.path.join(
+                "d:", "\pythonCode", "Automation", "Apparka", "data", "rtec_data.json"
+            )
         else:
             self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data_dev.json")
         self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
@@ -116,25 +118,18 @@ class Database:
             os.path.join(os.curdir, "data", _filename),
             follow_symlinks=True,
         )
-        self.LOG.info(f"Database backup complete. File = {_filename}.")
+        self.LOG.warning(f"Database backup complete. File = {_filename}.")
 
     def load_database(self):
         """Opens database and stores into to memory as a list of dictionaries"""
-<<<<<<< HEAD
         try:
             with open(self.DATABASE_NAME, mode="r") as file:
                 self.database = json.load(file)
-            self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-            self.LOG.info(f"Database records: {len(self.database):,}.")
+            self.LOG.warning(f"Database loaded: File = {self.DATABASE_NAME}")
+            self.LOG.warning(f"Database records: {len(self.database):,}.")
         except:
             self.LOG.error(f"Database corrupted. End Updater.")
-            quit()
-=======
-        with open(self.DATABASE_NAME, mode="r") as file:
-            self.database = json.load(file)
-        self.LOG.info(f"DATABASE > Database loaded: File = {str(self.DATABASE_NAME)}")
-        self.LOG.info(f"DATABASE > Database records: {len(self.database):,}.")
->>>>>>> 683288acade078e12333a91a4092ababaf4b474b
+            raise "Database corrupted. End Updater."
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.
@@ -152,7 +147,7 @@ class Database:
                         "rtecs_actualizado"
                     ] = "01/01/2000"
                     _fixes += 1
-        self.LOG.info(
+        self.LOG.warning(
             f"DATABASE > Database Checked. {_fixes} fixed made (requires write)."
         )
 
@@ -164,7 +159,7 @@ class Database:
             json.dump(self.database, file, indent=4)
         self.LOCK.release()
         # self.MONITOR.last_pending = 0
-        self.LOG.info(f"DATABASE > Database write.")
+        self.LOG.warning(f"DATABASE > Database write.")
 
     def update_database_correlatives(self):
         """Updates correlatives for all records, writes database."""
@@ -177,23 +172,24 @@ class Database:
         for k, _ in enumerate(self.database):
             self.database[k]["correlative"] = k
         self.write_database()
-        self.LOG.info(f"DATABASE > Correlatives updated.")
+        self.LOG.warning(f"DATABASE > Correlatives updated.")
 
     def upload_to_drive(self):
         """Attempts to make a copy to local GDrive folder in PC. If not possible,
         use Google Drive API to upload file directly."""
         try:
+            self.LOG.warning(f"{self.DATABASE_NAME=} {self.GDRIVE_BACKUP_PATH=}")
             shutil.copy(
                 self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
             )
-            self.LOG.info(f"DATABASE > Local GDrive folder upload complete.")
+            self.LOG.warning(f"DATABASE > Local GDrive folder upload complete.")
         except:
             try:
                 self.GOOGLE_UTILS.upload_to_drive(
                     local_path=self.DATABASE_NAME,
                     drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
                 )
-                self.LOG.info(f"DATABASE > GDrive upload complete.")
+                self.LOG.warning(f"DATABASE > GDrive upload complete.")
             except:
                 self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
 
@@ -316,4 +312,4 @@ class Database:
             _writer = csv.writer(file, delimiter="|", quotechar="'")
             _writer.writerow(response)
 
-        self.LOG.info(f"DATABASE > Dashboard data updated.")
+        self.LOG.warning(f"DATABASE > Dashboard data updated.")

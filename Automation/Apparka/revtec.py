@@ -34,13 +34,13 @@ class RevTec:
         Designed to work with Threading."""
 
         # log start of process
-        self.LOG.info(f"REVTEC > Begin.")
+        self.LOG.warning(f"REVTEC > Begin.")
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
         self.MONITOR.total_records[1] = len(records_to_update)
 
-        self.LOG.info(
+        self.LOG.warning(
             f"REVTEC > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
         )
 
@@ -104,7 +104,7 @@ class RevTec:
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
                     self.DB.write_database()
-                    self.LOG.info(f"End RevTec (Timeout). Processed {rec} records.")
+                    self.LOG.warning(f"End RevTec (Timeout). Processed {rec} records.")
                     return
 
                 # check monitor flags: stalled
@@ -118,10 +118,11 @@ class RevTec:
                     # self.MONITOR.last_change = dt.now()
                     break
 
-        # last write in case there are pending changes in memory
-        self.DB.write_database()
+        # last write in case there are pending changes in memory (only if for loop ran)
+        if rec:
+            self.DB.write_database()
         # log end of process
-        self.LOG.info(f"REVTEC > End (Complete). Processed: {rec} records.")
+        self.LOG.warning(f"REVTEC > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self, last_update_threshold=10):
 

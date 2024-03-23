@@ -37,7 +37,7 @@ class Brevete:
         """Iterates through a certain portion of database and updates Brevete data for each PLACA."""
 
         # log start of process
-        self.LOG.info(f"BREVETE > Begin.")
+        self.LOG.warning(f"BREVETE > Begin.")
 
         # create list of all records that need updating with priorities, add to monitor dashboard variable
         records_to_update = self.list_records_to_update()
@@ -47,7 +47,7 @@ class Brevete:
         self.limited_scrape = (
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
-        self.LOG.info(
+        self.LOG.warning(
             f"BREVETE > Will process {len(records_to_update):,} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
         )
 
@@ -83,7 +83,7 @@ class Brevete:
                 except KeyboardInterrupt:
                     quit()
                 except:
-                    self.LOG.info(f"BREVETE > Skipped Record {rec}.")
+                    self.LOG.warning(f"BREVETE > Skipped Record {rec}.")
                     self.WEBD.refresh()
                     time.sleep(1)
                     self.WEBD.get(self.URL)
@@ -116,7 +116,7 @@ class Brevete:
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
                     self.DB.write_database()
-                    self.LOG.info(f"BREVETE > End (Timeout). Processed {rec} records.")
+                    self.LOG.warning(f"BREVETE > End (Timeout). Processed {rec} records.")
                     return
 
                 # check monitor flags: stalled
@@ -130,10 +130,11 @@ class Brevete:
                     # self.MONITOR.last_change = dt.now()
                     break
 
-        # last write in case there are pending changes in memory
-        self.DB.write_database()
+        # last write in case there are pending changes in memory (only if for loop ran)
+        if rec:
+            self.DB.write_database()
         # log end of process
-        self.LOG.info(f"BREVETE > End (Complete). Processed: {rec} records.")
+        self.LOG.warning(f"BREVETE > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
         # check for switch to force updating all records
@@ -316,7 +317,7 @@ class Brevete:
             if "se encontraron" in _pimpagas:
                 _pimpagas = None
             else:
-                self.LOG.info(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
+                self.LOG.warning(f"BREVETE > Registo ejemplo de papeletas impagas: {dni}.")
             response.update({"papeletas_impagas": _pimpagas})
         except:
             return response
