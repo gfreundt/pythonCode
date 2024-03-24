@@ -22,8 +22,8 @@ class Monitor:
         self.pending_writes = 0
         self.GOOGLE_UTILS = GoogleUtils()
         self.threads = []
-        self.total_records = [1 for _ in range(3)]
-        self.current_record = [0 for _ in range(3)]
+        self.total_records = [1 for _ in range(4)]
+        self.current_record = [0 for _ in range(4)]
         self.process_names = ["Brevete", "RevTec", "Sutran"]
         self.DB = database
         api_thread = threading.Thread(target=api, daemon=True)

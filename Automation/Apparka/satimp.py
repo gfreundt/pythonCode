@@ -15,41 +15,36 @@ import monitor
 
 class Sutran:
     # define class constants
-    URL = "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
-    WRITE_FREQUENCY = 50
+    URL = "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx"
 
     def __init__(self, database, logger, monitor, options) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.DB = database
         self.LOG = logger
         self.MONITOR = monitor
-        self.TIMEOUT = 14430
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
         # log start of process
-        self.LOG.info(f"SUTRAN > Begin.")
+        self.LOG.info(f"SAT_IMPUESTOS > Begin.")
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
-        self.MONITOR.total_records[2] = len(records_to_update)
+        self.MONITOR.total_records[3] = len(records_to_update)
 
-        self.LOG.info(
-            f"SUTRAN > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
-        )
+        self.LOG.info(f"SAT_IMPUESTOS > Will process {len(records_to_update)} records.")
 
         # begin update
         process_complete = False
         while not process_complete:
             # set complete flag to True, changed if process stalled
             process_complete = True
-            pending_writes = 0
 
             # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, maximized=True
+                headless=False, verbose=False, maximized=True
             )
             self.WEBD.get(self.URL)
             time.sleep(2)
@@ -75,7 +70,7 @@ class Sutran:
                 if (
                     not new_record
                     and self.DB.database[record_index]["vehiculos"][position]["multas"][
-                        "sutran"
+                        "sat_imp"
                     ]
                 ):
                     continue
@@ -83,16 +78,18 @@ class Sutran:
                 # update sutran data and last update in database (introduce random delta days for even distribution)
                 # TODO: eliminate random in 30 days
                 self.DB.database[record_index]["vehiculos"][position]["multas"][
-                    "sutran"
+                    "sat_imp"
                 ] = new_record
                 self.DB.database[record_index]["vehiculos"][position]["multas"][
-                    "sutran_actualizado"
+                    "sat_imp_actualizado"
                 ] = dt.now().strftime("%d/%m/%Y")
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
                     self.DB.write_database()
-                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec} records.")
+                    self.LOG.info(
+                        f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
+                    )
                     return
 
                 # check monitor flags: stalled
@@ -110,7 +107,7 @@ class Sutran:
         if rec:
             self.DB.write_database()
         # log end of process
-        self.LOG.info(f"SUTRAN > End (Complete). Processed: {rec} records.")
+        self.LOG.info(f"SAT_IMPUESTOS > End (Complete). Processed: {rec} records.")
 
     def list_records_to_update(self):
 
@@ -120,7 +117,7 @@ class Sutran:
             vehiculos = record["vehiculos"]
             for veh_index, vehiculo in enumerate(vehiculos):
                 actualizado = dt.strptime(
-                    vehiculo["multas"]["sutran_actualizado"], "%d/%m/%Y"
+                    vehiculo["multas"]["sat_imp_actualizado"], "%d/%m/%Y"
                 )
 
                 # Skip all records than have already been updated in last 22 hours

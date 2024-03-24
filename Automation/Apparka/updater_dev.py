@@ -5,8 +5,8 @@ import logging
 
 # Custom imports
 # sys.path.append(r"\pythonCode\Resources\Scripts")
-from gft_utils import GoogleUtils
-import monitor, database, revtec, sutran, brevete
+# from gft_utils import GoogleUtils
+import monitor, database, revtec, sutran, brevete, satimp
 
 
 def start_logger(test=False):
@@ -61,12 +61,13 @@ def send_gmail():
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv
-    VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN"]
+    VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN", "SAT-IMP"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
     options = scraper_options()
 
+    arguments = ["SAT-IMP"]
     # start supervisor monitor in daemon thread
     _monitor = threading.Thread(target=MONITOR.supervisor, args=(options,), daemon=True)
     _monitor.start()
@@ -85,7 +86,7 @@ def main():
         MONITOR.threads.append(threading.Thread(target=su.run_full_update))
 
     if "SAT-IMP" in arguments:
-        si = satmp.SatImp(database=DB, logger=LOG, monitor=MONITOR, options=options)
+        si = satimp.SatImp(database=DB, logger=LOG, monitor=MONITOR, options=options)
         MONITOR.threads.append(threading.Thread(target=si.run_full_update))
 
     for thread in MONITOR.threads:
@@ -102,36 +103,39 @@ def main():
 
 def side():
 
-    # start supervisor monitor in daemon thread
-    _monitor = threading.Thread(
-        target=MONITOR.supervisor, args=({"timeout_time": 300},), daemon=True
-    )
-    _monitor.start()
+    # # start supervisor monitor in daemon thread
+    # _monitor = threading.Thread(
+    #     target=MONITOR.supervisor, args=({"timeout_time": 300},), daemon=True
+    # )
+    # _monitor.start()
 
-    import time
+    # import time
 
-    time.sleep(30)
-    return
+    # time.sleep(30)
+    # return
 
     for rec, record in enumerate(DB.database):
-        if record["vehiculos"] == None:
-            DB.database[rec]["vehiculos"] = []
+        for veh, vehiculo in enumerate(record["vehiculos"]):
+            DB.database[rec]["vehiculos"][veh].update({"impuestos": []})
+            DB.database[rec]["vehiculos"][veh].update(
+                {"impuestos_actualizado": "01/01/2015"}
+            )
 
     DB.write_database()
 
 
 if __name__ == "__main__":
     # start logger and register program start
-    LOG = start_logger(test=False)
+    LOG = start_logger(test=True)
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    DB = database.Database(no_backup=False, test=False, logger=LOG)
+    DB = database.Database(no_backup=False, test=True, logger=LOG)
     MONITOR = monitor.Monitor(database=DB)
     GOOGLE_UTILS = GoogleUtils()
 
-    # side()
-    # quit()
+    side()
+    quit()
 
     # run main code
     main()
