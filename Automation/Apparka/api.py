@@ -1,60 +1,62 @@
-import os, csv
+import os, csv, time, signal
+from datetime import datetime as dt
+from random import randint
+from gft_utils import ChromeUtils
+
+# import and activate Flask, change logging level to reduce messages
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
 
+# define all api endpoints and launcher
 @app.route("/")
-def home():
-    return render_template("home.html")
-
-
-@app.route("/rtec", methods=["GET", "POST"])
-def rtec():
-    if request.method == "POST":
-        dni = request.form.get("dni")
-        print(dni)
-        # return Brevete().run_single_update(dni=dni)
-    return render_template("rtec.html")
-
-
-@app.route("/dashboard")
-def dashboard():
-    with open(self.DASHBOARD_NAME, "r") as file:
-        dashboard = [i for i in csv.reader(file, delimiter="|", quotechar="'")]
-        print(dashboard[0])
-    return render_template("dashboard.html", data=dashboard[0])
+def root():
+    print("root!")
 
 
 @app.route("/status")
 def status():
-    data = [
-        {"elapsed": "34:34:34", "timeout": "3:55:12", "last_write": "12:12:00"},
-    ]
-    data1 = {
-        "active": True,
-        "process": "Procesassdda",
-        "cur_rec": 76,
-        "tot_recs": 5000,
-        "complet": "8.6%",
-        "status": "ACTIVE",
-        "rate": "6.7",
-        "eta": "05-06-24 06:44:12",
-    }
-    data2 = {
-        "active": False,
-        "process": "Procesassdda",
-        "cur_rec": 76,
-        "tot_recs": 5000,
-        "complet": "8.6%",
-        "status": "ACTIVE",
-        "rate": "16.3",
-        "eta": "05-06-24 06:44:12",
-    }
-    data.append(data1)
-    data.append(data2)
-    return render_template("status.html", data=data)
+    return render_template("status.html", data=MONITOR.api_data)
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+"""@app.route("/killemall", methods=["POST"])
+def killemall():
+    MONITOR.kill_em_all = True
+    return render_template("status.html", data=MONITOR.api_data)"""
+
+
+@app.route("/panic", methods=["POST"])
+def panic():
+    os.kill(os.getpid(), getattr(signal, "SIGKILL", signal.SIGTERM))
+
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html", data=MONITOR.dash_data)
+
+
+def stats_view(MONITOR):
+    # wait until port assigned by a different thread
+    while not MONITOR._port:
+        time.sleep(2)
+
+    # open browser on status page
+    webdriver = ChromeUtils().init_driver(
+        headless=False, verbose=False, window_size=(900, 310)
+    )
+    webdriver.set_window_position(1670, 1080, windowHandle="current")
+    webdriver.get(url=f"http://127.0.0.1:{MONITOR._port}/status")
+
+    # forever loop refreshing status page
+    while True:
+        time.sleep(3)
+        webdriver.refresh()
+
+
+def main(monitor, LOG):
+    global MONITOR
+    MONITOR = monitor
+    MONITOR._port = randint(8000, 40000)
+    LOG.info(f"Port: {MONITOR._port}")
+    app.run(port=MONITOR._port, debug=False)

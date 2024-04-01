@@ -4,36 +4,51 @@
 <body>
     <table style="color: white; background-color: blue;">
         <tr>
-            <td>Elapsed Time: {{data[0]["elapsed"]}}</td>
-            <td>Timeout in: {{data[0]["timeout"]}}</td>
-            <td>Last Write: {{data[0]["last_write"]}}</td>
+            <td style="width: 250px">Elapsed Time: {{data[0]["elapsed"]}}</td>
+            <td style="width: 180px">Timeout in: {{data[0]["timeout_in"]}}</td>
+            <td style="width: 100px">[ {{data[0]["timeout_time"]}} ]</td>
+            <td style="width: 200px">Last Write: {{data[0]["last_write"]}}</td>
+            <td style="width: 175px">
+                <form method="POST" action="/killemall">
+                    <button type="submit">Kill 'Em All</button>
+                </form>
+            </td>
+            <td style="width: 120px">
+                <form method="POST" action="/panic">
+                    <button type="submit">PANIC!</button>
+                </form>
+            </td>
         </tr>
     </table>
     </br>
     <table style="text-align:center;">
         <tr>
             <th style="width: 100px">Process</th>
-            <th>Current Rec</th>
-            <th>Total Recs</th>
-            <th>Completion</th>
-            <th>Status</th>
-            <th>Rate (it/hr)</th>
-            <th>ETA</th>
+            <th style="width: 50px">LUT</th>
+            <th style="width: 50px">Current Rec</th>
+            <th style="width: 100px">Total Recs</th>
+            <th style="width: 100px">Completion</th>
+            <th style="width: 120px">Status</th>
+            <th style="width: 50px">Rate (it/hr)</th>
+            <th style="width: 200px">ETA</th>
         </tr>
         {%for line in data[1:]%}
-            {%if line["active"]%}
+            {%if line["status"]=="ACTIVE"%}
         <tr style="color: black;background-color:rgb(45, 193, 45)">
-            {%else%}
-            <tr style="color: white;background-color:maroon">
-                {%endif%}
-                <td>{{line["process"]}}</td>
-                <td>{{line["cur_rec"]}}</td>
-                <td>{{line["tot_recs"]}}</td>
-                <td>{{line["complet"]}}</td>
-                <td>{{line["status"]}}</td>
-                <td>{{line["rate"]}}</td>
-                <td>{{line["eta"]}}</td>
-            </tr>
-            {%endfor%}
-        </table>
-    </body>
+            {%elif line["status"]=="STALLED"%}
+            <tr style="color: rgb(252, 251, 251);background-color:rgb(175, 18, 18)">
+                {%else%}
+                <tr style="color: black;background-color:rgb(223, 182, 20)">
+                    {%endif%}
+                    <td>{{line["process"]}}</td>
+                    <td>{{line["lut"]}}</td>
+                    <td>{{line["cur_rec"]}}</td>
+                    <td>{{line["tot_recs"]}}</td>
+                    <td>{{line["complet"]}}</td>
+                    <td>{{line["status"]}}</td>
+                    <td>{{line["rate"]}}</td>
+                    <td>{{line["eta"]}}</td>
+                </tr>
+                {%endfor%}
+            </table>
+        </body>

@@ -13,7 +13,6 @@ import random
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
-import monitor
 
 
 class RevTec:
@@ -39,16 +38,13 @@ class RevTec:
         records_to_update = self.list_records_to_update()
         self.MONITOR.total_records[1] = len(records_to_update)
 
-        self.LOG.info(
-            f"REVTEC > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
-        )
+        self.LOG.info(f"REVTEC > Will process {len(records_to_update):,} records.")
 
         # begin update
         process_complete = False
         while not process_complete:
             # set complete flag to True, changed if process stalled
             process_complete = True
-            pending_writes = 0
 
             # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
@@ -61,7 +57,7 @@ class RevTec:
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
                 # update monitor dashboard data
-                self.MONITOR.current_record[1] = rec
+                self.MONITOR.current_record[1] = rec + 1
                 # get scraper data, if webpage fails, wait, reload page and skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -82,7 +78,6 @@ class RevTec:
                     continue
 
                 # update brevete data and last update in database
-                # TODO: eliminate random in 12 days
                 self.DB.database[record_index]["vehiculos"][position][
                     "rtecs"
                 ] = new_record
@@ -92,8 +87,9 @@ class RevTec:
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
-                    self.DB.write_database()
+                    # self.DB.write_database()
                     self.LOG.info(f"End RevTec (Timeout). Processed {rec} records.")
+                    self.WEBD.close()
                     return
 
                 # check monitor flags: stalled
@@ -113,7 +109,7 @@ class RevTec:
         # log end of process
         self.LOG.info(f"REVTEC > End (Complete). Processed: {rec} records.")
 
-    def list_records_to_update(self, last_update_threshold=10):
+    def list_records_to_update(self, last_update_threshold=7):
 
         to_update = [[] for _ in range(5)]
 
@@ -128,24 +124,24 @@ class RevTec:
                 if dt.now() - actualizado <= td(days=1):
                     continue
 
-                # Priority 0: rtec will expire in 3 days or has expired in the last 30 days
+                # Priority 0: rtec will expire in 3 days or has expired in the last 60 days
                 if rtecs and rtecs[0]["fecha_hasta"]:
                     hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
-                    if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                    if td(days=-3) <= dt.now() - hasta <= td(days=60):
                         to_update[0].append((record_index, veh_index))
 
                 # Priority 1: rtecs with no fecha hasta
                 if rtecs and not rtecs[0]["fecha_hasta"]:
                     to_update[1].append((record_index, veh_index))
 
-                # Priority 2: no rtec information and last update was 10+ days ago
+                # Priority 2: no rtec information and last update was 7+ days ago
                 if not rtecs and dt.now() - actualizado >= td(
                     days=last_update_threshold
                 ):
                     to_update[2].append((record_index, veh_index))
 
-                # Priority 3: rtec will expire in more than 30 days and last update was 10+ days ago
-                if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
+                # Priority 3: rtec will expire in more than 60 days and last update was 7+ days ago
+                if dt.now() - hasta > td(days=60) and dt.now() - actualizado >= td(
                     days=last_update_threshold
                 ):
                     to_update[3].append((record_index, veh_index))

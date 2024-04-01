@@ -5,8 +5,8 @@ import logging
 
 # Custom imports
 # sys.path.append(r"\pythonCode\Resources\Scripts")
-# from gft_utils import GoogleUtils
-import monitor, database, revtec, sutran, brevete, satimp
+from gft_utils import GoogleUtils
+import monitor_dev as monitor, database, revtec, sutran, brevete, satimp
 
 
 def start_logger(test=False):
@@ -86,7 +86,7 @@ def main():
         MONITOR.threads.append(threading.Thread(target=su.run_full_update))
 
     if "SAT-IMP" in arguments:
-        si = satimp.SatImp(database=DB, logger=LOG, monitor=MONITOR, options=options)
+        si = satimp.Satimp(database=DB, logger=LOG, monitor=MONITOR, options=options)
         MONITOR.threads.append(threading.Thread(target=si.run_full_update))
 
     for thread in MONITOR.threads:
@@ -115,11 +115,10 @@ def side():
     # return
 
     for rec, record in enumerate(DB.database):
-        for veh, vehiculo in enumerate(record["vehiculos"]):
-            DB.database[rec]["vehiculos"][veh].update({"impuestos": []})
-            DB.database[rec]["vehiculos"][veh].update(
-                {"impuestos_actualizado": "01/01/2015"}
-            )
+        DB.database[rec]["documento"].update({"deuda_tributaria_sat": []})
+        DB.database[rec]["documento"].update(
+            {"deuda_tributaria_sat_actualizado": "01/01/2015"}
+        )
 
     DB.write_database()
 
@@ -130,7 +129,7 @@ if __name__ == "__main__":
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    DB = database.Database(no_backup=False, test=True, logger=LOG)
+    DB = database.Database(no_backup=False, test=False, logger=LOG)
     MONITOR = monitor.Monitor(database=DB)
     GOOGLE_UTILS = GoogleUtils()
 

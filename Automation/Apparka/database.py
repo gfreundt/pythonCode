@@ -128,8 +128,32 @@ class Database:
             self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
             self.LOG.info(f"Database records: {len(self.database):,}.")
         except:
-            self.LOG.error(f"Database corrupted. End Updater.")
-            raise "Database corrupted. End Updater."
+            # identify latest backup
+            _backups = [
+                i
+                for i in sorted(os.scandir(".\data"), key=lambda i: i.stat().st_ctime)
+                if "data_backup" in str(i)
+            ]
+
+            # overwrite database file with latest backup
+            shutil.copy(
+                src=os.path.join(_backups[-2]),
+                dst=self.DATABASE_NAME,
+                follow_symlinks=True,
+            )
+            # erase backup file created in this session
+            os.remove(_backups[-1])
+            # write to log
+            self.LOG.warning(f"Database recovered from {_backups[-2]}")
+            # retry reading database from recovered file
+            try:
+                with open(self.DATABASE_NAME, mode="r") as file:
+                    self.database = json.load(file)
+                self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
+                self.LOG.info(f"Database records: {len(self.database):,}.")
+            except:
+                self.LOG.error(f"Database corrupted. End Updater.")
+                raise "Database corrupted. End Updater."
 
     def fix_database_errors(self):
         """Checks database and puts placeholder data in empty critical fields.
@@ -158,8 +182,11 @@ class Database:
         with open(self.DATABASE_NAME, "w+") as file:
             json.dump(self.database, file, indent=4)
         self.LOCK.release()
-        # self.MONITOR.last_pending = 0
         self.LOG.info(f"DATABASE > Database write.")
+        try:
+            self.export_dashboard()
+        except:
+            self.LOG.warning("DATABASE > Cannot generate KPI dashboard file.")
 
     def update_database_correlatives(self):
         """Updates correlatives for all records, writes database."""
@@ -307,8 +334,11 @@ class Database:
             else:
                 response.append(item)
 
+                # add timestamp
+                response.append[str(dt.now())]
+
         # write data to file to be used by dashboard
-        with open(self.DASHBOARD_NAME, "w") as file:
+        with open(self.DASHBOARD_NAME, "a") as file:
             _writer = csv.writer(file, delimiter="|", quotechar="'")
             _writer.writerow(response)
 

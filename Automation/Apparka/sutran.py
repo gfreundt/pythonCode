@@ -36,16 +36,13 @@ class Sutran:
         records_to_update = self.list_records_to_update()
         self.MONITOR.total_records[2] = len(records_to_update)
 
-        self.LOG.info(
-            f"SUTRAN > Will process {len(records_to_update)} records. Timeout set to {td(seconds=self.TIMEOUT)}."
-        )
+        self.LOG.info(f"SUTRAN > Will process {len(records_to_update)} records.")
 
         # begin update
         process_complete = False
         while not process_complete:
             # set complete flag to True, changed if process stalled
             process_complete = True
-            pending_writes = 0
 
             # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
@@ -58,7 +55,7 @@ class Sutran:
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
                 # update monitor dashboard data
-                self.MONITOR.current_record[2] = rec
+                self.MONITOR.current_record[2] = rec + 1
                 # get scraper data, if webpage fails skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -66,22 +63,22 @@ class Sutran:
                 except KeyboardInterrupt:
                     quit()
                 except:
+                    self.LOG.warning("SUTRAN > Skipped Record {rec}.")
                     time.sleep(1)
                     self.WEBD.refresh()
                     time.sleep(1)
                     continue
 
                 # if record has data and response is None, do not overwrite database
-                if (
-                    not new_record
-                    and self.DB.database[record_index]["vehiculos"][position]["multas"][
-                        "sutran"
-                    ]
-                ):
-                    continue
+                # if (
+                #     not new_record
+                #     and self.DB.database[record_index]["vehiculos"][position]["multas"][
+                #         "sutran"
+                #     ]
+                # ):
+                #     continue
 
-                # update sutran data and last update in database (introduce random delta days for even distribution)
-                # TODO: eliminate random in 30 days
+                # update sutran data and last update in database
                 self.DB.database[record_index]["vehiculos"][position]["multas"][
                     "sutran"
                 ] = new_record
@@ -91,7 +88,7 @@ class Sutran:
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
-                    self.DB.write_database()
+                    # self.DB.write_database()
                     self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec} records.")
                     return
 

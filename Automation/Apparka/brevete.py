@@ -13,8 +13,7 @@ import logging
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
-from gft_utils import ChromeUtils, GoogleUtils
-import monitor, database, revtec, sutran
+from gft_utils import ChromeUtils
 
 # Brevete = 0
 
@@ -51,7 +50,7 @@ class Brevete:
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
         self.LOG.info(
-            f"BREVETE > Will process {len(records_to_update):,} records. Timeout set to {td(seconds=self.TIMEOUT)}. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
+            f"BREVETE > Will process {len(records_to_update):,} records. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
         )
 
         # begin update
@@ -118,8 +117,8 @@ class Brevete:
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
-                    self.DB.write_database()
                     self.LOG.info(f"BREVETE > End (Timeout). Processed {rec} records.")
+                    self.WEBD.close()
                     return
 
                 # check monitor flags: stalled

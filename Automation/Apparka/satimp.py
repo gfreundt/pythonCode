@@ -1,19 +1,20 @@
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
 import time, sys
 from datetime import datetime as dt, timedelta as td
 import easyocr
-from tqdm import tqdm
-import threading
-import random
+from PIL import Image
+import io, urllib
+
 
 # Custom imports
 sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
-import monitor
 
 
-class Sutran:
+class Satimp:
     # define class constants
     URL = "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx"
 
@@ -34,7 +35,9 @@ class Sutran:
         records_to_update = self.list_records_to_update()
         self.MONITOR.total_records[3] = len(records_to_update)
 
-        self.LOG.info(f"SAT_IMPUESTOS > Will process {len(records_to_update)} records.")
+        self.LOG.info(
+            f"SAT_IMPUESTOS > Will process {len(records_to_update):,} records."
+        )
 
         # begin update
         process_complete = False
@@ -44,20 +47,27 @@ class Sutran:
 
             # define Chromedriver and open url for first time
             self.WEBD = ChromeUtils().init_driver(
-                headless=False, verbose=False, maximized=True
+                headless=True, verbose=False, maximized=True
             )
             self.WEBD.get(self.URL)
             time.sleep(2)
 
             rec = 0
             # iterate on all records that require updating
-            for rec, (record_index, position) in enumerate(records_to_update):
+            open = True
+            for rec, record_index in enumerate(records_to_update):
                 # update monitor dashboard data
-                self.MONITOR.current_record[2] = rec
+                self.MONITOR.current_record[3] = rec + 1
                 # get scraper data, if webpage fails skip record
-                _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
+                _doc_num = self.DB.database[record_index]["documento"]["numero"]
+                _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
+                if _doc_tipo != "DNI":
+                    self.LOG.warning(f"SAT_IMPUESTOS > Skipped Record {rec} (CE).")
                 try:
-                    new_record = self.scraper(placa=_placa)
+                    new_record = self.scraper(
+                        doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
+                    )
+                    open = False
                 except KeyboardInterrupt:
                     quit()
                 except:
@@ -69,43 +79,27 @@ class Sutran:
                 # if record has data and response is None, do not overwrite database
                 if (
                     not new_record
-                    and self.DB.database[record_index]["vehiculos"][position]["multas"][
-                        "sat_imp"
+                    and self.DB.database[record_index]["documento"][
+                        "deuda_tributaria_sat"
                     ]
                 ):
                     continue
 
-                # update sutran data and last update in database (introduce random delta days for even distribution)
-                # TODO: eliminate random in 30 days
-                self.DB.database[record_index]["vehiculos"][position]["multas"][
-                    "sat_imp"
+                self.DB.database[record_index]["documento"][
+                    "deuda_tributaria_sat"
                 ] = new_record
-                self.DB.database[record_index]["vehiculos"][position]["multas"][
-                    "sat_imp_actualizado"
+                self.DB.database[record_index]["documento"][
+                    "deuda_tributaria_sat_actualizado"
                 ] = dt.now().strftime("%d/%m/%Y")
 
                 # check monitor flags: timeout
                 if self.MONITOR.timeout_flag:
-                    self.DB.write_database()
                     self.LOG.info(
                         f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
                     )
+                    self.WEBD.close()
                     return
 
-                # check monitor flags: stalled
-                if self.MONITOR.stalled:
-                    # set complete flag to False to force restart of updating process
-                    process_complete = False
-                    # close current webdriver session and wait
-                    self.WEBD.close()
-                    time.sleep(5)
-                    # update monitor stats
-                    # self.MONITOR.last_change = dt.now()
-                    break
-
-        # last write in case there are pending changes in memory (only if for loop ran)
-        if rec:
-            self.DB.write_database()
         # log end of process
         self.LOG.info(f"SAT_IMPUESTOS > End (Complete). Processed: {rec} records.")
 
@@ -114,85 +108,138 @@ class Sutran:
         to_update = [[] for _ in range(2)]
 
         for record_index, record in enumerate(self.DB.database):
-            vehiculos = record["vehiculos"]
-            for veh_index, vehiculo in enumerate(vehiculos):
-                actualizado = dt.strptime(
-                    vehiculo["multas"]["sat_imp_actualizado"], "%d/%m/%Y"
-                )
+            sat_impuestos = record["documento"]["deuda_tributaria_sat"]
+            actualizado = dt.strptime(
+                record["documento"]["deuda_tributaria_sat_actualizado"], "%d/%m/%Y"
+            )
 
-                # Skip all records than have already been updated in last 22 hours
-                if dt.now() - actualizado < td(days=1):
-                    continue
+            # Skip all records than have already been updated in last 22 hours
+            if dt.now() - actualizado < td(days=1):
+                continue
 
-                # Priority 0: last update over 30 days
-                if dt.now() - actualizado >= td(days=30):
-                    to_update[0].append((record_index, veh_index))
+            # Priority 0: last update over 30 days
+            if dt.now() - actualizado >= td(days=30):
+                to_update[0].append(record_index)
 
         # flatten list to records in order
         return [i for j in to_update for i in j]
 
-    def scraper(self, placa):
-        while True:
-            # capture captcha image from frame name
-            _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
-            self.WEBD.switch_to.frame(_iframe)
-            captcha_txt = (
-                self.WEBD.find_element(By.ID, "iimage")
-                .get_attribute("src")
-                .split("=")[-1]
-            )
-            captcha_txt = captcha_txt.replace("%C3%91", "Ñ")
+    def scraper(self, doc_tipo, doc_num, opening=False):
 
-            # enter data into fields and run
-            self.WEBD.find_element(By.ID, "txtPlaca").send_keys(placa)
-            time.sleep(0.2)
-            elements = (
-                self.WEBD.find_elements(By.ID, "TxtCodImagen"),
-                self.WEBD.find_elements(By.ID, "BtnBuscar"),
+        if opening:
+            # navigate to to Tributo Detalles page with internal URL
+            time.sleep(2)
+            _target = (
+                "https://www.sat.gob.pe/VirtualSAT/modulos/TributosResumen.aspx?tri=T&mysession="
+                + self.WEBD.current_url.split("=")[-1]
             )
-            if not elements[0] or not elements[1]:
-                self.WEBD.refresh()
-                continue
-            else:
-                elements[0][0].send_keys(captcha_txt)
-                time.sleep(0.2)
-                elements[1][0].click()
+            self.WEBD.get(_target)
+
+        while True:
+            # capture captcha image from webpage store in variable
+            self.WEBD.get_screenshot_as_file("captcha_tmp.png")
+            _img = Image.open("captcha_tmp.png")
+            _img = _img.crop((1385, 690, 1510, 725))
+            _img.save("captcha_tmp.png")
+            # convert image to text using OCR
+            _captcha = self.READER.readtext("captcha_tmp.png", text_threshold=0.5)
+            captcha_txt = (
+                _captcha[0][1] if len(_captcha) > 0 and len(_captcha[0]) > 0 else ""
+            )
+
+            time.sleep(0.5)
+            # select alternative option from dropdown to reset it
+            drop = Select(self.WEBD.find_element(By.ID, "tipoBusqueda"))
+            drop.select_by_value("busqCodAdministrado")
+            time.sleep(0.5)
+            # select Busqueda por Documento from dropdown
+            drop = Select(self.WEBD.find_element(By.ID, "tipoBusqueda"))
+            drop.select_by_value("busqTipoDocIdentidad")
+
+            time.sleep(0.5)
+            # dropdown tipo de documento
+            # drop = Select(
+            #     self.WEBD.find_element(
+            #         By.XPATH,
+            #         "/html/body/form/div[3]/section/div/div/div[2]/div[3]/div[2]/div/div[2]/div/div[2]/select",
+            #     )
+            # )
+            # # select between DNI and CE
+            # drop.select_by_value("4" if doc_tipo == "CE" else "1")
+
+            # clear field and enter DNI/CE
+            x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtDocumento")
+            x.send_keys(doc_num)
+
+            # enter captcha
+            y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
+            y.clear()
+            y.send_keys(captcha_txt)
             time.sleep(0.5)
 
-            # if no text response, restart
-            elements = self.WEBD.find_elements(By.ID, "LblMensaje")
-            if elements:
-                _alerta = self.WEBD.find_element(By.ID, "LblMensaje").text
-            else:
-                self.WEBD.refresh()
-                continue
-            # if no pendings, clear webpage for next iteration and return None
-            if "pendientes" in _alerta:
-                self.WEBD.refresh()
-                time.sleep(0.2)
-                return None
-            else:
-                break
+            # click BUSCAR
+            x = self.WEBD.find_element(By.CLASS_NAME, "boton")
+            x.click()
+            time.sleep(1)
 
-        response = {}
-        data_index = (
-            ("documento", 1),
-            ("tipo", 2),
-            ("fecha_documento", 3),
-            ("codigo_infraccion", 4),
-            ("clasificacion", 5),
-        )
-        for data_unit, pos in data_index:
-            response.update(
-                {
-                    data_unit: self.WEBD.find_element(
-                        By.XPATH,
-                        f"/html/body/form/div[3]/div[3]/div/table/tbody/tr[2]/td[{pos}]",
-                    ).text
-                }
+            x = self.WEBD.find_element(
+                By.ID, "ctl00_cplPrincipal_lblMensajeCantidad"
+            ).text
+            if x:
+                break
+            else:
+                y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
+                y.clear()  # send_keys(Keys.BACKSPACE * 6)
+
+        _qty = int("".join([i for i in x if i.isdigit()]))
+        if _qty == 0:
+            return None
+
+        response = []
+        for row in range(_qty):
+            codigo = self.WEBD.find_element(
+                By.ID, f"ctl00_cplPrincipal_grdAdministrados_ctl0{row+2}_lnkCodigo"
+            ).text
+
+            x = self.WEBD.find_element(
+                By.ID, f"ctl00_cplPrincipal_grdAdministrados_ctl0{row+2}_lnkNombre"
             )
-        # clear webpage for next search
-        self.WEBD.refresh()
-        time.sleep(0.2)
+            x.click()
+            time.sleep(0.5)
+
+            _deudas = []
+            self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_rbtMostrar_2").click()
+            time.sleep(0.5)
+
+            for i in range(2, 10):
+                _placeholder = f"ctl00_cplPrincipal_grdEstadoCuenta_ctl0{i}_lbl"
+                y = f"{_placeholder}Anio"
+                x = self.WEBD.find_elements(By.ID, y)
+                if x:
+                    _fila = {
+                        "ano": x[0].text,
+                        "periodo": self.WEBD.find_element(
+                            By.ID, f"{_placeholder}Periodo"
+                        ).text,
+                        "documento": self.WEBD.find_element(
+                            By.ID, f"{_placeholder}Documento"
+                        ).text,
+                        "total_a_pagar": self.WEBD.find_element(
+                            By.ID, f"{_placeholder}Deuda"
+                        ).text,
+                    }
+                    _deudas.append(_fila)
+
+            self.WEBD.back()
+            time.sleep(1)
+            self.WEBD.back()
+            time.sleep(1)
+            response.append({"codigo": int(codigo), "deudas": _deudas})
+
+        time.sleep(0.5)
+        x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_btnNuevaBusqueda")
+        x.click()
+
+        time.sleep(0.5)
 
         return response

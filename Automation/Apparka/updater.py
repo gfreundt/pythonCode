@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, time
 from datetime import datetime as dt, timedelta as td
 import threading
 import logging
@@ -6,7 +6,7 @@ import logging
 # Custom imports
 # sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import GoogleUtils
-import monitor, database, revtec, sutran, brevete
+import monitor, database, revtec, sutran, brevete, satimp
 
 
 def start_logger(test=False):
@@ -25,11 +25,6 @@ def start_logger(test=False):
     _log = logging.getLogger(__name__)
     _log.setLevel(logging.INFO)
     return _log
-
-    """import logging.config
-    logging.config.dictConfig({
-    'version': 1,
-    'disable_existing_loggers': True})"""
 
 
 def scraper_options():
@@ -61,7 +56,8 @@ def send_gmail():
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv
-    VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN"]
+    VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN", "SAT-IMP"]
+    # VALID_OPTIONS = ["RTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
@@ -70,6 +66,8 @@ def main():
     # start supervisor monitor in daemon thread
     _monitor = threading.Thread(target=MONITOR.supervisor, args=(options,), daemon=True)
     _monitor.start()
+    _api = threading.Thread(target=MONITOR.api, args=(options,), daemon=True)
+    _api.start()
 
     # start required scrapers
     if "BREVETE" in arguments:
@@ -85,16 +83,22 @@ def main():
         MONITOR.threads.append(threading.Thread(target=su.run_full_update))
 
     if "SAT-IMP" in arguments:
-        si = satmp.SatImp(database=DB, logger=LOG, monitor=MONITOR, options=options)
+        si = satimp.Satimp(database=DB, logger=LOG, monitor=MONITOR, options=options)
         MONITOR.threads.append(threading.Thread(target=si.run_full_update))
 
+    # start all scraper threads
     for thread in MONITOR.threads:
         thread.start()
+        # stagger webdrivers
+        time.sleep(10)
+
+    # join monitor and all activescraper threads
+    # _monitor.join()
     for thread in MONITOR.threads:
         thread.join()
 
     # wrap-up: update correlative numbers and upload database file to Google Drive, email completion
-    DB.update_database_correlatives()
+    # DB.update_database_correlatives()
     DB.upload_to_drive()
     # DB.export_dashboard()
     # MONITOR.send_gmail()
