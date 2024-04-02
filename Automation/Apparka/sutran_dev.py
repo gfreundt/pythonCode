@@ -53,6 +53,11 @@ class Sutran:
             rec = 0
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
+                # check monitor flags: timeout
+                if self.MONITOR.timeout_flag:
+                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec+1} records.")
+                    return
+
                 # update monitor dashboard data
                 self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
                 # get scraper data, if webpage fails skip record
@@ -79,12 +84,6 @@ class Sutran:
                 self.MONITOR.threads[self.thread_num][
                     "last_record_updated"
                 ] = time.time()
-
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    # self.DB.write_database()
-                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec+1} records.")
-                    return
 
                 # check monitor flags: stalled
                 if self.MONITOR.stalled:

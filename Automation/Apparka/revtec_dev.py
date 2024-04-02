@@ -44,7 +44,7 @@ class Revtec:
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
-            headless=True, verbose=False, incognito=True
+            headless=False, verbose=False, incognito=True
         )
         self.WEBD.get(self.URL)
         time.sleep(2)
@@ -53,6 +53,10 @@ class Revtec:
 
         # iterate on all records that require updating
         for rec, (record_index, position) in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"REVTEC > End (Timeout). Processed {rec+1} records.")
+                return
             # update monitor dashboard data
             self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
 

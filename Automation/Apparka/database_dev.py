@@ -16,18 +16,15 @@ class Database:
     def __init__(self, **kwargs):
         # define database constants
         self.LOG = kwargs["logger"]
+        self.BASE_PATH = os.path.join(os.getcwd(), "data")
         if kwargs.get("test") and kwargs["test"]:
-            self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data_dev.json")
+            self.DATABASE_FILENAME = "complete_data_dev.json"
         else:
-            self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data.json")
-        self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
-        self.GDRIVE_BACKUP_PATH = os.path.join(
-            "G:",
-            "\My Drive",
-            "pythonCoding",
-            "Updater Data",
-            f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
-        )
+            self.DATABASE_FILENAME = "complete_data.json"
+        self.DATABASE_NAME = os.path.join(self.BASE_PATH, self.DATABASE_FILENAME)
+        self.DASHBOARD_NAME = os.path.join(self.BASE_PATH, "dashboard.csv")
+        # MyDrive/pythonCode/Updater Data:
+        self.GDRIVE_PATH_ID = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
         self.LOCK = threading.Lock()
         self.GOOGLE_UTILS = GoogleUtils()
         # create database backup (negative switch)
@@ -106,11 +103,11 @@ class Database:
         # write combined data
         self.write_database()
         # redo correlatives
-        self.update_database_correlatives()
+        # self.update_database_correlatives()
 
     def backup_database(self):
         """Create local copy of database with random 8-letter text to avoid overwriting"""
-        _filename = f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json"
+        _filename = f"complete_data_backup_{str(uuid.uuid4())[:8]}.json"
         shutil.copyfile(
             self.DATABASE_NAME,
             os.path.join(os.curdir, "data", _filename),
@@ -119,7 +116,34 @@ class Database:
         self.LOG.info(f"Database backup complete. File = {_filename}.")
 
     def load_database(self):
-        """Opens database and stores into to memory as a list of dictionaries"""
+        """Downloads latest database and stores into to memory as a list of dictionaries"""
+        # Identify latest database file version on drive (adjust for time difference)
+        files = self.GOOGLE_UTILS.get_drive_files(gdrive_path_id=self.GDRIVE_PATH_ID)
+        parser = lambda i: dt(
+            year=int(i[:4]),
+            month=int(i[5:7]),
+            day=int(i[8:10]),
+            hour=int(i[11:13]),
+            minute=int(i[14:16]),
+            second=int(i[17:19]),
+        ) - td(hours=5)
+        latest_gdrive_file = sorted(
+            [
+                (f["title"], parser(f["modifiedDate"]), f)
+                for f in files
+                if self.DATABASE_FILENAME in f["title"]
+            ],
+            key=lambda i: i[1],
+            reverse=True,
+        )[0]
+
+        self.GOOGLE_UTILS.download_from_drive(
+            gdrive_object=latest_gdrive_file[2],
+            local_path=os.path.join(self.BASE_PATH, self.DATABASE_FILENAME),
+        )
+        self.LOG.info(
+            f"Replaced local database file with GDrive version: {latest_gdrive_file[1]}"
+        )
         try:
             with open(self.DATABASE_NAME, mode="r") as file:
                 self.database = json.load(file)
@@ -203,20 +227,19 @@ class Database:
         """Attempts to make a copy to local GDrive folder in PC. If not possible,
         use. Google Drive API to upload file directly."""
         try:
-            self.LOG.info(f"{self.DATABASE_NAME=} {self.GDRIVE_BACKUP_PATH=}")
-            shutil.copy(
-                self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
+            self.GOOGLE_UTILS.upload_to_drive(
+                local_path=self.DATABASE_NAME,
+                gdrive_filename=self.DATABASE_FILENAME,
+                gdrive_path_id=self.GDRIVE_PATH_ID,
             )
-            self.LOG.info(f"DATABASE > Local GDrive folder upload complete.")
+            self.GOOGLE_UTILS.upload_to_drive(
+                local_path=self.DATABASE_NAME,
+                gdrive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
+                gdrive_path_id=self.GDRIVE_PATH_ID,
+            )
+            self.LOG.info(f"DATABASE > GDrive upload complete.")
         except:
-            try:
-                self.GOOGLE_UTILS.upload_to_drive(
-                    local_path=self.DATABASE_NAME,
-                    drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
-                )
-                self.LOG.info(f"DATABASE > GDrive upload complete.")
-            except:
-                self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
+            self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
 
     def export_dashboard(self):
         """Aggregates and tabulates data from database to produce KPIs.

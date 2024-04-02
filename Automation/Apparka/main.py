@@ -71,12 +71,14 @@ class Monitor:
                         > self.STALL_TIME
                     ):
                         self.threads[k]["stalled"] = True
+                        """
                         if self.MAX_RESTARTS > self.threads[k]["restarts"]:
                             self.threads[k]["restarts"] += 1
                             _t = copy(thread[k])
                             self.threads.append(_t)
                             _t["thread"].start()
                             LOG.warning(f"Restarted Thread {_t['name']}")
+                        """
 
                 # process data to update status of threads
                 self.api_data = self.generate_status()
@@ -274,6 +276,7 @@ if __name__ == "__main__":
 
     # init monitor, database and Google functions (drive, gmail, etc)
     DB = database.Database(no_backup=False, test=False, logger=LOG)
+
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 

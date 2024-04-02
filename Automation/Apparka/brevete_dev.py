@@ -63,6 +63,10 @@ class Brevete:
 
         # iterate on all records that require updating
         for rec, record_index in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"BREVETE > End (Timeout). Processed {rec+1} records.")
+                return
             # update monitor status data
             self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
 

@@ -33,79 +33,73 @@ class Satimp:
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
-
         self.MONITOR.threads[self.thread_num]["total_records"] = len(records_to_update)
 
         self.LOG.info(
             f"SAT_IMPUESTOS > Will process {len(records_to_update):,} records."
         )
 
-        # begin update
-        process_complete = False
-        while not process_complete:
-            # set complete flag to True, changed if process stalled
-            process_complete = True
+        # define Chromedriver and open url for first time
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get(self.URL)
+        time.sleep(4)
 
-            # define Chromedriver and open url for first time
-            self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, maximized=True
-            )
-            self.WEBD.get(self.URL)
-            time.sleep(2)
+        rec = 0
+        # iterate on all records that require updating
+        open = True
+        for rec, record_index in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"SATIMP > End (Timeout). Processed {rec+1} records.")
+                return
 
-            rec = 0
-            # iterate on all records that require updating
-            open = True
-            for rec, record_index in enumerate(records_to_update):
-                # update monitor dashboard data
-                self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
-                # get scraper data, if webpage fails skip record
-                _doc_num = self.DB.database[record_index]["documento"]["numero"]
-                _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
-                if _doc_tipo != "DNI" or not _doc_num:
-                    self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec} (CE).")
-                    continue
-                try:
-                    new_record = self.scraper(
-                        doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
-                    )
-                    open = False
-                except KeyboardInterrupt:
-                    quit()
-                except:
-                    self.LOG.warning(f"SAT_IMPUESTOS > Skipped Record {rec}")
-                    time.sleep(1)
-                    self.WEBD.refresh()
-                    time.sleep(1)
-                    continue
+            # update monitor dashboard data
+            self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
+            # get scraper data, if webpage fails skip record
+            _doc_num = self.DB.database[record_index]["documento"]["numero"]
+            _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
+            if _doc_tipo != "DNI" or not _doc_num:
+                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec} (CE).")
+                continue
+            try:
+                new_record = self.scraper(
+                    doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
+                )
+                open = False
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     self.LOG.warning(f"SAT_IMPUESTOS > Skipped Record {rec}")
+            #     time.sleep(1)
+            #     self.WEBD.refresh()
+            #     time.sleep(1)
+            #     continue
 
-                # if record has data and response is None, do not overwrite database
-                if (
-                    not new_record
-                    and self.DB.database[record_index]["documento"][
-                        "deuda_tributaria_sat"
-                    ]
-                ):
-                    continue
+            # if record has data and response is None, do not overwrite database
+            if (
+                not new_record
+                and self.DB.database[record_index]["documento"]["deuda_tributaria_sat"]
+            ):
+                continue
 
-                self.DB.database[record_index]["documento"][
-                    "deuda_tributaria_sat"
-                ] = new_record
-                self.DB.database[record_index]["documento"][
-                    "deuda_tributaria_sat_actualizado"
-                ] = dt.now().strftime("%d/%m/%Y")
-                # timestamp
-                self.MONITOR.threads[self.thread_num][
-                    "last_record_updated"
-                ] = time.time()
+            self.DB.database[record_index]["documento"][
+                "deuda_tributaria_sat"
+            ] = new_record
+            self.DB.database[record_index]["documento"][
+                "deuda_tributaria_sat_actualizado"
+            ] = dt.now().strftime("%d/%m/%Y")
+            # timestamp
+            self.MONITOR.threads[self.thread_num]["last_record_updated"] = time.time()
 
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    self.LOG.info(
-                        f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
-                    )
-                    self.WEBD.close()
-                    return
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(
+                    f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
+                )
+                self.WEBD.close()
+                return
 
         # log end of process
         self.LOG.info(f"SAT_IMPUESTOS > End (Complete). Processed: {rec} records.")
