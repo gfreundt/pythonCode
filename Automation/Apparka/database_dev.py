@@ -263,33 +263,34 @@ class Database:
 
             # build brevete
             if record["documento"]["brevete"]:
-                kpis[5] += 1
                 _fecha = (
                     dt.strptime(
                         record["documento"]["brevete"]["fecha_hasta"], "%d/%m/%Y"
                     )
                     - dt.now()
                 )
-                if td(days=0) <= _fecha <= td(days=180):
+                if td(days=0) <= _fecha < td(days=180):
                     kpis[7] += 1
-                if td(days=180) < _fecha <= td(days=360):
+                if td(days=180) <= _fecha < td(days=360):
                     kpis[8] += 1
-                if td(days=360) < _fecha <= td(days=540):
+                if td(days=360) <= _fecha < td(days=540):
                     kpis[9] += 1
-                if _fecha > td(days=540):
+                if _fecha >= td(days=540):
                     kpis[10] += 1
-                kpis[6] = sum(kpis[2:6])  # Total Vigente
-                kpis[11] += _fecha < td(days=0)  # Total Vencido
+                if _fecha < td(days=0):
+                    kpis[11] += 1  # Total Vencido
             else:
                 kpis[12] += 1  # Total sin data
 
             # build vehiculos
             if not record["vehiculos"]:
+                kpis[13] += 1
+            else:
                 kpis[14] += 1
-            for n in range(1, 4):
-                if len(record["vehiculos"]) == n:
-                    kpis[15] += n
-                    kpis[n + 15] += 1
+                for n in range(1, 4):
+                    if len(record["vehiculos"]) == n:
+                        kpis[n + 14] += 1
+                        kpis[19] += n
 
             # build revisiones tecnicas
             for vehiculo in record["vehiculos"]:
@@ -321,7 +322,9 @@ class Database:
                 if _multas["mtc"]:
                     kpis[29] += 1
 
-        kpis[19] = kpis[15] / kpis[0]  # Promedio vehiculos/usuario
+        kpis[6] = sum(kpis[7:11])  # Total Vigente
+        kpis[5] = sum(kpis[6], kpis[11])
+        kpis[18] = kpis[14] / kpis[0]  # Promedio vehiculos/usuario
         kpis[27] = sum(kpis[28:31])  # Total multas impagas
 
         # last update date and time
