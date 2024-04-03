@@ -1,107 +1,107 @@
 <head>
     <title>Apparka User Data Dashboard</title>
 </head>
+
 <body>
     <h3>Latest update: {{data[-1]}}</h3>
-    <table>
-        <tr>
-            <td>Records:</td>
+    <table style="font-size: smaller; padding-left: 10px;">
+        <tr style="color: white; background-color:rgb(94, 6, 6); ">
+            <td style="padding-left: 10px">Usuarios:</td>
             <td>{{data[0]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Documentos</td>
+        <tr style="color: white; background-color:blue;" ;>
+            <td style="padding-left: 10px">Documentos</td>
             <td>{{data[1]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>DNI:</td>
+        <tr style="color: black; background-color:lightblue">
+            <td style="padding-left: 10px">DNIs:</td>
             <td>{{data[2]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>CE:</td>
+        <tr style="color: black; background-color:lightblue">
+            <td style="padding-left: 10px">CEs:</td>
             <td>{{data[3]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Otro/Blanco:</td>
+        <tr style="color: black; background-color:lightblue">
+            <td style="padding-left: 10px">Blancos:</td>
             <td>{{data[4]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Brevetes</td>
+        <tr style="color: white; background-color:green">
+            <td style="padding-left: 10px">Brevetes</td>
             <td>{{data[5]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vigentes</td>
+        <tr style="color: black; background-color: lightgreen">
+            <td style="padding-left: 10px">Vigentes</td>
             <td>{{data[6]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vigencia &lt6 meses:</td>
+        <tr style="color: black; background-color: greenyellow">
+            <td style="padding-left: 20px">&lt 6 meses:</td>
             <td>{{data[7]}}</td>
         </tr>
-        <td></td>
-        <tr>
-            <td>Vigencia 6-12 meses:</td>
+        <tr style="color: black; background-color: greenyellow">
+            <td style="padding-left: 20px">6-12 meses:</td>
             <td>{{data[8]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vigencia 12-18 meses:</td>
+        <tr style="color: black; background-color: greenyellow">
+            <td style="padding-left: 20px">12-18 meses:</td>
             <td>{{data[9]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vigencia >18 meses:</td>
+        <tr style="color: black; background-color: greenyellow">
+            <td style="padding-left: 20px">> 18 meses:</td>
             <td>{{data[10]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vencido:</td>
-            <td>{{data.c6}}</td>
+        <tr style="color: black; background-color: lightgreen">
+            <td style="padding-left: 10px">Vencidos:</td>
+            <td>{{data[11]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>otros:</td>
-            <td>{{data.d13}}</td>
+        <tr style="color: black; background-color: lightgreen">
+            <td style="padding-left: 10px">Blancos:</td>
+            <td>{{data[12]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Vehiculos:</td>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td>No Registrados:</td>
-            <td>{{data.d14}}</td>
+        <tr style="color: white; background-color: gray;">
+            <td style="padding-left: 10px">Usuarios sin Vehiculo:</td>
+            <td>{{data[13]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Registrados:</td>
-            <td>{{data.d15}}</td>
+        <tr style="color: white; background-color: gray;">
+            <td style="padding-left: 10px">Usuarios con Vehiculo:</td>
+            <td>{{data[14]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>1 por usuario</td>
-            <td>{{data.d16}}</td>
+        <tr style="color: black; background-color: lightgray">
+            <td style="padding-left: 10px">1 por usuario</td>
+            <td>{{data[15]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>2 por usuario</td>
-            <td>{{data.d17}}</td>
+        <tr style="color: black; background-color: lightgray;">
+            <td style="padding-left: 10px">2 por usuario</td>
+            <td>{{data[16]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>3 por usuario</td>
-            <td>{{data.d18}}</td>
+        <tr style="color: black; background-color: lightgray;">
+            <td style="padding-left: 10px">3 por usuario</td>
+            <td>{{data[17]}}</td>
             <td></td>
         </tr>
-        <tr>
-            <td>Promedio:</td>
-            <td>{{data.d19}}</td>
+        <tr style="color: white; background-color: gray;">
+            <td style="padding-left: 10px">Promedio / usuario</td>
+            <td>{{data[18]}}</td>
+            <td></td>
+        </tr>
+        <tr style="color: white; background-color: gray;">
+            <td style="padding-left: 10px">Total Vehiculos:</td>
+            <td>{{data[19]}}</td>
             <td></td>
         </tr>
     </table>
