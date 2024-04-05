@@ -41,7 +41,7 @@ class Satimp:
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get(self.URL)
         time.sleep(4)
@@ -142,16 +142,17 @@ class Satimp:
             y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
             y.clear()
             # capture captcha image from webpage store in variable
-            self.WEBD.get_screenshot_as_file("captcha_tmp.png")
-            _img = Image.open("captcha_tmp.png")
+            self.WEBD.get_screenshot_as_file("captchax_tmp.png")
+            _img = Image.open("captchax_tmp.png")
             _img = _img.crop((1385, 690, 1510, 725))
-            _img.save("captcha_tmp.png")
+            _img.save("captchax_tmp.png")
             # convert image to text using OCR
             _captcha = self.READER.readtext("captcha_tmp.png", text_threshold=0.5)
             captcha_txt = (
                 _captcha[0][1] if len(_captcha) > 0 and len(_captcha[0]) > 0 else ""
             )
             captcha_txt = "".join([i.upper() for i in captcha_txt if i.isalnum()])
+            print(".................", captcha_txt)
 
             time.sleep(0.5)
 

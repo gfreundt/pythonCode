@@ -117,38 +117,41 @@ class Database:
 
     def load_database(self):
         """Downloads latest database and stores into to memory as a list of dictionaries"""
-        # Identify latest database file version on drive (adjust for time difference)
-        files = self.GOOGLE_UTILS.get_drive_files(gdrive_path_id=self.GDRIVE_PATH_ID)
-        parser = lambda i: dt(
-            year=int(i[:4]),
-            month=int(i[5:7]),
-            day=int(i[8:10]),
-            hour=int(i[11:13]),
-            minute=int(i[14:16]),
-            second=int(i[17:19]),
-        ) - td(hours=5)
+        # identify latest database file version on drive (adjust for time difference)
+        _files = self.GOOGLE_UTILS.get_drive_files(gdrive_path_id=self.GDRIVE_PATH_ID)
         latest_gdrive_file = sorted(
             [
-                (f["title"], parser(f["modifiedDate"]), f)
-                for f in files
+                (
+                    f["title"],
+                    dt.fromisoformat(f["modifiedDate"][:-1]) - td(hours=5),
+                    f,
+                )
+                for f in _files
                 if self.DATABASE_FILENAME in f["title"]
             ],
             key=lambda i: i[1],
             reverse=True,
         )[0]
-
-        self.GOOGLE_UTILS.download_from_drive(
-            gdrive_object=latest_gdrive_file[2],
-            local_path=os.path.join(self.BASE_PATH, self.DATABASE_FILENAME),
-        )
-        self.LOG.info(
-            f"Replaced local database file with GDrive version: {latest_gdrive_file[1]}"
-        )
+        # compare dates -- replace local database only if gdrive is newer
+        if os.path.getmtime(self.DATABASE_NAME) < latest_gdrive_file[1].timestamp():
+            self.GOOGLE_UTILS.download_from_drive(
+                gdrive_object=latest_gdrive_file[2],
+                local_path=os.path.join(self.BASE_PATH, self.DATABASE_FILENAME),
+            )
+            self.LOG.info(
+                f"Replaced local database file with GDrive version: {latest_gdrive_file[1]}"
+            )
+        else:
+            self.LOG.info(
+                f"Local database file is newer than GDrive version (did not replace)."
+            )
+        # open local database -- if error in file, try using latest backup instead
         try:
             with open(self.DATABASE_NAME, mode="r") as file:
                 self.database = json.load(file)
-            self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-            self.LOG.info(f"Database records: {len(self.database):,}.")
+            self.LOG.info(
+                f"Database loaded: {self.DATABASE_NAME}. Total Records = {len(self.database):,}."
+            )
         except:
             # identify latest backup
             _backups = [
@@ -176,26 +179,6 @@ class Database:
             except:
                 self.LOG.error(f"Database corrupted. End Updater.")
                 raise "Database corrupted. End Updater."
-
-    def fix_database_errors(self):
-        """Checks database and puts placeholder data in empty critical fields.
-        Database must be opened prior.
-        Changes will not be permanent unless database is written."""
-        # TODO: fechas multas
-        _fixes = 0
-        for rec, record in enumerate(self.database):
-            if not record["documento"]["brevete_actualizado"]:
-                self.database[rec]["documento"]["brevete_actualizado"] = "01/01/2000"
-                _fixes += 1
-            for veh, vehiculo in enumerate(record["vehiculos"]):
-                if not vehiculo["rtecs_actualizado"]:
-                    self.database[rec]["vehiculos"][veh][
-                        "rtecs_actualizado"
-                    ] = "01/01/2000"
-                    _fixes += 1
-        self.LOG.info(
-            f"DATABASE > Database Checked. {_fixes} fixed made (requires write)."
-        )
 
     def write_database(self):
         """Writes complete updated database file from memory.
