@@ -242,11 +242,7 @@ def start_scrapers(arguments, options):
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv[1:]
-<<<<<<< HEAD
-    VALID_OPTIONS = ["REVTEC"]  # , "REVTEC", "BREVETE", "SUTRAN"]
-=======
-    VALID_OPTIONS = ["BREVETE"]  # , "REVTEC", "BREVETE", "SUTRAN"]
->>>>>>> e7bb5667b862b9ed4fc37d16af28cecb2a5e4f56
+    VALID_OPTIONS = ["SATIMP"]  # , "REVTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
