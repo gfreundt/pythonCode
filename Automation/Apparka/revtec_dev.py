@@ -44,7 +44,7 @@ class Revtec:
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, incognito=True
+            headless=True, verbose=False, incognito=True
         )
         self.WEBD.get(self.URL)
         time.sleep(2)

@@ -6,6 +6,7 @@ from datetime import datetime as dt, timedelta as td
 import easyocr
 import logging
 from PIL import Image
+import pyautogui
 from gft_utils import ChromeUtils
 
 # remove easyocr warnings
@@ -41,7 +42,7 @@ class Satimp:
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get(self.URL)
         time.sleep(4)
@@ -137,6 +138,11 @@ class Satimp:
             )
             self.WEBD.get(_target)
 
+        if pyautogui.size()[0] == 3840:
+            crop_coordinates = (1385, 690, 1510, 725)
+        elif pyautogui.size()[0] == 1920:
+            crop_coordinates = (558, 703, 678, 740)
+
         while True:
             self.WEBD.refresh()
             y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
@@ -144,7 +150,7 @@ class Satimp:
             # capture captcha image from webpage store in variable
             self.WEBD.get_screenshot_as_file("captchax_tmp.png")
             _img = Image.open("captchax_tmp.png")
-            _img = _img.crop((1385, 690, 1510, 725))
+            _img = _img.crop(crop_coordinates)
             _img.save("captchax_tmp.png")
             # convert image to text using OCR
             _captcha = self.READER.readtext("captchax_tmp.png", text_threshold=0.5)
