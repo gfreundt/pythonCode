@@ -150,8 +150,8 @@ class Satimp:
             y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
             y.clear()
             # capture captcha image from webpage store in variable
-            self.WEBD.get_screenshot_as_file("captchax_tmp.png")
-            _img = Image.open("captchax_tmp.png")
+            self.WEBD.get_screenshot_as_file("captchaz_tmp.png")
+            _img = Image.open("captchaz_tmp.png")
             _img = _img.crop(crop_coordinates)
             _img.save("captchax_tmp.png")
             # convert image to text using OCR
