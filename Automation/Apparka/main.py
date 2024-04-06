@@ -169,7 +169,7 @@ def start_logger(test=False):
 
 def scraper_options():
     options = {"timeout_time": 42600, "scraper_delay": 7}
-    # no options entered
+    # no options entered.
     if len(sys.argv) == 1:
         return options
     # iterate all options entered and build options dictionary (start with default values)

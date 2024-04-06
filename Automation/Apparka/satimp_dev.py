@@ -53,7 +53,7 @@ class Satimp:
         for rec, record_index in enumerate(records_to_update):
             # check monitor flags: timeout
             if self.MONITOR.timeout_flag:
-                self.LOG.info(f"SATIMP > End (Timeout). Processed {rec+1} records.")
+                self.LOG.info(f"SATIMP > End (Timeout). Processed {rec+1:,} records.")
                 return
 
             # update monitor dashboard data
@@ -62,7 +62,7 @@ class Satimp:
             _doc_num = self.DB.database[record_index]["documento"]["numero"]
             _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
             if not _doc_num:
-                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec}.")
+                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec} (no document).")
                 continue
             try:
                 new_record = self.scraper(
@@ -71,12 +71,14 @@ class Satimp:
                 open = False
             except KeyboardInterrupt:
                 quit()
-            # except:
-            #     self.LOG.warning(f"SAT_IMPUESTOS > Skipped Record {rec}")
-            #     time.sleep(1)
-            #     self.WEBD.refresh()
-            #     time.sleep(1)
-            #     continue
+            except:
+                self.LOG.warning(
+                    f"SAT_IMPUESTOS > Skipped Record {rec} (error in scraper)."
+                )
+                time.sleep(1)
+                self.WEBD.refresh()
+                time.sleep(1)
+                continue
 
             # if record has data and response is None, do not overwrite database
             if (
@@ -141,7 +143,7 @@ class Satimp:
         if pyautogui.size()[0] == 3840:
             crop_coordinates = (1385, 690, 1510, 725)
         elif pyautogui.size()[0] == 1920:
-            crop_coordinates = (558, 703, 678, 740)
+            crop_coordinates = (560, 555, 675, 590)
 
         while True:
             self.WEBD.refresh()
