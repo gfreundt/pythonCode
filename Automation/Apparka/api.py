@@ -1,6 +1,7 @@
 import os, csv, time, signal
 from datetime import datetime as dt
 from random import randint
+import socket
 from gft_utils import ChromeUtils
 
 # import and activate Flask, change logging level to reduce messages
@@ -46,7 +47,7 @@ def stats_view(MONITOR):
         headless=False, verbose=False, window_size=(900, 310)
     )
     webdriver.set_window_position(1670, 1080, windowHandle="current")
-    webdriver.get(url=f"http://127.0.0.1:{MONITOR._port}/status")
+    webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 
     # forever loop refreshing status page
     while True:
@@ -59,4 +60,5 @@ def main(monitor, LOG):
     MONITOR = monitor
     MONITOR._port = randint(8000, 40000)
     LOG.info(f"Port: {MONITOR._port}")
-    app.run(port=MONITOR._port, debug=False)
+    MONITOR._myip = socket.gethostbyname(socket.gethostname())
+    app.run(host=MONITOR._myip, port=MONITOR._port, debug=False)

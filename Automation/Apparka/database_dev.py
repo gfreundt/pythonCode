@@ -132,6 +132,7 @@ class Database:
             key=lambda i: i[1],
             reverse=True,
         )[0]
+
         # compare dates -- replace local database only if gdrive is newer
         if os.path.getmtime(self.DATABASE_NAME) < latest_gdrive_file[1].timestamp():
             self.GOOGLE_UTILS.download_from_drive(
@@ -207,17 +208,11 @@ class Database:
         self.LOG.info(f"DATABASE > Correlatives updated.")
 
     def upload_to_drive(self):
-        """Attempts to make a copy to local GDrive folder in PC. If not possible,
-        use. Google Drive API to upload file directly."""
+        """Upload database file to Google Drive."""
         try:
             self.GOOGLE_UTILS.upload_to_drive(
                 local_path=self.DATABASE_NAME,
                 gdrive_filename=self.DATABASE_FILENAME,
-                gdrive_path_id=self.GDRIVE_PATH_ID,
-            )
-            self.GOOGLE_UTILS.upload_to_drive(
-                local_path=self.DATABASE_NAME,
-                gdrive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
                 gdrive_path_id=self.GDRIVE_PATH_ID,
             )
             self.LOG.info(f"DATABASE > GDrive upload complete.")

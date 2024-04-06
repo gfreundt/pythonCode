@@ -242,7 +242,7 @@ def start_scrapers(arguments, options):
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["SATIMP"]  # , "REVTEC", "BREVETE", "SUTRAN"]
+    VALID_OPTIONS = ["REVTEC"]  # , "REVTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
@@ -276,7 +276,6 @@ if __name__ == "__main__":
 
     # init monitor, database and Google functions (drive, gmail, etc)
     DB = database.Database(no_backup=False, test=False, logger=LOG)
-    quit()
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 
