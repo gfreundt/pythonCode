@@ -140,11 +140,6 @@ class Satimp:
             )
             self.WEBD.get(_target)
 
-        if pyautogui.size()[0] == 3840:
-            crop_coordinates = (1385, 690, 1510, 725)
-        elif pyautogui.size()[0] == 1920:
-            crop_coordinates = (560, 555, 675, 590)
-
         while True:
             self.WEBD.refresh()
             y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
@@ -152,6 +147,13 @@ class Satimp:
             # capture captcha image from webpage store in variable
             self.WEBD.get_screenshot_as_file("captchaz_tmp.png")
             _img = Image.open("captchaz_tmp.png")
+            print(_img.width, "++++++++++++++")
+            if _img.width == 3840:
+                crop_coordinates = (1385, 690, 1510, 725)
+            elif _img.width == 2609:
+                crop_coordinates = (860, 575, 975, 610)
+            elif _img.width == 1920:
+                crop_coordinates = (560, 555, 675, 590)
             _img = _img.crop(crop_coordinates)
             _img.save("captchax_tmp.png")
             # convert image to text using OCR
