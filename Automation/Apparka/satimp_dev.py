@@ -41,7 +41,7 @@ class Satimp:
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
-            headless=True, verbose=False, maximized=True
+            headless=False, verbose=False, maximized=True
         )
         self.WEBD.get(self.URL)
         time.sleep(4)
@@ -60,8 +60,8 @@ class Satimp:
             # get scraper data, if webpage fails skip record
             _doc_num = self.DB.database[record_index]["documento"]["numero"]
             _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
-            if _doc_tipo != "DNI" or not _doc_num:
-                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec} (CE).")
+            if not _doc_num:
+                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec}.")
                 continue
             try:
                 new_record = self.scraper(
@@ -147,12 +147,11 @@ class Satimp:
             _img = _img.crop((1385, 690, 1510, 725))
             _img.save("captchax_tmp.png")
             # convert image to text using OCR
-            _captcha = self.READER.readtext("captcha_tmp.png", text_threshold=0.5)
+            _captcha = self.READER.readtext("captchax_tmp.png", text_threshold=0.5)
             captcha_txt = (
                 _captcha[0][1] if len(_captcha) > 0 and len(_captcha[0]) > 0 else ""
             )
             captcha_txt = "".join([i.upper() for i in captcha_txt if i.isalnum()])
-            print(".................", captcha_txt)
 
             time.sleep(0.5)
 
