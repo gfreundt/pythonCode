@@ -147,7 +147,6 @@ class Satimp:
             # capture captcha image from webpage store in variable
             self.WEBD.get_screenshot_as_file("captchaz_tmp.png")
             _img = Image.open("captchaz_tmp.png")
-            print(_img.width, "++++++++++++++")
             if _img.width == 3840:
                 crop_coordinates = (1385, 690, 1510, 725)
             elif _img.width == 2609:
