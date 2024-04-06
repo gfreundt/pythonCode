@@ -13,27 +13,22 @@ from gft_utils import GoogleUtils
 
 
 class Database:
-    def __init__(self, logger, no_backup=False, test=False):
+    def __init__(self, **kwargs):
         # define database constants
-        self.LOG = logger
-        if not test:
-            self.DATABASE_NAME = os.path.join(
-                "d:", "\pythonCode", "Automation", "Apparka", "data", "rtec_data.json"
-            )
+        self.LOG = kwargs["logger"]
+        self.BASE_PATH = os.path.join(os.getcwd(), "data")
+        if kwargs.get("test") and kwargs["test"]:
+            self.DATABASE_FILENAME = "complete_data_dev.json"
         else:
-            self.DATABASE_NAME = os.path.join(os.getcwd(), "data", "rtec_data_dev.json")
-        self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
-        self.GDRIVE_BACKUP_PATH = os.path.join(
-            "G:",
-            "\My Drive",
-            "pythonCoding",
-            "Updater Data",
-            f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
-        )
+            self.DATABASE_FILENAME = "complete_data.json"
+        self.DATABASE_NAME = os.path.join(self.BASE_PATH, self.DATABASE_FILENAME)
+        self.DASHBOARD_NAME = os.path.join(self.BASE_PATH, "dashboard.csv")
+        # MyDrive/pythonCode/Updater Data:
+        self.GDRIVE_PATH_ID = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
         self.LOCK = threading.Lock()
         self.GOOGLE_UTILS = GoogleUtils()
         # create database backup (negative switch)
-        if not no_backup:
+        if not (kwargs.get("no_backup") and not kwargs["no_backup"]):
             self.backup_database()
         # load database into memory
         self.load_database()
@@ -108,11 +103,11 @@ class Database:
         # write combined data
         self.write_database()
         # redo correlatives
-        self.update_database_correlatives()
+        # self.update_database_correlatives()
 
     def backup_database(self):
         """Create local copy of database with random 8-letter text to avoid overwriting"""
-        _filename = f"rtec_data_backup_{str(uuid.uuid4())[:8]}.json"
+        _filename = f"complete_data_backup_{str(uuid.uuid4())[:8]}.json"
         shutil.copyfile(
             self.DATABASE_NAME,
             os.path.join(os.curdir, "data", _filename),
@@ -121,12 +116,43 @@ class Database:
         self.LOG.info(f"Database backup complete. File = {_filename}.")
 
     def load_database(self):
-        """Opens database and stores into to memory as a list of dictionaries"""
+        """Downloads latest database and stores into to memory as a list of dictionaries"""
+        # identify latest database file version on drive (adjust for time difference)
+        _files = self.GOOGLE_UTILS.get_drive_files(gdrive_path_id=self.GDRIVE_PATH_ID)
+        latest_gdrive_file = sorted(
+            [
+                (
+                    f["title"],
+                    dt.fromisoformat(f["modifiedDate"][:-1]) - td(hours=5),
+                    f,
+                )
+                for f in _files
+                if self.DATABASE_FILENAME in f["title"]
+            ],
+            key=lambda i: i[1],
+            reverse=True,
+        )[0]
+
+        # compare dates -- replace local database only if gdrive is newer
+        if os.path.getmtime(self.DATABASE_NAME) < latest_gdrive_file[1].timestamp():
+            self.GOOGLE_UTILS.download_from_drive(
+                gdrive_object=latest_gdrive_file[2],
+                local_path=os.path.join(self.BASE_PATH, self.DATABASE_FILENAME),
+            )
+            self.LOG.info(
+                f"Replaced local database file with GDrive version: {latest_gdrive_file[1]}"
+            )
+        else:
+            self.LOG.info(
+                f"Local database file is newer than GDrive version (did not replace)."
+            )
+        # open local database -- if error in file, try using latest backup instead
         try:
             with open(self.DATABASE_NAME, mode="r") as file:
                 self.database = json.load(file)
-            self.LOG.info(f"Database loaded: File = {self.DATABASE_NAME}")
-            self.LOG.info(f"Database records: {len(self.database):,}.")
+            self.LOG.info(
+                f"Database loaded: {self.DATABASE_NAME}. Total Records = {len(self.database):,}."
+            )
         except:
             # identify latest backup
             _backups = [
@@ -155,26 +181,6 @@ class Database:
                 self.LOG.error(f"Database corrupted. End Updater.")
                 raise "Database corrupted. End Updater."
 
-    def fix_database_errors(self):
-        """Checks database and puts placeholder data in empty critical fields.
-        Database must be opened prior.
-        Changes will not be permanent unless database is written."""
-        # TODO: fechas multas
-        _fixes = 0
-        for rec, record in enumerate(self.database):
-            if not record["documento"]["brevete_actualizado"]:
-                self.database[rec]["documento"]["brevete_actualizado"] = "01/01/2000"
-                _fixes += 1
-            for veh, vehiculo in enumerate(record["vehiculos"]):
-                if not vehiculo["rtecs_actualizado"]:
-                    self.database[rec]["vehiculos"][veh][
-                        "rtecs_actualizado"
-                    ] = "01/01/2000"
-                    _fixes += 1
-        self.LOG.info(
-            f"DATABASE > Database Checked. {_fixes} fixed made (requires write)."
-        )
-
     def write_database(self):
         """Writes complete updated database file from memory.
         Locks file to avoid race conditions between threads"""
@@ -202,23 +208,16 @@ class Database:
         self.LOG.info(f"DATABASE > Correlatives updated.")
 
     def upload_to_drive(self):
-        """Attempts to make a copy to local GDrive folder in PC. If not possible,
-        use Google Drive API to upload file directly."""
+        """Upload database file to Google Drive."""
         try:
-            self.LOG.info(f"{self.DATABASE_NAME=} {self.GDRIVE_BACKUP_PATH=}")
-            shutil.copy(
-                self.DATABASE_NAME, self.GDRIVE_BACKUP_PATH, follow_symlinks=True
+            self.GOOGLE_UTILS.upload_to_drive(
+                local_path=self.DATABASE_NAME,
+                gdrive_filename=self.DATABASE_FILENAME,
+                gdrive_path_id=self.GDRIVE_PATH_ID,
             )
-            self.LOG.info(f"DATABASE > Local GDrive folder upload complete.")
+            self.LOG.info(f"DATABASE > GDrive upload complete.")
         except:
-            try:
-                self.GOOGLE_UTILS.upload_to_drive(
-                    local_path=self.DATABASE_NAME,
-                    drive_filename=f"UserData [Backup: {dt.now().strftime('%d%m%Y')}].json",
-                )
-                self.LOG.info(f"DATABASE > GDrive upload complete.")
-            except:
-                self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
+            self.LOG.warning(f"DATABASE > GDrive upload ERROR.")
 
     def export_dashboard(self):
         """Aggregates and tabulates data from database to produce KPIs.
@@ -242,33 +241,34 @@ class Database:
 
             # build brevete
             if record["documento"]["brevete"]:
-                kpis[5] += 1
                 _fecha = (
                     dt.strptime(
                         record["documento"]["brevete"]["fecha_hasta"], "%d/%m/%Y"
                     )
                     - dt.now()
                 )
-                if td(days=0) <= _fecha <= td(days=180):
+                if td(days=0) <= _fecha < td(days=180):
                     kpis[7] += 1
-                if td(days=180) < _fecha <= td(days=360):
+                if td(days=180) <= _fecha < td(days=360):
                     kpis[8] += 1
-                if td(days=360) < _fecha <= td(days=540):
+                if td(days=360) <= _fecha < td(days=540):
                     kpis[9] += 1
-                if _fecha > td(days=540):
+                if _fecha >= td(days=540):
                     kpis[10] += 1
-                kpis[6] = sum(kpis[2:6])  # Total Vigente
-                kpis[11] += _fecha < td(days=0)  # Total Vencido
+                if _fecha < td(days=0):
+                    kpis[11] += 1  # Total Vencido
             else:
                 kpis[12] += 1  # Total sin data
 
             # build vehiculos
             if not record["vehiculos"]:
+                kpis[13] += 1
+            else:
                 kpis[14] += 1
-            for n in range(1, 4):
-                if len(record["vehiculos"]) == n:
-                    kpis[15] += n
-                    kpis[n + 15] += 1
+                for n in range(1, 4):
+                    if len(record["vehiculos"]) == n:
+                        kpis[n + 14] += 1
+                        kpis[19] += n
 
             # build revisiones tecnicas
             for vehiculo in record["vehiculos"]:
@@ -300,7 +300,9 @@ class Database:
                 if _multas["mtc"]:
                     kpis[29] += 1
 
-        kpis[19] = kpis[15] / kpis[0]  # Promedio vehiculos/usuario
+        kpis[6] = sum(kpis[7:11])  # Total Vigente
+        kpis[5] = sum(kpis[6], kpis[11])
+        kpis[18] = kpis[14] / kpis[0]  # Promedio vehiculos/usuario
         kpis[27] = sum(kpis[28:31])  # Total multas impagas
 
         # last update date and time
@@ -309,7 +311,7 @@ class Database:
             key=lambda i: os.path.getctime(i),
         )
 
-        with open(_all_logs[-1], "r") as file:
+        """ with open(_all_logs[-1], "r") as file:
             logs = file.readlines()
             for log in logs[::-1]:
                 if "Database write" in log and not kpis[40]:
@@ -321,7 +323,7 @@ class Database:
                     kpis[43] = int("".join([i for i in log[25:] if i.isdigit()]))
                 if "SUTRAN > End" in log and not kpis[44]:
                     kpis[44] = int("".join([i for i in log[25:] if i.isdigit()]))
-
+        """
         # format all items
         response = []
         for item in kpis:

@@ -49,5 +49,6 @@ class Captcha:
         # x.click()
 
 
-x = Captcha()
-x.scraper()
+if __name__ == "__main__":
+    x = Captcha()
+    x.scraper()

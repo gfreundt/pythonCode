@@ -6,10 +6,8 @@ from copy import deepcopy as copy
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
-import database_dev as database, revtec_dev as revtec, sutran_dev as sutran, brevete_dev as brevete, satimp_dev as satimp
+import database, revtec, sutran, brevete, satimp, satmul
 import api
-
-# production: import database, revtec, sutran, brevete, satimp
 
 # import and activate Flask, change logging level to reduce messages
 from flask import Flask, render_template, request
@@ -242,7 +240,7 @@ def start_scrapers(arguments, options):
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["SATIMP", "REVTEC", "BREVETE", "SUTRAN"]
+    VALID_OPTIONS = ["SATIMP"]  # , "REVTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
@@ -259,12 +257,11 @@ def main():
 
 def side():
 
-    time.sleep(30)
+    time.sleep(20)
     return
 
     for rec, record in enumerate(DB.database):
-        if record["vehiculos"] == None:
-            DB.database[rec]["vehiculos"] = []
+        record["idUsuario"] = 0
 
     DB.write_database()
 

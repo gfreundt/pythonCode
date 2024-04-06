@@ -4,24 +4,26 @@ import time, sys
 from datetime import datetime as dt, timedelta as td
 import easyocr
 from tqdm import tqdm
-import logging
-from gft_utils import ChromeUtils
+import threading
+import random
 
-# remove easyocr warnings
-logging.getLogger("easyocr").setLevel(logging.ERROR)
+# Custom imports
+sys.path.append(r"\pythonCode\Resources\Scripts")
+from gft_utils import ChromeUtils
+import monitor
 
 
 class Sutran:
     # define class constants
     URL = "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
+    WRITE_FREQUENCY = 50
 
-    def __init__(self, **kwargs):
+    def __init__(self, database, logger, monitor, options) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.DB = kwargs["database"]
-        self.LOG = kwargs["logger"]
-        self.MONITOR = kwargs["monitor"]
-        self.options = kwargs["options"]
-        self.thread_num = kwargs["threadnum"]
+        self.DB = database
+        self.LOG = logger
+        self.MONITOR = monitor
+        self.TIMEOUT = 14430
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
@@ -32,10 +34,9 @@ class Sutran:
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
+        self.MONITOR.total_records[2] = len(records_to_update)
 
-        self.MONITOR.threads[self.thread_num]["total_records"] = len(records_to_update)
-
-        self.LOG.info(f"SUTRAN > Will process {len(records_to_update):,} records.")
+        self.LOG.info(f"SUTRAN > Will process {len(records_to_update)} records.")
 
         # begin update
         process_complete = False
@@ -53,13 +54,8 @@ class Sutran:
             rec = 0
             # iterate on all records that require updating
             for rec, (record_index, position) in enumerate(records_to_update):
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec+1} records.")
-                    return
-
                 # update monitor dashboard data
-                self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
+                self.MONITOR.current_record[2] = rec + 1
                 # get scraper data, if webpage fails skip record
                 _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
                 try:
@@ -67,11 +63,20 @@ class Sutran:
                 except KeyboardInterrupt:
                     quit()
                 except:
-                    self.LOG.warning(f"SUTRAN > Skipped Record {rec}.")
+                    self.LOG.warning("SUTRAN > Skipped Record {rec}.")
                     time.sleep(1)
                     self.WEBD.refresh()
                     time.sleep(1)
                     continue
+
+                # if record has data and response is None, do not overwrite database
+                # if (
+                #     not new_record
+                #     and self.DB.database[record_index]["vehiculos"][position]["multas"][
+                #         "sutran"
+                #     ]
+                # ):
+                #     continue
 
                 # update sutran data and last update in database
                 self.DB.database[record_index]["vehiculos"][position]["multas"][
@@ -80,10 +85,12 @@ class Sutran:
                 self.DB.database[record_index]["vehiculos"][position]["multas"][
                     "sutran_actualizado"
                 ] = dt.now().strftime("%d/%m/%Y")
-                # timestamp
-                self.MONITOR.threads[self.thread_num][
-                    "last_record_updated"
-                ] = time.time()
+
+                # check monitor flags: timeout
+                if self.MONITOR.timeout_flag:
+                    # self.DB.write_database()
+                    self.LOG.info(f"SUTRAN > End (Timeout). Processed {rec} records.")
+                    return
 
                 # check monitor flags: stalled
                 if self.MONITOR.stalled:
@@ -100,11 +107,9 @@ class Sutran:
         if rec:
             self.DB.write_database()
         # log end of process
-        self.LOG.info(f"SUTRAN > End (Complete). Processed: {rec+1} records.")
+        self.LOG.info(f"SUTRAN > End (Complete). Processed: {rec} records.")
 
-    def list_records_to_update(self, last_update_threshold=15):
-
-        self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
+    def list_records_to_update(self):
 
         to_update = [[] for _ in range(2)]
 
@@ -120,7 +125,7 @@ class Sutran:
                     continue
 
                 # Priority 0: last update over 30 days
-                if dt.now() - actualizado >= td(days=last_update_threshold):
+                if dt.now() - actualizado >= td(days=30):
                     to_update[0].append((record_index, veh_index))
 
         # flatten list to records in order

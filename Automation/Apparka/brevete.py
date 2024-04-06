@@ -9,31 +9,23 @@ import io, urllib
 import easyocr
 import random
 import logging
-
-
-# Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
 
-# Brevete = 0
-
-
+# remove easyocr warnings
 logging.getLogger("easyocr").setLevel(logging.ERROR)
 
 
 class Brevete:
-    WRITE_FREQUENCY = 50
     URL = "https://licencias.mtc.gob.pe/#/index"
 
-    def __init__(self, database, logger, monitor, options) -> None:
-        self.counter = 0
+    def __init__(self, **kwargs):
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.DB = database
-        self.LOG = logger
-        self.MONITOR = monitor
-        self.TIMEOUT = 21600
+        self.DB = kwargs["database"]
+        self.LOG = kwargs["logger"]
+        self.MONITOR = kwargs["monitor"]
+        self.options = kwargs["options"]
+        self.thread_num = kwargs["threadnum"]
         self.SWITCH_TO_LIMITED = 1200  # records
-        self.options = options
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates Brevete data for each PLACA."""
@@ -41,108 +33,89 @@ class Brevete:
         # log start of process
         self.LOG.info(f"BREVETE > Begin.")
 
-        # create list of all records that need updating with priorities, add to monitor dashboard variable
+        # create list of all records that need updating, ease restrictions to get target number
         records_to_update = self.list_records_to_update()
-        self.MONITOR.total_records[0] = len(records_to_update)
+
+        self.MONITOR.threads[self.thread_num]["total_records"] = len(records_to_update)
 
         # if volume is large, use less time-consuming scraper
         self.limited_scrape = (
             True if len(records_to_update) > self.SWITCH_TO_LIMITED else False
         )
-        self.LOG.info(
-            f"BREVETE > Will process {len(records_to_update):,} records. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
-        )
 
-        # begin update
-        process_complete = False
-        while not process_complete:
-            # set complete flag to True, changed if process stalled
-            process_complete = True
-            pending_writes = 0
-
-            # define Chromedriver and open url for first time
-            self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, incognito=True
+        # if no records to update, log end of process
+        if not records_to_update:
+            self.LOG.info(f"BREVETE > End (Did not start). No records to process.")
+            return
+        else:
+            self.LOG.info(
+                f"BREVETE > Will process {len(records_to_update):,} records. {'Limited' if self.limited_scrape else 'Regular'} Scrape."
             )
-            self.WEBD.get(self.URL)
-            time.sleep(2)
 
-            rec = 0  # only in case for loop doesn't run
-            # iterate on all records that require updating
-            for rec, record_index in enumerate(records_to_update):
-                # update monitor dashboard data
-                self.MONITOR.current_record[0] = rec + 1
+        # define Chromedriver and open url for first time
+        self.WEBD = ChromeUtils().init_driver(
+            headless=True, verbose=False, incognito=True
+        )
+        self.WEBD.get(self.URL)
+        time.sleep(2)
 
-                # get scraper data, if webpage fails, refresh and skip record
-                _dni = self.DB.database[record_index]["documento"]["numero"]
-                try:
-                    new_record = self.scraper(dni=_dni)
-                    # clear webpage for next iteration and small wait
-                    time.sleep(1)
-                    self.WEBD.back()
-                    time.sleep(0.2)
-                    self.WEBD.refresh()
-                except KeyboardInterrupt:
-                    quit()
-                except:
-                    self.LOG.warning(f"BREVETE > Skipped Record {rec}.")
-                    self.WEBD.refresh()
-                    time.sleep(1)
-                    self.WEBD.get(self.URL)
-                    time.sleep(1)
-                    continue
+        rec = 0  # only in case for loop doesn't run
 
-                # if database has data and response is None, do not overwrite database
-                if (
-                    not new_record
-                    and self.DB.database[record_index]["documento"]["brevete"]
-                ):
-                    continue
+        # iterate on all records that require updating
+        for rec, record_index in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"BREVETE > End (Timeout). Processed {rec+1} records.")
+                return
+            # update monitor status data
+            self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
 
-                # update brevete data and last update in database
-                self.DB.database[record_index]["documento"]["brevete"] = new_record
-                self.DB.database[record_index]["documento"][
-                    "brevete_actualizado"
-                ] = dt.now().strftime("%d/%m/%Y")
+            # get scraper data, if webpage fails, refresh and skip record
+            _dni = self.DB.database[record_index]["documento"]["numero"]
+            try:
+                new_record = self.scraper(dni=_dni)
+                # clear webpage for next iteration and small wait
+                time.sleep(1)
+                self.WEBD.back()
+                time.sleep(0.2)
+                self.WEBD.refresh()
+            except KeyboardInterrupt:
+                return
+            except:
+                self.LOG.warning(f"BREVETE > Skipped Record {rec}.")
+                self.WEBD.refresh()
+                time.sleep(1)
+                self.WEBD.get(self.URL)
+                time.sleep(1)
+                continue
 
-                # update counter
-                pending_writes += 1
-                """
-                # write database to disk every n captures
-                if pending_writes % self.WRITE_FREQUENCY == 0:
-                    pending_writes = 0
-                    # MONITOR.writes += self.WRITE_FREQUENCY
-                    self.DB.write_database()
-                """
+            # if database has data and response is None, do not overwrite database
+            if (
+                not new_record
+                and self.DB.database[record_index]["documento"]["brevete"]
+            ):
+                continue
 
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    self.LOG.info(f"BREVETE > End (Timeout). Processed {rec} records.")
-                    self.WEBD.close()
-                    return
+            # update brevete data and last update in database
+            self.DB.database[record_index]["documento"]["brevete"] = new_record
+            self.DB.database[record_index]["documento"][
+                "brevete_actualizado"
+            ] = dt.now().strftime("%d/%m/%Y")
+            # timestamp
+            self.MONITOR.threads[self.thread_num]["last_record_updated"] = time.time()
 
-                # check monitor flags: stalled
-                if self.MONITOR.stalled:
-                    # set complete flag to False to force restart of updating process
-                    process_complete = False
-                    # close current webdriver session and wait
-                    self.WEBD.close()
-                    time.sleep(5)
-                    # update monitor stats
-                    # self.MONITOR.last_change = dt.now()
-                    break
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"BREVETE > End (Timeout). Processed {rec} records.")
+                self.WEBD.close()
+                return
 
-        # last write in case there are pending changes in memory (only if for loop ran)
-        if rec:
-            self.DB.write_database()
         # log end of process
         self.LOG.info(f"BREVETE > End (Complete). Processed: {rec} records.")
 
-    def list_records_to_update(self):
-        # check for switch to force updating all records
-        if "-all" in sys.argv:
-            self.LOG.info("-all switch selected.")
-            return [i for i in range(self.DB.len_database)]
+    def list_records_to_update(self, last_update_threshold=60):
+
+        self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
 
         to_update = [[] for _ in range(3)]
 
@@ -163,11 +136,13 @@ class Brevete:
                     to_update[0].append(record_index)
 
             # Priority 1: no brevete information and last update was 10+ days ago
-            if not brevete and dt.now() - actualizado >= td(days=10):
+            if not brevete and dt.now() - actualizado >= td(days=last_update_threshold):
                 to_update[1].append(record_index)
 
             # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
-            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(days=10):
+            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
+                days=last_update_threshold
+            ):
                 to_update[2].append(record_index)
 
         # return flat list of records in order

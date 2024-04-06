@@ -4,119 +4,109 @@ import time, sys
 from datetime import datetime as dt, timedelta as td
 from PIL import Image
 import io, urllib
+import logging
 import easyocr
-from tqdm import tqdm
-import threading
-import random
-
-
-# Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
 
+# remove easyocr warnings
+logging.getLogger("easyocr").setLevel(logging.ERROR)
 
-class RevTec:
-    # define class constants
+
+class Revtec:
     URL = "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
 
-    def __init__(self, database, logger, monitor, options) -> None:
-        self.counter = 0
+    def __init__(self, **kwargs):
+        # self.counter = 0
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.DB = database
-        self.LOG = logger
-        self.MONITOR = monitor
-        self.TIMEOUT = 14460
+        self.DB = kwargs["database"]
+        self.LOG = kwargs["logger"]
+        self.MONITOR = kwargs["monitor"]
+        self.options = kwargs["options"]
+        self.thread_num = kwargs["threadnum"]
 
     def run_full_update(self):
-        """Iterates through a certain portion of database and updates RTEC data for each PLACA.
-        Designed to work with Threading."""
+        """Iterates through a certain portion of database and updates RTEC data for each PLACA."""
 
         # log start of process
         self.LOG.info(f"REVTEC > Begin.")
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
-        self.MONITOR.total_records[1] = len(records_to_update)
 
-        self.LOG.info(f"REVTEC > Will process {len(records_to_update):,} records.")
+        self.MONITOR.threads[self.thread_num]["total_records"] = len(records_to_update)
 
-        # begin update
-        process_complete = False
-        while not process_complete:
-            # set complete flag to True, changed if process stalled
-            process_complete = True
+        # if no records to update, log end of process
+        if not records_to_update:
+            self.LOG.info(f"REVTEC > End (Did not start). No records to process.")
+            return
+        else:
+            self.LOG.info(f"REVTEC > Will process {len(records_to_update):,} records.")
 
-            # define Chromedriver and open url for first time
-            self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, maximized=True
-            )
-            self.WEBD.get(self.URL)
-            time.sleep(2)
+        # define Chromedriver and open url for first time
+        self.WEBD = ChromeUtils().init_driver(
+            headless=True, verbose=False, incognito=True
+        )
+        self.WEBD.get(self.URL)
+        time.sleep(2)
 
-            rec = 0
-            # iterate on all records that require updating
-            for rec, (record_index, position) in enumerate(records_to_update):
-                # update monitor dashboard data
-                self.MONITOR.current_record[1] = rec + 1
-                # get scraper data, if webpage fails, wait, reload page and skip record
-                _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
-                try:
-                    new_record = self.scraper(placa=_placa)
-                except KeyboardInterrupt:
-                    quit()
-                except:
-                    time.sleep(1)
-                    self.WEBD.refresh()
-                    time.sleep(1)
-                    continue
+        rec = 0  # only in case for loop doesn't run
 
-                # if record has data and response is None, do not overwrite database
-                if (
-                    not new_record
-                    and self.DB.database[record_index]["vehiculos"][position]["rtecs"]
-                ):
-                    continue
+        # iterate on all records that require updating
+        for rec, (record_index, position) in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"REVTEC > End (Timeout). Processed {rec+1} records.")
+                return
+            # update monitor dashboard data
+            self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
 
-                # update brevete data and last update in database
-                self.DB.database[record_index]["vehiculos"][position][
-                    "rtecs"
-                ] = new_record
-                self.DB.database[record_index]["vehiculos"][position][
-                    "rtecs_actualizado"
-                ] = dt.now().strftime("%d/%m/%Y")
+            # get scraper data, if webpage fails, wait, reload page and skip record
+            _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
+            try:
+                new_record = self.scraper(placa=_placa)
+            except KeyboardInterrupt:
+                quit()
+            except:
+                self.LOG.warning(f"REVTEC > Skipped Record {rec}.")
+                time.sleep(1)
+                self.WEBD.refresh()
+                time.sleep(1)
+                continue
 
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    # self.DB.write_database()
-                    self.LOG.info(f"End RevTec (Timeout). Processed {rec} records.")
-                    self.WEBD.close()
-                    return
+            # if record has data and response is None, do not overwrite database
+            if (
+                not new_record
+                and self.DB.database[record_index]["vehiculos"][position]["rtecs"]
+            ):
+                continue
 
-                # check monitor flags: stalled
-                if self.MONITOR.stalled:
-                    # set complete flag to False to force restart of updating process
-                    process_complete = False
-                    # close current webdriver session and wait
-                    self.WEBD.close()
-                    time.sleep(5)
-                    # update monitor stats
-                    # self.MONITOR.last_change = dt.now()
-                    break
+            # update brevete data and last update in database
+            self.DB.database[record_index]["vehiculos"][position]["rtecs"] = new_record
+            self.DB.database[record_index]["vehiculos"][position][
+                "rtecs_actualizado"
+            ] = dt.now().strftime("%d/%m/%Y")
+            # timestamp
+            self.MONITOR.threads[self.thread_num]["last_record_updated"] = time.time()
 
-        # last write in case there are pending changes in memory (only if for loop ran)
-        if rec:
-            self.DB.write_database()
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                # self.DB.write_database()
+                self.LOG.info(f"End RevTec (Timeout). Processed {rec+1} records.")
+                self.WEBD.close()
+                return
+
         # log end of process
-        self.LOG.info(f"REVTEC > End (Complete). Processed: {rec} records.")
+        self.LOG.info(f"REVTEC > End (Complete). Processed: {rec+1} records.")
 
-    def list_records_to_update(self, last_update_threshold=7):
+    def list_records_to_update(self, last_update_threshold=15):
+
+        self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
 
         to_update = [[] for _ in range(5)]
 
         for record_index, record in enumerate(self.DB.database):
-            vehiculos = record["vehiculos"]
 
-            for veh_index, vehiculo in enumerate(vehiculos):
+            for veh_index, vehiculo in enumerate(record["vehiculos"]):
                 actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
                 rtecs = vehiculo["rtecs"]
 

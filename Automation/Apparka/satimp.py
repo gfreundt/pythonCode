@@ -1,28 +1,27 @@
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.keys import Keys
-import time, sys
+import time
 from datetime import datetime as dt, timedelta as td
 import easyocr
-from PIL import Image
-import io, urllib
-
-
-# Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
+import logging
 from gft_utils import ChromeUtils
+
+# remove easyocr warnings
+logging.getLogger("easyocr").setLevel(logging.ERROR)
 
 
 class Satimp:
     # define class constants
     URL = "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx"
 
-    def __init__(self, database, logger, monitor, options) -> None:
+    def __init__(self, **kwargs):
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.DB = database
-        self.LOG = logger
-        self.MONITOR = monitor
+        self.DB = kwargs["database"]
+        self.LOG = kwargs["logger"]
+        self.MONITOR = kwargs["monitor"]
+        self.options = kwargs["options"]
+        self.thread_num = kwargs["threadnum"]
 
     def run_full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
@@ -33,92 +32,96 @@ class Satimp:
 
         # create list of all records that need updating with priorities
         records_to_update = self.list_records_to_update()
-        self.MONITOR.total_records[3] = len(records_to_update)
+        self.MONITOR.threads[self.thread_num]["total_records"] = len(records_to_update)
 
         self.LOG.info(
             f"SAT_IMPUESTOS > Will process {len(records_to_update):,} records."
         )
 
-        # begin update
-        process_complete = False
-        while not process_complete:
-            # set complete flag to True, changed if process stalled
-            process_complete = True
+        # define Chromedriver and open url for first time
+        self.WEBD = ChromeUtils().init_driver(
+            headless=True, verbose=False, maximized=True
+        )
+        self.WEBD.get(self.URL)
+        time.sleep(4)
 
-            # define Chromedriver and open url for first time
-            self.WEBD = ChromeUtils().init_driver(
-                headless=True, verbose=False, maximized=True
-            )
-            self.WEBD.get(self.URL)
-            time.sleep(2)
+        rec = 0
+        # iterate on all records that require updating
+        open = True
+        for rec, record_index in enumerate(records_to_update):
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(f"SATIMP > End (Timeout). Processed {rec+1:,} records.")
+                return
 
-            rec = 0
-            # iterate on all records that require updating
-            open = True
-            for rec, record_index in enumerate(records_to_update):
-                # update monitor dashboard data
-                self.MONITOR.current_record[3] = rec + 1
-                # get scraper data, if webpage fails skip record
-                _doc_num = self.DB.database[record_index]["documento"]["numero"]
-                _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
-                if _doc_tipo != "DNI":
-                    self.LOG.warning(f"SAT_IMPUESTOS > Skipped Record {rec} (CE).")
-                try:
-                    new_record = self.scraper(
-                        doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
-                    )
-                    open = False
-                except KeyboardInterrupt:
-                    quit()
-                except:
-                    time.sleep(1)
-                    self.WEBD.refresh()
-                    time.sleep(1)
-                    continue
+            # update monitor dashboard data
+            self.MONITOR.threads[self.thread_num]["current_record"] = rec + 1
+            # get scraper data, if webpage fails skip record
+            _doc_num = self.DB.database[record_index]["documento"]["numero"]
+            _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
+            if not _doc_num:
+                self.LOG.info(f"SAT_IMPUESTOS > Skipped Record {rec} (no document).")
+                continue
+            try:
+                new_record = self.scraper(
+                    doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
+                )
+                open = False
+            except KeyboardInterrupt:
+                quit()
+            except:
+                self.LOG.warning(
+                    f"SAT_IMPUESTOS > Skipped Record {rec} (scraper error)."
+                )
+                time.sleep(1)
+                self.WEBD.refresh()
+                time.sleep(1)
+                continue
 
-                # if record has data and response is None, do not overwrite database
-                if (
-                    not new_record
-                    and self.DB.database[record_index]["documento"][
-                        "deuda_tributaria_sat"
-                    ]
-                ):
-                    continue
+            # if record has data and response is None, do not overwrite database
+            if (
+                not new_record
+                and self.DB.database[record_index]["documento"]["deuda_tributaria_sat"]
+            ):
+                continue
 
-                self.DB.database[record_index]["documento"][
-                    "deuda_tributaria_sat"
-                ] = new_record
-                self.DB.database[record_index]["documento"][
-                    "deuda_tributaria_sat_actualizado"
-                ] = dt.now().strftime("%d/%m/%Y")
+            self.DB.database[record_index]["documento"][
+                "deuda_tributaria_sat"
+            ] = new_record
+            self.DB.database[record_index]["documento"][
+                "deuda_tributaria_sat_actualizado"
+            ] = dt.now().strftime("%d/%m/%Y")
+            # timestamp
+            self.MONITOR.threads[self.thread_num]["last_record_updated"] = time.time()
 
-                # check monitor flags: timeout
-                if self.MONITOR.timeout_flag:
-                    self.LOG.info(
-                        f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
-                    )
-                    self.WEBD.close()
-                    return
+            # check monitor flags: timeout
+            if self.MONITOR.timeout_flag:
+                self.LOG.info(
+                    f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
+                )
+                self.WEBD.close()
+                return
 
         # log end of process
         self.LOG.info(f"SAT_IMPUESTOS > End (Complete). Processed: {rec} records.")
 
-    def list_records_to_update(self):
+    def list_records_to_update(self, last_update_threshold=60):
+
+        self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
 
         to_update = [[] for _ in range(2)]
 
         for record_index, record in enumerate(self.DB.database):
-            sat_impuestos = record["documento"]["deuda_tributaria_sat"]
             actualizado = dt.strptime(
                 record["documento"]["deuda_tributaria_sat_actualizado"], "%d/%m/%Y"
             )
 
-            # Skip all records than have already been updated in last 22 hours
+            # Skip all records than have already been updated in last 24 hours
             if dt.now() - actualizado < td(days=1):
                 continue
 
             # Priority 0: last update over 30 days
-            if dt.now() - actualizado >= td(days=30):
+            if dt.now() - actualizado >= td(days=last_update_threshold):
                 to_update[0].append(record_index)
 
         # flatten list to records in order
@@ -136,39 +139,41 @@ class Satimp:
             self.WEBD.get(_target)
 
         while True:
-            # capture captcha image from webpage store in variable
-            self.WEBD.get_screenshot_as_file("captcha_tmp.png")
-            _img = Image.open("captcha_tmp.png")
-            _img = _img.crop((1385, 690, 1510, 725))
-            _img.save("captcha_tmp.png")
-            # convert image to text using OCR
-            _captcha = self.READER.readtext("captcha_tmp.png", text_threshold=0.5)
+            self.WEBD.refresh()
+            y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
+            y.clear()
+            # captura captcha image from webpage store in temp file
+            _captcha_img_url = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/form/div[3]/section/div/div/div[2]/div[3]/div[5]/div/div[1]/div[2]/div/img",
+            )
+            _captcha_img_url.screenshot("captcha_satimp.png")
+
+            # apply OCR to temp file
+            _captcha = self.READER.readtext("captcha_satimp.png", text_threshold=0.5)
             captcha_txt = (
                 _captcha[0][1] if len(_captcha) > 0 and len(_captcha[0]) > 0 else ""
             )
+            captcha_txt = "".join([i.upper() for i in captcha_txt if i.isalnum()])
 
-            time.sleep(0.5)
             # select alternative option from dropdown to reset it
             drop = Select(self.WEBD.find_element(By.ID, "tipoBusqueda"))
             drop.select_by_value("busqCodAdministrado")
             time.sleep(0.5)
             # select Busqueda por Documento from dropdown
-            drop = Select(self.WEBD.find_element(By.ID, "tipoBusqueda"))
             drop.select_by_value("busqTipoDocIdentidad")
-
             time.sleep(0.5)
-            # dropdown tipo de documento
-            # drop = Select(
-            #     self.WEBD.find_element(
-            #         By.XPATH,
-            #         "/html/body/form/div[3]/section/div/div/div[2]/div[3]/div[2]/div/div[2]/div/div[2]/select",
-            #     )
-            # )
-            # # select between DNI and CE
-            # drop.select_by_value("4" if doc_tipo == "CE" else "1")
+
+            # select tipo documento (DNI/CE) from dropdown
+            drop = Select(
+                self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_ddlTipoDocu")
+            )
+            drop.select_by_value("4" if doc_tipo == "CE" else "2")
+            time.sleep(0.5)
 
             # clear field and enter DNI/CE
             x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtDocumento")
+            x.clear()
             x.send_keys(doc_num)
 
             # enter captcha
@@ -180,20 +185,17 @@ class Satimp:
             # click BUSCAR
             x = self.WEBD.find_element(By.CLASS_NAME, "boton")
             x.click()
-            time.sleep(1)
+            time.sleep(0.5)
 
             x = self.WEBD.find_element(
                 By.ID, "ctl00_cplPrincipal_lblMensajeCantidad"
             ).text
             if x:
                 break
-            else:
-                y = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtCaptcha")
-                y.clear()  # send_keys(Keys.BACKSPACE * 6)
 
         _qty = int("".join([i for i in x if i.isdigit()]))
         if _qty == 0:
-            return None
+            return []
 
         response = []
         for row in range(_qty):
