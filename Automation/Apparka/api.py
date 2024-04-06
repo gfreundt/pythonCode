@@ -3,6 +3,7 @@ from datetime import datetime as dt
 from random import randint
 import socket
 from gft_utils import ChromeUtils
+import pyautogui
 
 # import and activate Flask, change logging level to reduce messages
 from flask import Flask, render_template, request
@@ -46,7 +47,11 @@ def stats_view(MONITOR):
     webdriver = ChromeUtils().init_driver(
         headless=False, verbose=False, window_size=(900, 310)
     )
-    webdriver.set_window_position(1670, 1080, windowHandle="current")
+    if pyautogui.size()[0] == 3840:
+        posx, posy = (1670, 1080)
+    elif pyautogui.size()[0] == 1920:
+        posx, posy = (100, 100)
+    webdriver.set_window_position(posx, posy, windowHandle="current")
     webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 
     # forever loop refreshing status page
