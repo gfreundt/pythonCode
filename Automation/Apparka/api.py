@@ -1,6 +1,6 @@
 import os, csv, time, signal
 from datetime import datetime as dt
-from random import randint
+import platform
 import socket
 from gft_utils import ChromeUtils
 import pyautogui
@@ -60,10 +60,19 @@ def stats_view(MONITOR):
         webdriver.refresh()
 
 
+def assign_port():
+    _devices = {"power": 12500, "salita-tv": 13500, "rpi": 14500}
+    try:
+        return _devices[platform.node().lower()]
+    except:
+        return 21000
+
+
 def main(monitor, LOG):
     global MONITOR
     MONITOR = monitor
-    MONITOR._port = randint(8000, 40000)
-    LOG.info(f"Port: {MONITOR._port}")
     MONITOR._myip = socket.gethostbyname(socket.gethostname())
+    MONITOR._port = assign_port()
+    LOG.info(f"Port: {MONITOR._port}")
+
     app.run(host=MONITOR._myip, port=MONITOR._port, debug=False)
