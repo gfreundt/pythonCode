@@ -257,6 +257,8 @@ def main():
 
 def side():
 
+    DB.export_dashboard()
+
     time.sleep(20)
     return
 

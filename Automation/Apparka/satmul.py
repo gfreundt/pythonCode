@@ -25,28 +25,37 @@ class Captcha:
 
     def scraper(self, opening=True):
         if opening:
-            # navigate to to Tributo Detalles page with internal URL
+            # navigate to to Consulta Papeletas page with internal URL
             time.sleep(1)
             _target = (
                 "https://www.sat.gob.pe/VirtualSAT/modulos/papeletas.aspx?mysession="
                 + self.WEBD.current_url.split("=")[-1]
             )
             self.WEBD.get(_target)
+            opening = False
+        time.sleep(2)
 
-        time.sleep(4)
+        # select alternative option from dropdown to reset it
+        drop = Select(self.WEBD.find_element(By.ID, "tipoBusquedaPapeletas"))
+        drop.select_by_value("busqPlaca")
+        time.sleep(0.5)
 
-        _cc = (1401, 1042)
-        _rc = (randrange(100, 2500), randrange(200, 1800))
-        pyautogui.moveTo(_rc)
-        time.sleep(3)
-        pyautogui.moveTo(_cc, duration=0.54)
-        time.sleep(1.5)
+        # enter Placa
+        x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtPlaca")
+        x.send_keys("ABC123")
+
+        # click Captcha
+        _coords = (1392 + randrange(0, 37), 1004 + randrange(0, 34))
+        _delay = 0.45 + randrange(0, 15) // 100
+        pyautogui.moveTo(_coords[0], _coords[1], _delay)
+        time.sleep(0.1)
         pyautogui.click()
+        time.sleep(0.7)
 
-        time.sleep(10)
-
-        # x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_CaptchaContinue")
-        # x.click()
+        # click Buscar
+        x = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_CaptchaContinue")
+        x.click()
+        time.sleep(30)
 
 
 if __name__ == "__main__":

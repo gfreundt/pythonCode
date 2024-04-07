@@ -191,6 +191,7 @@ class Database:
         self.LOG.info(f"DATABASE > Database write.")
         try:
             self.export_dashboard()
+            self.LOG.info("DATABASE > KPI dashboard file generated succesfully.")
         except:
             self.LOG.warning("DATABASE > Cannot generate KPI dashboard file.")
 
@@ -301,15 +302,15 @@ class Database:
                     kpis[29] += 1
 
         kpis[6] = sum(kpis[7:11])  # Total Vigente
-        kpis[5] = sum(kpis[6], kpis[11])
+        kpis[5] = kpis[6] + kpis[11]
         kpis[18] = kpis[14] / kpis[0]  # Promedio vehiculos/usuario
         kpis[27] = sum(kpis[28:31])  # Total multas impagas
 
         # last update date and time
-        _all_logs = sorted(
-            os.scandir(os.path.join(os.getcwd(), "logs")),
-            key=lambda i: os.path.getctime(i),
-        )
+        # _all_logs = sorted(
+        #     os.scandir(os.path.join(os.getcwd(), "logs")),
+        #     key=lambda i: os.path.getctime(i),
+        # )
 
         """ with open(_all_logs[-1], "r") as file:
             logs = file.readlines()
@@ -336,12 +337,10 @@ class Database:
             else:
                 response.append(item)
 
-                # add timestamp
-                response.append[str(dt.now())]
+        # add timestamp
+        response.append(str(dt.now()))
 
         # write data to file to be used by dashboard
         with open(self.DASHBOARD_NAME, "a") as file:
             _writer = csv.writer(file, delimiter="|", quotechar="'")
             _writer.writerow(response)
-
-        self.LOG.info(f"DATABASE > Dashboard data updated.")
