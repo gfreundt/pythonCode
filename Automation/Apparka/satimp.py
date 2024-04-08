@@ -120,6 +120,10 @@ class Satimp:
             if dt.now() - actualizado < td(days=1):
                 continue
 
+            # Skip all records with no DNI/CE
+            if not record["documento"]["numero"]:
+                continue
+
             # Priority 0: last update over 30 days
             if dt.now() - actualizado >= td(days=last_update_threshold):
                 to_update[0].append(record_index)
