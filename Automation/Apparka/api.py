@@ -3,8 +3,12 @@ from datetime import datetime as dt
 import platform
 import socket
 from gft_utils import ChromeUtils
-import pyautogui
 from random import randrange
+
+try:
+    import pyautogui
+except ImportError:
+    pass
 
 # import and activate Flask, change logging level to reduce messages
 from flask import Flask, render_template, request

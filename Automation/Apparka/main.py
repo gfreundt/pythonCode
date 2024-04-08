@@ -3,6 +3,7 @@ from datetime import datetime as dt, timedelta as td
 import threading
 import logging
 from copy import deepcopy as copy
+import platform
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
@@ -25,6 +26,7 @@ class Monitor:
         self.threads = []
         self.timeout_flag = False
         self.dash_data = ""
+        self.device = str(platform.system())
 
     def supervisor(self, options):
         self.MAX_RESTARTS = 3
@@ -199,9 +201,12 @@ def start_monitors(options):
     # starts server to be able to access data via browser
     _api = threading.Thread(target=api.main, args=(MONITOR, LOG), daemon=True)
     _api.start()
-    # starts browser on lower right of screen
-    _stats_view = threading.Thread(target=api.stats_view, args=(MONITOR,), daemon=True)
-    _stats_view.start()
+    # starts browser on lower right of screen (not on RPI)
+    if MONITOR.device == "Windows":
+        _stats_view = threading.Thread(
+            target=api.stats_view, args=(MONITOR,), daemon=True
+        )
+        _stats_view.start()
 
 
 def start_scrapers(arguments, options):
