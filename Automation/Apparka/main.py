@@ -6,7 +6,7 @@ from copy import deepcopy as copy
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
-import database, revtec, sutran, brevete, satimp, satmul, sunarp
+import database, revtec, sutran, brevete, satimp, satmul
 import api
 
 # import and activate Flask, change logging level to reduce messages
