@@ -170,6 +170,9 @@ class Revtec:
             self.WEBD.find_element(By.ID, "BtnBuscar").click()
             time.sleep(1)
 
+            # captcha tries counter
+            self.MONITOR.threads[self.thread_num]["captcha_attempts"] += 1
+
             # if captcha is not correct, refresh and restart cycle, if no data found, return None
             _alerta = self.WEBD.find_element(By.ID, "lblAlertaMensaje").text
             if "no es correcto" in _alerta:

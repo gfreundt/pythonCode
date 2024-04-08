@@ -192,6 +192,9 @@ class Brevete:
             ).click()
             time.sleep(1)
 
+            # captcha tries counter
+            self.MONITOR.threads[self.thread_num]["captcha_attempts"] += 1
+
             # if captcha is not correct, refresh and restart cycle, if no data found, return None
             _alerta = self.WEBD.find_elements(By.ID, "swal2-html-container")
             if _alerta and "persona natural" in _alerta[0].text:

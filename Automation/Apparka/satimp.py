@@ -191,6 +191,9 @@ class Satimp:
             x.click()
             time.sleep(0.5)
 
+            # captcha tries counter
+            self.MONITOR.threads[self.thread_num]["captcha_attempts"] += 1
+
             x = self.WEBD.find_element(
                 By.ID, "ctl00_cplPrincipal_lblMensajeCantidad"
             ).text

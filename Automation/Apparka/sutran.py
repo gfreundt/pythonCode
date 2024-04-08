@@ -3,7 +3,6 @@ from selenium.common.exceptions import *
 import time, sys
 from datetime import datetime as dt, timedelta as td
 import easyocr
-from tqdm import tqdm
 import logging
 from gft_utils import ChromeUtils
 
@@ -153,6 +152,9 @@ class Sutran:
                 time.sleep(0.2)
                 elements[1][0].click()
             time.sleep(0.5)
+
+            # captcha tries counter
+            self.MONITOR.threads[self.thread_num]["captcha_attempts"] += 1
 
             # if no text response, restart
             elements = self.WEBD.find_elements(By.ID, "LblMensaje")

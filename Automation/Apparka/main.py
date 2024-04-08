@@ -110,8 +110,9 @@ class Monitor:
             )
             _process = thread["name"]
             _lut = thread["lut"]
+            _captcha = f"{thread['captcha_attempts']*100/thread['current_record']:.1f}%"
             _cur_rec = f"{thread['current_record']:,}"
-            _tot_recs = f"{thread['total_records']:,}"
+            _pend_recs = f"{thread['total_records']-thread['current_record']:,}"
             _complet = (
                 f"{thread['current_record']*100/max(1,thread['total_records']):.1f}%"
             )
@@ -131,8 +132,9 @@ class Monitor:
                 {
                     "process": _process,
                     "lut": _lut,
+                    "captcha": _captcha,
                     "cur_rec": _cur_rec,
-                    "tot_recs": _tot_recs,
+                    "pend_recs": _pend_recs,
                     "complet": _complet,
                     "status": _status,
                     "rate": f"{_rate:.1f} ",
@@ -218,6 +220,7 @@ def start_scrapers(arguments, options):
         MONITOR.threads[k].update(
             {
                 "start_time": dt.now(),
+                "captcha_attempts": 0,
                 "total_records": 0,
                 "current_record": 0,
                 "last_record_updated": time.time(),
