@@ -4,6 +4,7 @@ import platform
 import socket
 from gft_utils import ChromeUtils
 import pyautogui
+from random import randrange
 
 # import and activate Flask, change logging level to reduce messages
 from flask import Flask, render_template, request
@@ -62,10 +63,7 @@ def stats_view(MONITOR):
 
 def assign_port():
     _devices = {"power": 12500, "salita-tv": 13500, "rpi": 14500}
-    try:
-        return _devices[platform.node().lower()]
-    except:
-        return 21000
+    return _devices.get(platform.node().lower(), 21000) + randrange(100)
 
 
 def main(monitor, LOG):

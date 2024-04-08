@@ -6,7 +6,7 @@ from copy import deepcopy as copy
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
-import database, revtec, sutran, brevete, satimp, satmul
+import database, revtec, sutran, brevete, satimp, satmul, sunarp
 import api
 
 # import and activate Flask, change logging level to reduce messages
@@ -56,7 +56,6 @@ class Monitor:
                 time.time() - self.timer_on > options["timeout_time"]
                 or self.kill_em_all
             ):
-                DB.write_database()
                 self.timeout_flag = True
                 return
 
@@ -240,7 +239,7 @@ def start_scrapers(arguments, options):
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["SATIMP", "REVTEC", "BREVETE", "SUTRAN"]
+    VALID_OPTIONS = ["SUNARP", "SATIMP", "REVTEC", "BREVETE", "SUTRAN"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
@@ -250,6 +249,9 @@ def main():
     # begin all threads
     start_monitors(options)
     start_scrapers(arguments, options)
+
+    # write db when processes are over (finished all records, timeout or soft interrupt)
+    DB.write_database()
 
     # wrap-up: make a copy of database file to GDrive
     DB.upload_to_drive()
