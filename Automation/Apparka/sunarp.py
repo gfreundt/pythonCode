@@ -206,9 +206,23 @@ class Sunarp:
 
     def get_year(self, vin):
         base_year = 2010 if vin[6].isalpha() else 1980
-        offset_options = ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N"
+        offset_options = [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "J",
+            "K",
+            "L",
+            "M",
+            "N",
+        ]
 
-
+    """
         Code	Year		Code	Year		Code	Year		Code	Year		Code	Year		Code	Year
 A	1980		L	1990		Y	2000		A	2010		L	2020		Y	2030
 B	1981		M	1991		1	2001		B	2011		M	2021		1	2031
@@ -220,6 +234,7 @@ G	1986		T	1996		6	2006		G	2016		T	2026		6	2036
 H	1987		V	1997		7	2007		H	2017		V	2027		7	2037
 J	1988		W	1998		8	2008		J	2018		W	2028		8	2038
 K	1989		X	1999		9	2009		K	2019		X	2029		9	2039
+    """
 
     def detect_text(self, path):
         # stop runaway API requests
