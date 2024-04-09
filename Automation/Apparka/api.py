@@ -7,7 +7,7 @@ from random import randrange
 
 try:
     import pyautogui
-except ImportError:
+except KeyError:
     pass
 
 # import and activate Flask, change logging level to reduce messages
