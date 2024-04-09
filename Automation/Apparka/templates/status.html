@@ -25,12 +25,13 @@
         <tr>
             <th style="width: 100px">Process</th>
             <th style="width: 50px">LUT</th>
+            <th style="width: 50px">Captcha Success</th>
             <th style="width: 50px">Current Rec</th>
-            <th style="width: 100px">Total Recs</th>
+            <th style="width: 100px">Pending Recs</th>
             <th style="width: 100px">Completion</th>
             <th style="width: 120px">Status</th>
             <th style="width: 50px">Rate (it/hr)</th>
-            <th style="width: 200px">ETA</th>
+            <th style="width: 200px">ETA / Finished</th>
         </tr>
         {%for line in data[1:]%}
             {%if line["status"]=="ACTIVE"%}
@@ -42,8 +43,9 @@
                     {%endif%}
                     <td>{{line["process"]}}</td>
                     <td>{{line["lut"]}}</td>
+                    <td>{{line["captcha"]}}</td>
                     <td>{{line["cur_rec"]}}</td>
-                    <td>{{line["tot_recs"]}}</td>
+                    <td>{{line["pend_recs"]}}</td>
                     <td>{{line["complet"]}}</td>
                     <td>{{line["status"]}}</td>
                     <td>{{line["rate"]}}</td>

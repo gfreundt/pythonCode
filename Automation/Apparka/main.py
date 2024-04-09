@@ -26,7 +26,7 @@ class Monitor:
         self.threads = []
         self.timeout_flag = False
         self.dash_data = ""
-        self.device = str(platform.system())
+        self.device = str(platform.system()).strip()
 
     def supervisor(self, options):
         self.MAX_RESTARTS = 3
@@ -104,19 +104,27 @@ class Monitor:
         ]
 
         # build body
-        for thread in self.threads:
+        for th, thread in enumerate(self.threads):
             _status = (
                 "INACTIVE"
                 if not thread["thread"].is_alive()
                 else "STALLED" if thread["stalled"] else "ACTIVE"
             )
+            if (
+                _status == "INACTIVE"
+                and thread.get("finished")
+                and "Ended" not in thread["finished"]
+            ):
+                self.threads[th]["finished"] = f"Ended: {str(dt.now())[:-7]}"
             _process = thread["name"]
             _lut = thread["lut"]
-            _captcha = f"{thread['captcha_attempts']*100/thread['current_record']:.1f}%"
+            _captcha = (
+                f"{thread['current_record']*100/max(thread['captcha_attempts'],1):.1f}%"
+            )
             _cur_rec = f"{thread['current_record']:,}"
             _pend_recs = f"{thread['total_records']-thread['current_record']:,}"
             _complet = (
-                f"{thread['current_record']*100/max(1,thread['total_records']):.1f}%"
+                f"{thread['current_record']*100/max(thread['total_records'],1):.1f}%"
             )
             _rate = max(thread["current_record"] * 3600 / _elapsed, 1)
             _eta = (
@@ -128,7 +136,7 @@ class Monitor:
                     )
                 )[:-7]
                 if _status == "ACTIVE"
-                else str(_elapsed)
+                else thread.get("finished", "")
             )
             data.append(
                 {
@@ -231,6 +239,7 @@ def start_scrapers(arguments, options):
                 "last_record_updated": time.time(),
                 "stalled": False,
                 "restarts": 0,
+                "finished": str(dt.now()),
             }
         )
 

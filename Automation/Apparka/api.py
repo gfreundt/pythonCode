@@ -61,6 +61,7 @@ def stats_view(MONITOR):
 
     # forever loop refreshing status page
     while True:
+        # print(MONITOR.api_data)
         time.sleep(3)
         webdriver.refresh()
 
@@ -71,11 +72,12 @@ def assign_port():
 
 
 def main(monitor, LOG):
+    LOG.info("API > Begin.")
     global MONITOR
     MONITOR = monitor
     MONITOR._myip = socket.gethostbyname(socket.gethostname())
     MONITOR._port = assign_port()
     print(f"Status: {MONITOR._myip}:{MONITOR._port}/status")
-    LOG.info(f"Port: {MONITOR._port}")
+    LOG.info(f"For status: http:\\{MONITOR._myip}:{MONITOR._port}/status")
 
     app.run(host=MONITOR._myip, port=MONITOR._port, debug=False)
