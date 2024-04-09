@@ -101,7 +101,7 @@ class Sutran:
         # log end of process
         self.LOG.info(f"SUTRAN > End (Complete). Processed: {rec+1} records.")
 
-    def list_records_to_update(self, last_update_threshold=15):
+    def list_records_to_update(self, last_update_threshold=10):
 
         self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
 
