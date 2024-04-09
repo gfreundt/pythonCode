@@ -68,7 +68,7 @@ def stats_view(MONITOR):
 
 def assign_port():
     _devices = {"power": 12500, "salita-tv": 13500, "rpi": 14500}
-    return _devices.get(platform.node().lower(), 21000) + randrange(100)
+    return _devices.get(platform.node().lower(), 21000) + randrange(999)
 
 
 def main(monitor, LOG):
