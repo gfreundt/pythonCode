@@ -125,6 +125,8 @@ class Monitor:
             _pend_recs = f"{thread['total_records']-thread['current_record']:,}"
             _complet = (
                 f"{thread['current_record']*100/max(thread['total_records'],1):.1f}%"
+                if _pend_recs > 0
+                else "100%"
             )
             _rate = max(thread["current_record"] * 3600 / _elapsed, 1)
             _eta = (
