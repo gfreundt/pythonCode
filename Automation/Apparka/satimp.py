@@ -22,8 +22,26 @@ class Satimp:
         self.MONITOR = kwargs["monitor"]
         self.options = kwargs["options"]
         self.thread_num = kwargs["threadnum"]
+        self.restarts = 0
 
     def run_full_update(self):
+        # run normally
+        self.full_update()
+
+        # restart wrapper
+        while self.restarts <= 3:
+            if self.MONITOR.threads[self.thread_num]["complete"]:
+                self.LOG.info(f"SAT_IMPUESTOS > End.")
+                return
+            else:
+                time.sleep(3)
+                self.restarts += 1
+                self.LOG.info(f"SAT_IMPUESTOS > Restart #{self.restarts}.")
+                self.full_update()
+
+        self.LOG.info(f"SAT IMPUESTOS > Restart Limit. End Process.")
+
+    def full_update(self):
         """Iterates through a certain portion of database and updates RTEC data for each PLACA.
         Designed to work with Threading."""
 
@@ -46,6 +64,7 @@ class Satimp:
         time.sleep(4)
 
         rec = 0
+        errors = 0
         # iterate on all records that require updating
         open = True
         for rec, record_index in enumerate(records_to_update):
@@ -73,6 +92,10 @@ class Satimp:
                 self.LOG.warning(
                     f"SAT_IMPUESTOS > Skipped Record {rec} (scraper error)."
                 )
+                errors += 1
+                if errors > 4:
+                    self.WEBD.close()
+                    return
                 time.sleep(1)
                 self.WEBD.refresh()
                 time.sleep(1)
@@ -100,10 +123,13 @@ class Satimp:
                     f"SAT_IMPUESTOS > End (Timeout). Processed {rec} records."
                 )
                 self.WEBD.close()
+                self.MONITOR.threads[self.thread_num]["complete"] = True
                 return
 
         # log end of process
         self.LOG.info(f"SAT_IMPUESTOS > End (Complete). Processed: {rec} records.")
+        self.MONITOR.threads[self.thread_num]["complete"] = True
+        return
 
     def list_records_to_update(self, last_update_threshold=60):
 

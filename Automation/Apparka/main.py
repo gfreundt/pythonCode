@@ -108,7 +108,9 @@ class Monitor:
             _status = (
                 "INACTIVE"
                 if not thread["thread"].is_alive()
-                else "STALLED" if thread["stalled"] else "ACTIVE"
+                else (
+                    "STALLED" if thread["stalled"] else f"ACTIVE ({thread['restarts']})"
+                )
             )
             if (
                 _status == "INACTIVE"
@@ -240,6 +242,7 @@ def start_scrapers(arguments, options):
                 "current_record": 0,
                 "last_record_updated": time.time(),
                 "stalled": False,
+                "complete": False,
                 "restarts": 0,
                 "finished": str(dt.now()),
             }

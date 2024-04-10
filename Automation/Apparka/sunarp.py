@@ -220,21 +220,25 @@ class Sunarp:
             "L",
             "M",
             "N",
+            "P",
+            "R",
+            "S",
+            "T",
+            "V",
+            "W",
+            "X",
+            "Y",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
         ]
-
-    """
-        Code	Year		Code	Year		Code	Year		Code	Year		Code	Year		Code	Year
-A	1980		L	1990		Y	2000		A	2010		L	2020		Y	2030
-B	1981		M	1991		1	2001		B	2011		M	2021		1	2031
-C	1982		N	1992		2	2002		C	2012		N	2022		2	2032
-D	1983		P	1993		3	2003		D	2013		P	2023		3	2033
-E	1984		R	1994		4	2004		E	2014		R	2024		4	2034
-F	1985		S	1995		5	2005		F	2015		S	2025		5	2035
-G	1986		T	1996		6	2006		G	2016		T	2026		6	2036
-H	1987		V	1997		7	2007		H	2017		V	2027		7	2037
-J	1988		W	1998		8	2008		J	2018		W	2028		8	2038
-K	1989		X	1999		9	2009		K	2019		X	2029		9	2039
-    """
+        return base_year + offset_options.index(vin[9])
 
     def detect_text(self, path):
         # stop runaway API requests
