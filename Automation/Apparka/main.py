@@ -7,7 +7,8 @@ import platform
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
-import database, revtec, sutran, brevete, satimp
+import scrapers
+import database  # , revtec, sutran, brevete, satimp
 import api
 
 # import and activate Flask, change logging level to reduce messages
@@ -46,7 +47,6 @@ class Monitor:
 
         # permanent management of status
         while True:
-
             # check if enough time elapsed to write database
             if time.time() - self.last_write > self.WRITE_FREQUENCY:
                 DB.write_database()
@@ -61,31 +61,10 @@ class Monitor:
                 self.timeout_flag = True
                 return
 
-            try:
-                # check for each process if stalled and turn on flag
-                for k, thread in enumerate(self.threads):
-                    if (
-                        not thread["stalled"]
-                        and time.time() - thread["last_record_updated"]
-                        > self.STALL_TIME
-                    ):
-                        self.threads[k]["stalled"] = True
-                        """
-                        if self.MAX_RESTARTS > self.threads[k]["restarts"]:
-                            self.threads[k]["restarts"] += 1
-                            _t = copy(thread[k])
-                            self.threads.append(_t)
-                            _t["thread"].start()
-                            LOG.warning(f"Restarted Thread {_t['name']}")
-                        """
+            # process data to update status of threads
+            self.api_data = self.generate_status()
 
-                # process data to update status of threads
-                self.api_data = self.generate_status()
-
-            except:
-                pass
-
-            # wait to restart status update
+            # update wait time
             time.sleep(self.UPDATE_FREQUENCY)
 
     def generate_status(self):
@@ -105,42 +84,38 @@ class Monitor:
 
         # build body
         for th, thread in enumerate(self.threads):
+            info = thread["info"]
             _status = (
                 "INACTIVE"
                 if not thread["thread"].is_alive()
-                else (
-                    "STALLED" if thread["stalled"] else f"ACTIVE ({thread['restarts']})"
-                )
+                else ("STALLED" if info["stalled"] else f"ACTIVE")
             )
             if (
                 _status == "INACTIVE"
-                and thread.get("finished")
-                and "Ended" not in thread["finished"]
+                and info.get("finished")
+                and "Ended" not in info["finished"]
             ):
-                self.threads[th]["finished"] = f"Ended: {str(dt.now())[:-7]}"
-            _process = thread["name"]
-            _lut = thread["lut"]
+                self.threads[th]["info"]["finished"] = f"Ended: {str(dt.now())[:-7]}"
+            _process = info["name"]
+            _lut = info["lut"]
             _captcha = (
-                f"{thread['current_record']*100/max(thread['captcha_attempts'],1):.1f}%"
+                f"{info['current_record']*100/max(info['captcha_attempts'],1):.1f}%"
             )
-            _cur_rec = f"{thread['current_record']:,}"
-            _pend_recs = f"{thread['total_records']-thread['current_record']:,}"
+            _cur_rec = f"{info['current_record']:,}"
+            _pend_recs = f"{info['total_records']-info['current_record']:,}"
             _complet = (
-                (f"{thread['current_record']*100/max(thread['total_records'],1):.1f}%")
-                if thread["total_records"] > 0
+                (f"{info['current_record']*100/max(info['total_records'],1):.1f}%")
+                if info["total_records"] > 0
                 else "100%"
             )
-            _rate = max(thread["current_record"] * 3600 / _elapsed, 1)
+            _rate = max(info["current_record"] * 3600 / _elapsed, 1)
             _eta = (
                 str(
                     dt.now()
-                    + td(
-                        hours=(thread["total_records"] - thread["current_record"])
-                        / _rate
-                    )
+                    + td(hours=(info["total_records"] - info["current_record"]) / _rate)
                 )[:-7]
                 if _status == "ACTIVE"
-                else thread.get("finished", "")
+                else info.get("finished", "")
             )
             data.append(
                 {
@@ -221,36 +196,42 @@ def start_monitors(options):
         _stats_view.start()
 
 
-def start_scrapers(arguments, options):
+def start_scrapers(requested_scrapers, options):
+
+    URLS = {
+        "satimp": "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
+        "brevete": "https://licencias.mtc.gob.pe/#/index",
+    }
+    LUTS = {"satimp": 60, "brevete": 50}
+
     # use exec to avoid rewriting parameters
-    for k, var in enumerate(arguments):
-        _params = f"(database=DB, logger=LOG, monitor=MONITOR, options=options, threadnum={k})"
-        exec(
-            f"global {var.lower()}x; {var.lower()}x = {var.lower()}.{var.title()}{_params}"
-        )
-        exec(
-            f"MONITOR.threads.append({{'name': '{var.title()}','thread': threading.Thread(target={var.lower()}x.run_full_update, daemon=True)}})"
-        )
-
-    # add placeholders and start time to scraper thread data
-    for k, thread in enumerate(MONITOR.threads):
-        MONITOR.threads[k].update(
-            {
-                "start_time": dt.now(),
-                "captcha_attempts": 0,
-                "total_records": 0,
-                "current_record": 0,
-                "last_record_updated": time.time(),
-                "stalled": False,
-                "complete": False,
-                "restarts": 0,
-                "finished": str(dt.now()),
-            }
-        )
-
-    # starts threads staggered to avoid webdriver conflicts
-    for thread in MONITOR.threads:
-        thread["thread"].start()
+    for threadnum, scraper in enumerate(requested_scrapers):
+        _parameters = {
+            "scraper": scraper,
+            "url": URLS[scraper],
+            "database": DB,
+            "logger": LOG,
+            "monitor": MONITOR,
+            "options": options,
+            "threadnum": threadnum,
+        }
+        _instance = scrapers.Scraper(_parameters)
+        _thread = threading.Thread(target=_instance.run_full_update)
+        _info = {
+            "name": scraper,
+            "lut": LUTS[scraper],
+            "start_time": dt.now(),
+            "captcha_attempts": 0,
+            "total_records": 0,
+            "current_record": 0,
+            "last_record_updated": time.time(),
+            "stalled": False,
+            "complete": False,
+            "restarts": 0,
+            "finished": str(dt.now()),
+        }
+        MONITOR.threads.append({"thread": _thread, "info": _info})
+        _thread.start()
         time.sleep(options["scraper_delay"])
 
     # join scraper threads
@@ -261,7 +242,7 @@ def start_scrapers(arguments, options):
 def main():
     # select scrapers to run according to parameters or set all scrapers if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["SATIMP", "REVTEC", "BREVETE", "SUTRAN"]  # SUNARP
+    VALID_OPTIONS = ["satimp", "brevete"]  # , "REVTEC", "BREVETE", "SUTRAN"]  # SUNARP
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
@@ -298,7 +279,7 @@ if __name__ == "__main__":
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    DB = database.Database(no_backup=False, test=False, logger=LOG)
+    DB = database.Database(no_backup=True, test=False, logger=LOG)
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 

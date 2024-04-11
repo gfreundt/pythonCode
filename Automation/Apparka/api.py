@@ -77,7 +77,7 @@ def main(monitor, LOG):
     MONITOR = monitor
     MONITOR._myip = socket.gethostbyname(socket.gethostname())
     MONITOR._port = assign_port()
-    print(f"Status: {MONITOR._myip}:{MONITOR._port}/status")
-    LOG.info(f"For status: http:\\{MONITOR._myip}:{MONITOR._port}/status")
+    print(f"For status: http://{MONITOR._myip}:{MONITOR._port}/status")
+    LOG.info(f"For status: http://{MONITOR._myip}:{MONITOR._port}/status")
 
     app.run(host=MONITOR._myip, port=MONITOR._port, debug=False)
