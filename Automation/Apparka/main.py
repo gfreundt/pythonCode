@@ -201,6 +201,7 @@ def start_scrapers(requested_scrapers, options):
     URLS = {
         "satimp": "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
         "brevete": "https://licencias.mtc.gob.pe/#/index",
+        "revtec": "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
     }
     LUTS = {"satimp": 60, "brevete": 50}
 

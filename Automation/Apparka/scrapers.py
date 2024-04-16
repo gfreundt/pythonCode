@@ -62,9 +62,12 @@ class Scraper:
             records_to_update
         )
 
-        self.LOG.info(
-            f"{self.log_name} > Will process {len(records_to_update):,} records."
-        )
+        # if no records to update, log end of process
+        if not records_to_update:
+            self.LOG.info(f"REVTEC > End (Did not start). No records to process.")
+            return
+        else:
+            self.LOG.info(f"REVTEC > Will process {len(records_to_update):,} records.")
 
         # define Chromedriver and open url for first time
         self.WEBD = ChromeUtils().init_driver(
@@ -73,9 +76,10 @@ class Scraper:
         self.WEBD.get(self.URL)
         time.sleep(3)
 
-        rec = 0
+        rec = 0  # only in case loop doesn't run
+
         # iterate on all records that require updating
-        for rec, record_index in enumerate(records_to_update):
+        for rec, (record_index, position) in enumerate(records_to_update):
 
             # check monitor flags: timeout -- return
             if self.MONITOR.timeout_flag:
@@ -90,7 +94,7 @@ class Scraper:
             self.MONITOR.threads[self.thread_num]["info"]["current_record"] = rec + 1
 
             # get scraper data
-            new_record = self.get_new_record(rec, record_index)
+            new_record = self.get_new_record(record_index, position)
 
             # if error from scraper then if limit of consecutive errors, restart updater, else next record
             if new_record is None:
@@ -100,7 +104,7 @@ class Scraper:
                     continue
 
             # insert data into database
-            self.update_record(record_index, new_record)
+            self.update_record(record_index, position, new_record)
 
         # natural end of process (all records processed before timeout)
         self.LOG.info(f"{self.log_name} > End (Complete). Processed: {rec} records.")
@@ -112,64 +116,93 @@ class Scraper:
         to_update = [[] for _ in range(10)]
 
         for record_index, record in enumerate(self.DB.database):
+            # initiate next loop only if looping through vehiculos
+            for veh_index, vehiculo in enumerate(record.get("vehiculos", [])):
 
-            match self.SCRAPER:
+                match self.SCRAPER:
+                    case "satimp":
+                        relevant_date = record["documento"][
+                            "deuda_tributaria_sat_actualizado"
+                        ]
 
-                case "satimp":
-                    relevant_date = record["documento"][
-                        "deuda_tributaria_sat_actualizado"
-                    ]
+                    case "brevete":
+                        relevant_date = record["documento"]["brevete_actualizado"]
 
-                case "brevete":
-                    relevant_date = record["documento"]["brevete_actualizado"]
+                    case "revtec":
+                        relevant_date = record["documento"]["rtces_actualizado"]
 
-            actualizado = dt.strptime(relevant_date, "%d/%m/%Y")
+                actualizado = dt.strptime(relevant_date, "%d/%m/%Y")
 
-            # Skip all records than have already been updated in last 24 hours
-            if dt.now() - actualizado < td(days=1):
-                continue
+                # Skip all records than have already been updated in last 24 hours
+                if dt.now() - actualizado < td(days=1):
+                    continue
 
-            match self.SCRAPER:
-                case "satimp":
-                    # Skip all records with no DNI/CE
-                    if not record["documento"]["numero"]:
-                        continue
+                match self.SCRAPER:
+                    case "satimp":
+                        # Skip all records with no DNI/CE
+                        if not record["documento"]["numero"]:
+                            continue
 
-                    # Priority 0: last update over 30 days
-                    if dt.now() - actualizado >= td(days=lut):
-                        to_update[0].append(record_index)
+                        # Priority 0: last update over 30 days
+                        if dt.now() - actualizado >= td(days=lut):
+                            to_update[0].append(record_index, 0)
 
-                case "brevete":
-                    # Skip all records with no DNI/CE
-                    if not record["documento"]["numero"]:
-                        continue
+                    case "brevete":
+                        # Skip all records with no DNI/CE
+                        if not record["documento"]["numero"]:
+                            continue
 
-                    # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
-                    if record["documento"]["brevete"]:
-                        hasta = dt.strptime(
-                            record["documento"]["brevete"]["fecha_hasta"], "%d/%m/%Y"
-                        )
-                        if td(days=-3) <= dt.now() - hasta <= td(days=30):
-                            to_update[0].append(record_index)
+                        # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
+                        if record["documento"]["brevete"]:
+                            hasta = dt.strptime(
+                                record["documento"]["brevete"]["fecha_hasta"],
+                                "%d/%m/%Y",
+                            )
+                            if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                                to_update[0].append(record_index, 0)
 
-                    # Priority 1: no brevete information and last update was 10+ days ago
-                    if not record["documento"][
-                        "brevete"
-                    ] and dt.now() - actualizado >= td(days=lut):
-                        to_update[1].append(record_index)
+                        # Priority 1: no brevete information and last update was 10+ days ago
+                        if not record["documento"][
+                            "brevete"
+                        ] and dt.now() - actualizado >= td(days=lut):
+                            to_update[1].append(record_index)
 
-                    # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
-                    if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
-                        days=lut
-                    ):
-                        to_update[2].append(record_index)
+                        # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+                        if dt.now() - hasta > td(
+                            days=30
+                        ) and dt.now() - actualizado >= td(days=lut):
+                            to_update[2].append(record_index)
+
+                    case "revtec":
+
+                        _rtecs = vehiculo["rtecs"]
+                        # Priority 0: rtec will expire in 3 days or has expired in the last 60 days
+                        if _rtecs and _rtecs[0]["fecha_hasta"]:
+                            hasta = dt.strptime(_rtecs[0]["fecha_hasta"], "%d/%m/%Y")
+                        if td(days=-3) <= dt.now() - hasta <= td(days=60):
+                            to_update[0].append((record_index, veh_index))
+
+                        # Priority 1: rtecs with no fecha hasta
+                        if _rtecs and not _rtecs[0]["fecha_hasta"]:
+                            to_update[1].append((record_index, veh_index))
+
+                        # Priority 2: no rtec information and last update was 7+ days ago
+                        if not _rtecs and dt.now() - actualizado >= td(days=lut):
+                            to_update[2].append((record_index, veh_index))
+
+                        # Priority 3: rtec will expire in more than 60 days and last update was 7+ days ago
+                        if dt.now() - hasta > td(
+                            days=60
+                        ) and dt.now() - actualizado >= td(days=lut):
+                            to_update[3].append((record_index, veh_index))
 
         # flatten list to records in order
         return [i for j in to_update for i in j]
 
-    def get_new_record(self, rec, record_index):
+    def get_new_record(self, record_index, position):
         _doc_num = self.DB.database[record_index]["documento"]["numero"]
         _doc_tipo = self.DB.database[record_index]["documento"]["tipo"]
+        _placa = self.DB.database[record_index]["vehiculos"][position]["placa"]
 
         try:
             match self.SCRAPER:
@@ -184,6 +217,8 @@ class Scraper:
                     self.WEBD.back()
                     time.sleep(0.2)
                     self.WEBD.refresh()
+                case "revtec":
+                    new_record = self.scraper(placa=_placa)
 
         except KeyboardInterrupt:
             quit()
@@ -193,11 +228,12 @@ class Scraper:
         #     if self.consecutive_errors > 3:
         #         self.WEBD.close()
         #         return
-        #     time.sleep(1)
-        #     self.WEBD.refresh()
-        #     time.sleep(1)
+        #     else:
+        #         time.sleep(1)
+        #         self.WEBD.refresh()
+        #         time.sleep(1)
 
-    def update_record(self, record_index, new_record):
+    def update_record(self, record_index, position, new_record):
 
         match self.SCRAPER:
 
@@ -213,6 +249,18 @@ class Scraper:
                 self.DB.database[record_index]["documento"][
                     "brevete_actualizado"
                 ] = dt.now().strftime("%d/%m/%Y")
+            case "revtec":
+                # update brevete data and last update in database
+                self.DB.database[record_index]["vehiculos"][position][
+                    "rtecs"
+                ] = new_record
+                self.DB.database[record_index]["vehiculos"][position][
+                    "rtecs_actualizado"
+                ] = dt.now().strftime("%d/%m/%Y")
+                # timestamp
+                self.MONITOR.threads[self.thread_num][
+                    "last_record_updated"
+                ] = time.time()
 
         # update timestamp
         self.MONITOR.threads[self.thread_num]["info"][
@@ -521,3 +569,80 @@ class Scraper:
                     return response
 
                 return response
+
+            case "revtec":
+                retry_captcha = False
+                while True:
+                    # get captcha in string format
+                    captcha_txt = ""
+                    while not captcha_txt:
+                        if retry_captcha:
+                            self.WEBD.refresh()
+                            time.sleep(1)
+                        # captura captcha image from webpage store in variable
+                        _captcha_img_url = self.WEBD.find_element(
+                            By.ID, "imgCaptcha"
+                        ).get_attribute("src")
+                        _img = Image.open(
+                            io.BytesIO(urllib.request.urlopen(_captcha_img_url).read())
+                        )
+                        # convert image to text using OCR
+                        _captcha = self.READER.readtext(_img, text_threshold=0.5)
+                        captcha_txt = (
+                            _captcha[0][1]
+                            if len(_captcha) > 0 and len(_captcha[0]) > 0
+                            else ""
+                        )
+                        retry_captcha = True
+
+                    # enter data into fields and run
+                    self.WEBD.find_element(By.ID, "txtPlaca").send_keys(placa)
+                    time.sleep(0.5)
+                    self.WEBD.find_element(By.ID, "txtCaptcha").send_keys(captcha_txt)
+                    time.sleep(0.5)
+                    self.WEBD.find_element(By.ID, "BtnBuscar").click()
+                    time.sleep(1)
+
+                    # captcha tries counter
+                    self.MONITOR.threads[self.thread_num]["captcha_attempts"] += 1
+
+                    # if captcha is not correct, refresh and restart cycle, if no data found, return None
+                    _alerta = self.WEBD.find_element(By.ID, "lblAlertaMensaje").text
+                    if "no es correcto" in _alerta:
+                        continue
+                    elif "encontraron resultados" in _alerta:
+                        # clear webpage for next iteration and return None
+                        self.WEBD.refresh()
+                        time.sleep(0.5)
+                        return []
+                    else:
+                        break
+
+                # extract data from table and parse relevant data, return a dictionary with RTEC data for each PLACA
+                # TODO: capture ALL revisiones (not just latest) -- response not []
+                response = {}
+                data_index = (
+                    ("certificadora", 1),
+                    ("placa", 1),
+                    ("certificado", 2),
+                    ("fecha_desde", 3),
+                    ("fecha_hasta", 4),
+                    ("resultado", 5),
+                    ("vigencia", 6),
+                )
+                for data_unit, pos in data_index:
+                    response.update(
+                        {
+                            data_unit: self.WEBD.find_element(
+                                By.XPATH,
+                                f"/html/body/form/div[4]/div/div/div[2]/div[2]/div/div/div[6]/div[{'2' if data_unit == 'empresa' else '3'}]/div/div/div/table/tbody/tr[2]/td[{pos}]",
+                            ).text
+                        }
+                    )
+
+                # clear webpage for next response
+                time.sleep(1)
+                self.WEBD.refresh()
+                time.sleep(1)
+
+                return [response]
