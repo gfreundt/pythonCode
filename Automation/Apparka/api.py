@@ -60,10 +60,12 @@ def stats_view(MONITOR):
     webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 
     # forever loop refreshing status page
-    while True:
-        # print(MONITOR.api_data)
+    while not MONITOR.timeout_flag:
         time.sleep(3)
         webdriver.refresh()
+
+    # close status browser
+    webdriver.quit()
 
 
 def assign_port():

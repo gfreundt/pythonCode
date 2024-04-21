@@ -2,20 +2,21 @@ import sys, os, time, csv
 from datetime import datetime as dt, timedelta as td
 import threading
 import logging
-from copy import deepcopy as copy
+
+# from copy import deepcopy as copy
 import platform
 
 # custom imports
 from gft_utils import GoogleUtils, ChromeUtils
-import scrapers
+import updaters
 import database  # , revtec, sutran, brevete, satimp
 import api
 
 # import and activate Flask, change logging level to reduce messages
-from flask import Flask, render_template, request
+# from flask import Flask, render_template, request
 
-app = Flask(__name__)
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
+# app = Flask(__name__)
+# logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 
 class Monitor:
@@ -155,8 +156,8 @@ def start_logger(test=False):
     return _log
 
 
-def scraper_options():
-    options = {"timeout_time": 42600, "scraper_delay": 7}
+def updater_options():
+    options = {"timeout_time": 42600, "updater_delay": 7}
     # no options entered.
     if len(sys.argv) == 1:
         return options
@@ -196,31 +197,31 @@ def start_monitors(options):
         _stats_view.start()
 
 
-def start_scrapers(requested_scrapers, options):
+def start_updaters(requested_updaters, options):
 
     URLS = {
         "satimp": "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
         "brevete": "https://licencias.mtc.gob.pe/#/index",
         "revtec": "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
+        "sutran": "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
     }
-    LUTS = {"satimp": 60, "brevete": 50}
+    LUTS = {"satimp": 60, "brevete": 50, "revtec": 30, "sutran": 15}
 
-    # use exec to avoid rewriting parameters
-    for threadnum, scraper in enumerate(requested_scrapers):
+    for threadnum, updater in enumerate(requested_updaters):
         _parameters = {
-            "scraper": scraper,
-            "url": URLS[scraper],
+            "updater": updater,
+            "url": URLS[updater],
             "database": DB,
             "logger": LOG,
             "monitor": MONITOR,
             "options": options,
             "threadnum": threadnum,
         }
-        _instance = scrapers.Scraper(_parameters)
+        _instance = updaters.Updater(_parameters)
         _thread = threading.Thread(target=_instance.run_full_update)
         _info = {
-            "name": scraper,
-            "lut": LUTS[scraper],
+            "name": updater,
+            "lut": LUTS[updater],
             "start_time": dt.now(),
             "captcha_attempts": 0,
             "total_records": 0,
@@ -233,26 +234,26 @@ def start_scrapers(requested_scrapers, options):
         }
         MONITOR.threads.append({"thread": _thread, "info": _info})
         _thread.start()
-        time.sleep(options["scraper_delay"])
+        time.sleep(options["updater_delay"])
 
-    # join scraper threads
+    # join updater threads
     for thread in MONITOR.threads:
         thread["thread"].join()
 
 
 def main():
-    # select scrapers to run according to parameters or set all scrapers if no parameters entered
+    # select updaters to run according to parameters or set all updaters if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["satimp", "brevete"]  # , "REVTEC", "BREVETE", "SUTRAN"]  # SUNARP
+    VALID_OPTIONS = ["satimp", "brevete", "revtec", "sutran"]
     if not any([i in VALID_OPTIONS for i in sys.argv]):
         arguments = VALID_OPTIONS
 
     # parse through all starting options (timeout, etc)
-    options = scraper_options()
+    options = updater_options()
 
     # begin all threads
     start_monitors(options)
-    start_scrapers(arguments, options)
+    start_updaters(arguments, options)
 
     # write db when processes are over (finished all records, timeout or soft interrupt)
     DB.write_database()
@@ -263,24 +264,30 @@ def main():
 
 def side():
 
-    DB.export_dashboard()
+    # DB.export_dashboard()
 
-    time.sleep(20)
-    return
+    # time.sleep(20)
+    # return
 
     for rec, record in enumerate(DB.database):
-        record["idUsuario"] = 0
+        # if "+" in record["documento"]["numero"]:
+        #     DB.database[rec]["documento"]["numero"] = ""
+        if (
+            not record["documento"]["numero"].isnumeric()
+            and len(record["documento"]["numero"]) > 0
+        ):
+            DB.database[rec]["documento"]["numero"] = ""
 
     DB.write_database()
 
 
 if __name__ == "__main__":
     # start logger and register program start
-    LOG = start_logger(test=False)
+    LOG = start_logger()
     LOG.info("Updater Begin.")
 
     # init monitor, database and Google functions (drive, gmail, etc)
-    DB = database.Database(no_backup=True, test=False, logger=LOG)
+    DB = database.Database(no_backup=False, test=False, logger=LOG)
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 
