@@ -18,7 +18,6 @@ class Updater:
         self.MONITOR = parameters["monitor"]
         self.options = parameters["options"]
         self.thread_num = parameters["threadnum"]
-        # self.READER = easyocr.Reader(["es"], gpu=False)
         self.restarts = 0
         self.consecutive_errors = 0
 
@@ -32,8 +31,6 @@ class Updater:
             case "sutran":
                 self.scraper = scrapers.Sutran(self.DB)
 
-        # eventually replace with config file
-
     def run_full_update(self):
         # first run is normal
         self.full_update()
@@ -45,6 +42,9 @@ class Updater:
             else:
                 time.sleep(3)
                 self.restarts += 1
+                self.MONITOR.threads[self.thread_num]["info"][
+                    "restarts"
+                ] = self.restarts
                 self.LOG.info(f"{self.log_name} > Restart #{self.restarts}.")
                 self.full_update()
 
@@ -103,7 +103,7 @@ class Updater:
 
             # if error from scraper then if limit of consecutive errors, restart updater, else next record
             if new_record is None:
-                if self.consecutive_errors > 4:
+                if self.consecutive_errors > 3:
                     return
                 else:
                     continue
@@ -138,17 +138,12 @@ class Updater:
             return new_record, captcha_attempts
         except KeyboardInterrupt:
             quit()
-
-        # except:
-        #     self.LOG.warning(f"{self.log_name} > Skipped Record {rec} (scraper error).")
-        #     self.consecutive_errors += 1
-        #     if self.consecutive_errors > 3:
-        #         self.WEBD.close()
-        #         return
-        #     else:
-        #         time.sleep(1)
-        #         self.WEBD.refresh()
-        #         time.sleep(1)
+        except:
+            # in case scraper crashes, skip record and add to error count
+            self.LOG.warning(
+                f"{self.log_name} > Skipped Record {record_index} (scraper error)."
+            )
+            return None, 0
 
     def update_record(self, record_index, position, new_record):
         self.scraper.update_record(record_index, position, new_record)

@@ -31,12 +31,12 @@ class Monitor:
         self.device = str(platform.system()).strip()
 
     def supervisor(self, options):
-        self.MAX_RESTARTS = 3
+        # self.MAX_RESTARTS = 3
         self.kill_em_all = False
         self.options = options
         self.last_pending = 0
         self.last_write = time.time()
-        self.start_time = dt.now() - td(seconds=1)  # add second to avoid div by zero
+        self.start_time = dt.now() - td(seconds=1)  # add one sec to avoid div by zero
 
         # register start of process and off flag
         self.timer_on = time.time()
@@ -51,6 +51,7 @@ class Monitor:
             # check if enough time elapsed to write database
             if time.time() - self.last_write > self.WRITE_FREQUENCY:
                 DB.write_database()
+                LOG.info(self.api_data)
                 self.update_dashboard()
                 self.last_write = time.time()
 
@@ -104,6 +105,7 @@ class Monitor:
             )
             _cur_rec = f"{info['current_record']:,}"
             _pend_recs = f"{info['total_records']-info['current_record']:,}"
+            _restarts = f"{info['restarts']:,}"
             _complet = (
                 (f"{info['current_record']*100/max(info['total_records'],1):.1f}%")
                 if info["total_records"] > 0
@@ -127,6 +129,7 @@ class Monitor:
                     "pend_recs": _pend_recs,
                     "complet": _complet,
                     "status": _status,
+                    "restarts": _restarts,
                     "rate": f"{_rate:.1f} ",
                     "eta": _eta,
                 }

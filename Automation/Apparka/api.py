@@ -1,19 +1,16 @@
-import os, csv, time, signal
-from datetime import datetime as dt
+import os, time, signal
 import platform
 import socket
 from gft_utils import ChromeUtils
 from random import randrange
-
-try:
-    import pyautogui
-except KeyError:
-    pass
+import logging
+import pyautogui
 
 # import and activate Flask, change logging level to reduce messages
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 
 app = Flask(__name__)
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 
 # define all api endpoints and launcher
@@ -27,14 +24,15 @@ def status():
     return render_template("status.html", data=MONITOR.api_data)
 
 
-"""@app.route("/killemall", methods=["POST"])
+@app.route("/killemall", methods=["POST"])
 def killemall():
     MONITOR.kill_em_all = True
-    return render_template("status.html", data=MONITOR.api_data)"""
+    LOG.info("API > Soft Kill Button Pressed.")
 
 
 @app.route("/panic", methods=["POST"])
 def panic():
+    LOG.info("API > Hard Kill Button (Panic) Pressed.")
     os.kill(os.getpid(), getattr(signal, "SIGKILL", signal.SIGTERM))
 
 
@@ -73,10 +71,10 @@ def assign_port():
     return _devices.get(platform.node().lower(), 21000) + randrange(999)
 
 
-def main(monitor, LOG):
+def main(monitor, log):
+    global MONITOR, LOG
+    MONITOR, LOG = monitor, log
     LOG.info("API > Begin.")
-    global MONITOR
-    MONITOR = monitor
     MONITOR._myip = socket.gethostbyname(socket.gethostname())
     MONITOR._port = assign_port()
     print(f"For status: http://{MONITOR._myip}:{MONITOR._port}/status")
