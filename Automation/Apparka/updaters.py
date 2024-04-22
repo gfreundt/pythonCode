@@ -36,7 +36,7 @@ class Updater:
         self.full_update()
 
         # restart wrapper
-        while self.restarts <= 3:
+        while self.restarts <= 10:
             if self.MONITOR.threads[self.thread_num]["info"]["complete"]:
                 return
             else:
@@ -76,8 +76,14 @@ class Updater:
         self.scraper.WEBD = ChromeUtils().init_driver(
             headless=True, verbose=False, maximized=True
         )
-        self.scraper.WEBD.get(self.URL)
-        time.sleep(3)
+        try:
+            self.scraper.WEBD.get(self.URL)
+            time.sleep(3)
+        except:
+            # in case URL does not load (error with webpage)
+            f"{self.log_name} > Error loading URL."
+            time.sleep(300)
+            return
 
         rec = 0  # only in case loop doesn't run
         # iterate on all records that require updating
