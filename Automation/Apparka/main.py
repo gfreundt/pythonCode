@@ -1,4 +1,4 @@
-import sys, os, time, csv
+import sys, os, time, csv, json
 from datetime import datetime as dt, timedelta as td
 import threading
 import logging
@@ -29,9 +29,11 @@ class Monitor:
         self.timeout_flag = False
         self.dash_data = ""
         self.device = str(platform.system()).strip()
+        self.PARAMETERS_PATH = "parameters.json"
+        with open(self.PARAMETERS_PATH, mode="r") as file:
+            self.params = json.load(file)
 
     def supervisor(self, options):
-        # self.MAX_RESTARTS = 3
         self.kill_em_all = False
         self.options = options
         self.last_pending = 0
@@ -201,7 +203,6 @@ def start_monitors(options):
 
 
 def start_updaters(requested_updaters, options):
-
     URLS = {
         "satimp": "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
         "brevete": "https://licencias.mtc.gob.pe/#/index",
@@ -247,9 +248,7 @@ def start_updaters(requested_updaters, options):
 def main():
     # select updaters to run according to parameters or set all updaters if no parameters entered
     arguments = sys.argv[1:]
-    VALID_OPTIONS = ["satimp", "brevete", "revtec", "sutran"]
-    if not any([i in VALID_OPTIONS for i in sys.argv]):
-        arguments = VALID_OPTIONS
+    arguments = [i["name"] for i in MONITOR.params["scrapers"]]
 
     # parse through all starting options (timeout, etc)
     options = updater_options()

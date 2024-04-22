@@ -1,0 +1,34 @@
+{
+    "updater": {
+        "timeout": 42600,
+        "updater_delay": 7,
+        "write_frequency": 900,
+        "supervisor_update_frequency": 3
+    },
+    "scrapers": [
+        {
+            "name": "satimp",
+            "full_name": "Impuestos Vehiculares SAT",
+            "url": "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
+            "last_update_threshold": 30
+        },
+        {
+            "name": "sutran",
+            "full_name": "Multas SUTRAN",
+            "url": "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
+            "last_update_threshold": 12
+        },
+        {
+            "name": "brevete",
+            "full_name": "Informacion del MTC sobre brevete",
+            "url": "https://licencias.mtc.gob.pe/#/index",
+            "last_update_threshold": 45
+        },
+        {
+            "name": "revtec",
+            "full_name": "Informacion del MTC sobre revisiones tecnicas",
+            "url": "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
+            "last_update_threshold": 30
+        }
+    ]
+}

@@ -103,7 +103,7 @@ class Updater:
 
             # if error from scraper then if limit of consecutive errors, restart updater, else next record
             if new_record is None:
-                if self.consecutive_errors > 3:
+                if self.consecutive_errors > 4:
                     return
                 else:
                     continue
@@ -113,7 +113,7 @@ class Updater:
 
         # natural end of process (all records processed before timeout)
         self.LOG.info(f"{self.log_name} > End (Complete). Processed: {rec} records.")
-        self.MONITOR.threads[self.thread_num]["complete"] = True
+        self.MONITOR.threads[self.thread_num]["info"]["complete"] = True
         return
 
     def records_to_update(self):
@@ -143,6 +143,7 @@ class Updater:
             self.LOG.warning(
                 f"{self.log_name} > Skipped Record {record_index} (scraper error)."
             )
+            self.consecutive_errors += 1
             return None, 0
 
     def update_record(self, record_index, position, new_record):
