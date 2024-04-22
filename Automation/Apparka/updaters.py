@@ -41,6 +41,10 @@ class Updater:
                 return
             else:
                 time.sleep(3)
+                self.MONITOR.threads[self.thread_num]["info"]["captcha_attempts"] = 0
+                self.MONITOR.threads[self.thread_num]["info"]["start_time"] = (
+                    dt.now(),
+                )
                 self.restarts += 1
                 self.MONITOR.threads[self.thread_num]["info"][
                     "restarts"
