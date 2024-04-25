@@ -182,25 +182,25 @@ class Brevete:
                 record["documento"]["brevete_actualizado"], "%d/%m/%Y"
             )
 
-            # Skip all records than have already been updated in last 22 hours
+            # Skip all records than have already been updated in last 24 hours
             if dt.now() - actualizado < td(days=1):
                 continue
 
-            # Priority 0: brevete will expire in 3 days or has expired in the last 30 days
+            # Priority 0: brevete will expire in 15 days or has expired in the last 30 days
             if brevete:
                 hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
-                if td(days=-3) <= dt.now() - hasta <= td(days=30):
+                if td(days=-15) <= dt.now() - hasta <= td(days=30):
                     to_update[0].append((record_index, 0))
 
-            # Priority 1: no brevete information and last update was 10+ days ago
-            if not brevete and dt.now() - actualizado >= td(days=last_update_threshold):
+            # Priority 1: last update was LUT days ago
+            if dt.now() - actualizado >= td(days=last_update_threshold):
                 to_update[1].append((record_index, 0))
 
-            # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
-            if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
-                days=last_update_threshold
-            ):
-                to_update[2].append((record_index, 0))
+            # # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
+            # if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
+            #     days=last_update_threshold
+            # ):
+            #     to_update[2].append((record_index, 0))
 
         return to_update
 
@@ -382,11 +382,6 @@ class Brevete:
             self.WEBD.refresh()
             return response, captcha_attempts
 
-            # clear webpage for next iteration and small wait
-            time.sleep(1)
-            self.WEBD.back()
-            time.sleep(0.2)
-            self.WEBD.refresh()
         return response, captcha_attempts
 
 
@@ -480,7 +475,7 @@ class Revtec:
                 # clear webpage for next iteration and return None
                 self.WEBD.refresh()
                 time.sleep(0.5)
-                return None
+                return None, 0
             else:
                 break
 
@@ -501,7 +496,7 @@ class Revtec:
                 {
                     data_unit: self.WEBD.find_element(
                         By.XPATH,
-                        f"/html/body/form/div[4]/div/div/div[2]/div[2]/div/div/div[6]/div[{'2' if data_unit == 'empresa' else '3'}]/div/div/div/table/tbody/tr[2]/td[{pos}]",
+                        f"/html/body/form/div[4]/div/div/div[2]/div[2]/div/div/div[6]/div[{'2' if data_unit == 'certificadora' else '3'}]/div/div/div/table/tbody/tr[2]/td[{pos}]",
                     ).text
                 }
             )
@@ -511,7 +506,7 @@ class Revtec:
         self.WEBD.refresh()
         time.sleep(1)
 
-        return [response], captcha_attempts
+        return response, captcha_attempts
 
 
 class Sutran:

@@ -48,12 +48,12 @@ def stats_view(MONITOR):
 
     # open browser on status page
     webdriver = ChromeUtils().init_driver(
-        headless=False, verbose=False, window_size=(900, 310)
+        headless=False, verbose=False, window_size=(1000, 310)
     )
     if pyautogui.size()[0] == 3840:
-        posx, posy = (1670, 1080)
+        posx, posy = (1640, 1080)
     elif pyautogui.size()[0] == 1920:
-        posx, posy = (700, 420)
+        posx, posy = (680, 420)
     webdriver.set_window_position(posx, posy, windowHandle="current")
     webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 

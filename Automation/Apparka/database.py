@@ -5,10 +5,6 @@ import shutil
 from copy import deepcopy as copy
 import uuid
 import threading
-
-
-# Custom imports
-# sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import GoogleUtils
 
 
@@ -132,6 +128,7 @@ class Database:
             key=lambda i: i[1],
             reverse=True,
         )[0]
+        self.LOG.info("Latest GDRIVE file:", latest_gdrive_file)
 
         # compare dates -- replace local database only if gdrive is newer
         if os.path.getmtime(self.DATABASE_NAME) < latest_gdrive_file[1].timestamp():
