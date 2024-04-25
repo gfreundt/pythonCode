@@ -128,7 +128,6 @@ class Database:
             key=lambda i: i[1],
             reverse=True,
         )[0]
-        self.LOG.info("Latest GDRIVE file:", latest_gdrive_file)
 
         # compare dates -- replace local database only if gdrive is newer
         if os.path.getmtime(self.DATABASE_NAME) < latest_gdrive_file[1].timestamp():
