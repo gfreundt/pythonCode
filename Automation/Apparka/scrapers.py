@@ -506,7 +506,7 @@ class Revtec:
         self.WEBD.refresh()
         time.sleep(1)
 
-        return response, captcha_attempts
+        return [response], captcha_attempts
 
 
 class Sutran:

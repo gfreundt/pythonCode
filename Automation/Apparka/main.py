@@ -18,6 +18,9 @@ import api
 # app = Flask(__name__)
 # logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
+from copy import deepcopy as copy
+from pprint import pprint
+
 
 class Monitor:
     def __init__(self) -> None:
@@ -266,21 +269,42 @@ def main():
 
 def side():
 
-    # DB.export_dashboard()
+    to_update = [[] for _ in range(4)]
 
-    # time.sleep(20)
-    # return
+    for record_index, record in enumerate(DB.database):
+        for veh_index, vehiculo in enumerate(record["vehiculos"]):
+            actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
+            rtecs = vehiculo["rtecs"]
 
+            # Skip all records than have already been updated in same date
+            if dt.now() - actualizado <= td(days=1):
+                continue
+
+            # Priority 0: rtec will expire in 3 days or has expired in the last 60 days
+            if rtecs and rtecs[0]["fecha_hasta"]:
+                hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
+                if td(days=-3) <= dt.now() - hasta <= td(days=60):
+                    to_update[0].append((record_index, veh_index))
+
+    return
+
+    v = 0
     for rec, record in enumerate(DB.database):
-        # if "+" in record["documento"]["numero"]:
-        #     DB.database[rec]["documento"]["numero"] = ""
-        if (
-            not record["documento"]["numero"].isnumeric()
-            and len(record["documento"]["numero"]) > 0
-        ):
-            DB.database[rec]["documento"]["numero"] = ""
+        for veh_index, vehiculo in enumerate(record["vehiculos"]):
 
-    DB.write_database()
+            if vehiculo["rtecs"] and type(vehiculo["rtecs"]) != list:
+                pprint(DB.database[rec])
+                DB.database[rec]["vehiculos"][veh_index]["rtecs"] = copy(
+                    [vehiculo["rtecs"]]
+                )
+                print("---------------")
+                pprint(DB.database[rec])
+                print("++++++++++++++++")
+                v += 1
+                input()
+    print(v)
+
+    # DB.write_database()
 
 
 if __name__ == "__main__":
