@@ -104,7 +104,6 @@ class Sutran:
     def list_records_to_update(self, last_update_threshold=10):
 
         self.MONITOR.threads[self.thread_num]["lut"] = last_update_threshold
-
         to_update = [[] for _ in range(2)]
 
         for record_index, record in enumerate(self.DB.database):

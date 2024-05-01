@@ -1,0 +1,625 @@
+[
+    {
+        "Correlativo": 1,
+        "Datos": {
+            "Nombre y Apellido": "Gabriel Freundt-Thurne Sturmann",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "10059261",
+            "Celular": "989034311",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "gfreundt@gmail.com",
+            "Placas": [
+                "AMQ073",
+                "D8R344",
+                "DOD374"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 1870788,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q10059261",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "17/01/1992",
+                "restricciones": "CON LENTES",
+                "fecha_hasta": "09/05/2024",
+                "centro": "MTC - ANTENOR ORREGO"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "AMQ073",
+                    "certificado": "C-2023-146-321-008549",
+                    "fecha_desde": "01/07/2023",
+                    "fecha_hasta": "30/04/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                },
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "D8R344",
+                    "certificado": "C-2024-146-321-004100",
+                    "fecha_desde": "20/03/2024",
+                    "fecha_hasta": "30/04/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                },
+                null
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                [],
+                [],
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": true,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 2,
+        "Datos": {
+            "Nombre y Apellido": "Urpi Torrado",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "09343936",
+            "Celular": "999925531",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "urpi@datum.com.pe",
+            "Placas": [
+                "CBW475"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 97318,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q09343936",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "23/01/1995",
+                "restricciones": "SIN RESTRICCIONES",
+                "fecha_hasta": "15/09/2033",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                null
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": true,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 3,
+        "Datos": {
+            "Nombre y Apellido": "Sergio Perez",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "10557545",
+            "Celular": "980311900",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "sourcingroup.sp@gmail.com",
+            "Placas": [
+                "4536FC"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 2555787,
+                    "deudas": [
+                        {
+                            "ano": "2024",
+                            "periodo": "2",
+                            "documento": "12418066091",
+                            "total_a_pagar": "194.49"
+                        },
+                        {
+                            "ano": "2024",
+                            "periodo": "3",
+                            "documento": "12420366221",
+                            "total_a_pagar": "194.49"
+                        },
+                        {
+                            "ano": "2024",
+                            "periodo": "4",
+                            "documento": "12422666359",
+                            "total_a_pagar": "194.49"
+                        }
+                    ]
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q10557545",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "07/09/1995",
+                "restricciones": "SIN RESTRICCIONES",
+                "fecha_hasta": "13/03/2034",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                null
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 4,
+        "Datos": {
+            "Nombre y Apellido": "Carlos Ausejo",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "09856416",
+            "Celular": "999090454",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "causejo@yahoo.com",
+            "Placas": [
+                "F4J162"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 665863,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q09856416",
+                "tipo": "ELECTR\u00d3NICA",
+                "fecha_expedicion": "23/10/1992",
+                "restricciones": "CON LENTES",
+                "fecha_hasta": "20/10/2032",
+                "centro": "MTC - ANTENOR ORREGO"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "F4J162",
+                    "certificado": "C-2024-146-334-004372",
+                    "fecha_desde": "01/02/2024",
+                    "fecha_hasta": "01/02/2025",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": "18/04/2024",
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 5,
+        "Datos": {
+            "Nombre y Apellido": "Patrick Lerner",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "09872078",
+            "Celular": "995742347",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "patrick_lerner@yahoo.com",
+            "Placas": [
+                "AJP209",
+                "D5U002"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": [],
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "REVISIONES TECNICAS DEL PERU S.A.C.",
+                    "placa": "AJP209",
+                    "certificado": "C-2023-013-185-015140",
+                    "fecha_desde": "17/07/2023",
+                    "fecha_hasta": "17/07/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                },
+                {
+                    "certificadora": "REVISIONES TECNICAS DEL PERU S.A.C.",
+                    "placa": "D5U002",
+                    "certificado": "C-2023-013-185-015114",
+                    "fecha_desde": "17/07/2023",
+                    "fecha_hasta": "24/04/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                [],
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": "02/02/2024",
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 6,
+        "Datos": {
+            "Nombre y Apellido": "Francisco Espinosa",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "09342827",
+            "Celular": "997913702",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "fespinosar@espinosabellido.com",
+            "Placas": [
+                "D5Y413"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 236023,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q09342827",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "16/07/1991",
+                "restricciones": "SIN RESTRICCIONES",
+                "fecha_hasta": "29/03/2027",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "INSPECCIONES TECNICAS VEHICULARES BIRMINGHAM SOCIEDAD ANONIMA CERRADA - I.T.V. BIRMINGHAMS.A.C.",
+                    "placa": "D5Y413",
+                    "certificado": "C-2023-328-488-018271",
+                    "fecha_desde": "08/12/2023",
+                    "fecha_hasta": "08/12/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 7,
+        "Datos": {
+            "Nombre y Apellido": "Santiago de la piedra",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "10220909",
+            "Celular": "999287905",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "santiago@penta.com.pe",
+            "Placas": [
+                "CJM179"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 28234,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q10220909",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "10/01/1997",
+                "restricciones": "CON LENTES",
+                "fecha_hasta": "07/11/2032",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                null
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 8,
+        "Datos": {
+            "Nombre y Apellido": "Javier Hanza",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "06674196",
+            "Celular": "991679166",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "javierhanza@gmail.com",
+            "Placas": [
+                "APA503"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 370957,
+                    "deudas": []
+                },
+                {
+                    "codigo": 1333345,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q06674196",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "12/05/1994",
+                "restricciones": "SIN RESTRICCIONES",
+                "fecha_hasta": "05/07/2030",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "APA503",
+                    "certificado": "C-2023-146-321-011918",
+                    "fecha_desde": "07/09/2023",
+                    "fecha_hasta": "29/04/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                [
+                    {
+                        "tangoecho": 12
+                    }
+                ]
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 9,
+        "Datos": {
+            "Nombre y Apellido": "Luis La Torre Costa",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "09341676",
+            "Celular": "976198992",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "lucholtc@gmail.com",
+            "Placas": [
+                "D7Z065",
+                "F2L100"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 260855,
+                    "deudas": []
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q09341676",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "08/07/2011",
+                "restricciones": "SIN RESTRICCIONES",
+                "fecha_hasta": "29/04/2024",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "D7Z065",
+                    "certificado": "C-2024-146-334-005610",
+                    "fecha_desde": "12/02/2024",
+                    "fecha_hasta": "12/02/2025",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                },
+                {
+                    "certificadora": "I.T.V. CAMBRIDGE S.A.C.",
+                    "placa": "F2L100",
+                    "certificado": "C-2023-146-334-031729",
+                    "fecha_desde": "24/11/2023",
+                    "fecha_hasta": "24/11/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                [],
+                {
+                    "documento": "2450355610",
+                    "tipo": "Papeletas Transito",
+                    "fecha_documento": "20/02/2023",
+                    "codigo_infraccion": "M20",
+                    "clasificacion": "Muy Grave"
+                }
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    },
+    {
+        "Correlativo": 10,
+        "Datos": {
+            "Nombre y Apellido": "Jaime Freundt-Thurne Freundt",
+            "Documento Tipo": "DNI",
+            "N\u00famero de Documento": "08257907",
+            "Celular": "997522873",
+            "Correo electr\u00f3nico para recibir informaci\u00f3n y alertas": "jaime.freundt.thurne@gmail.com",
+            "Placas": [
+                "BAW484"
+            ]
+        },
+        "Resultados": {
+            "Satimp": [
+                {
+                    "codigo": 385805,
+                    "deudas": []
+                },
+                {
+                    "codigo": 1171947,
+                    "deudas": [
+                        {
+                            "ano": "2023",
+                            "periodo": "4",
+                            "documento": "12320460775",
+                            "total_a_pagar": "9.21"
+                        }
+                    ]
+                }
+            ],
+            "Satimp_Actualizado": "23/04/2024",
+            "Brevete": {
+                "clase": "A I",
+                "numero": "Q08257907",
+                "tipo": "F\u00cdSICA",
+                "fecha_expedicion": "24/04/1978",
+                "restricciones": "CON LENTES",
+                "fecha_hasta": "13/12/2027",
+                "centro": "MTC - LINCE"
+            },
+            "Brevete_Actualizado": "23/04/2024",
+            "Revtec": [
+                {
+                    "certificadora": "REVISIONES TECNICAS DEL PERU S.A.C.",
+                    "placa": "BAW484",
+                    "certificado": "C-2023-013-185-012354",
+                    "fecha_desde": "05/06/2023",
+                    "fecha_hasta": "05/06/2024",
+                    "resultado": "APROBADO",
+                    "vigencia": "VIGENTE"
+                }
+            ],
+            "Revtec_Actualizado": "23/04/2024",
+            "Sutran": [
+                []
+            ],
+            "Sutran_Actualizado": "23/04/2024"
+        },
+        "Envios": {
+            "Bienvenida": false,
+            "Resumen": false,
+            "Alertas": {
+                "Brevete": null,
+                "Satimp": null,
+                "Revtec": null,
+                "Sutran": null
+            }
+        }
+    }
+]

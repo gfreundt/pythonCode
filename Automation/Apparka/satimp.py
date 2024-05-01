@@ -64,7 +64,7 @@ class Satimp:
         time.sleep(4)
 
         rec = 0
-        errors = 0
+        consecutive_errors = 0
         # iterate on all records that require updating
         open = True
         for rec, record_index in enumerate(records_to_update):
@@ -86,14 +86,15 @@ class Satimp:
                     doc_num=_doc_num, doc_tipo=_doc_tipo, opening=open
                 )
                 open = False
+                consecutive_errors = 0
             except KeyboardInterrupt:
                 quit()
             except:
                 self.LOG.warning(
                     f"SAT_IMPUESTOS > Skipped Record {rec} (scraper error)."
                 )
-                errors += 1
-                if errors > 4:
+                consecutive_errors += 1
+                if consecutive_errors > 3:
                     self.WEBD.close()
                     return
                 time.sleep(1)

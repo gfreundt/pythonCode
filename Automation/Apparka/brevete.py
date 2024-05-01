@@ -79,6 +79,7 @@ class Brevete:
                 self.WEBD.back()
                 time.sleep(0.2)
                 self.WEBD.refresh()
+
             except KeyboardInterrupt:
                 return
             except:

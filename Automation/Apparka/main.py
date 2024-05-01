@@ -179,9 +179,10 @@ def updater_options():
 def send_gmail():
     try:
         GOOGLE_UTILS.send_gmail(
-            "gfreundt@gmail.com",
-            "UserData Process",
-            f"Finished Process on {dt.now()}.\nRevTec: {MONITOR.total_records_revtec}\nBrevete: {MONITOR.total_records_brevete}",
+            fr="gabfre@gmail.com",
+            to="gfreundt@gmail.com",
+            subject="UserData Process",
+            body=f"Finished Process on {dt.now()}.\nRevTec: {MONITOR.total_records_revtec}\nBrevete: {MONITOR.total_records_brevete}",
         )
         LOG.info(f"GMail sent.")
     except:
@@ -269,6 +270,22 @@ def main():
 
 def side():
 
+    s = []
+
+    for i in DB.database:
+        try:
+            x = i["vehiculos"][0]["rtecs"][0]["certificadora"]
+            if len(x) > 6:
+                s.append(x)
+        except:
+            pass
+
+    a = set(s)
+    for i in a:
+        print(i)
+
+    return
+
     to_update = [[] for _ in range(4)]
 
     for record_index, record in enumerate(DB.database):
@@ -317,11 +334,11 @@ if __name__ == "__main__":
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 
-    # side()
-    # quit()
+    side()
+    quit()
 
     # run main code
-    main()
+    # main()
 
     # register program end
     LOG.info("Updater End.")

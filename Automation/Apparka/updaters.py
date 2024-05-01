@@ -40,7 +40,6 @@ class Updater:
             if self.MONITOR.threads[self.thread_num]["info"]["complete"]:
                 return
             else:
-                time.sleep(3)
                 self.MONITOR.threads[self.thread_num]["info"]["captcha_attempts"] = 0
                 self.MONITOR.threads[self.thread_num]["info"]["start_time"] = (
                     dt.now(),
@@ -49,6 +48,8 @@ class Updater:
                 self.MONITOR.threads[self.thread_num]["info"][
                     "restarts"
                 ] = self.restarts
+                self.MONITOR.threads[self.thread_num]["info"]["status"] = "RESTARTING"
+                time.sleep(600)  # wait 10 minutes before next restart
                 self.LOG.info(f"{self.log_name} > Restart #{self.restarts}.")
                 self.full_update()
 

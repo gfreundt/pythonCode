@@ -475,7 +475,7 @@ class Revtec:
                 # clear webpage for next iteration and return None
                 self.WEBD.refresh()
                 time.sleep(0.5)
-                return None, 0
+                return [], captcha_attempts
             else:
                 break
 
@@ -612,3 +612,97 @@ class Sutran:
         time.sleep(0.2)
 
         return response, captcha_attempts
+
+
+class Soat:
+    def browser(self, **kwargs):
+        placa = kwargs["placa"]
+        captcha_txt = kwargs["captcha_txt"]
+
+        while True:
+
+            if not captcha_txt:
+                _img = self.WEBD.find_element(
+                    By.XPATH,
+                    "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
+                )
+                return Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
+
+            a = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[1]/input",
+            )
+            a.send_keys(placa)
+
+            c = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/input",
+            )
+            c.send_keys(captcha_txt)
+
+            d = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/button",
+            )
+            d.click()
+
+            time.sleep(1)
+            _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
+            self.WEBD.switch_to.frame(_iframe)
+
+            # Check if limit of scraping exceeded and wait
+            limit_msg = self.WEBD.find_elements(By.XPATH, "/html/body")
+            if limit_msg and "superado" in limit_msg[0].text:
+                print("EXCESO!")
+                time.sleep(600)
+                captcha_txt = ""
+                self.WEBD.refresh()
+                continue
+
+            # Check if error message pops up
+            error_msg = self.WEBD.find_elements(
+                By.XPATH, "/html/body/div[3]/div/div/div[2]"
+            )
+
+            # Error: wrong captcha
+            if error_msg and "incorrecto" in error_msg[0].text:
+                print("MAL CAPTCHA!!!")
+                captcha_txt = ""
+                self.WEBD.refresh()
+                continue
+
+            # Error: no data for placa
+            elif error_msg:
+                print("NO HAY DATOS")
+                self.WEBD.refresh()
+                return {}
+            else:
+                headers = (
+                    "aseguradora",
+                    "fecha_inicio",
+                    "fecha_fin",
+                    "placa",
+                    "certificado",
+                    "uso",
+                    "clase",
+                    "vigencia",
+                    "tipo",
+                    "fecha_venta",
+                    "fecha_anulacion",
+                )
+                response = {
+                    i: self.WEBD.find_element(
+                        By.XPATH,
+                        f"/html/body/div[2]/div/div/div/div[2]/table/tbody/tr[1]/td[{j}]",
+                    ).text.strip()
+                    for i, j in zip(headers, range(1, 11))
+                }
+            # out of frame and click CERRAR
+            self.WEBD.switch_to.default_content()
+            e = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/div[1]/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[2]/div/div/div[3]/button",
+            )
+            e.click()
+
+            return response
