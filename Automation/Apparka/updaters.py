@@ -50,6 +50,7 @@ class Updater:
                 ] = self.restarts
                 self.MONITOR.threads[self.thread_num]["info"]["status"] = "RESTARTING"
                 time.sleep(600)  # wait 10 minutes before next restart
+                self.MONITOR.threads[self.thread_num]["info"]["status"] = "ACTIVE"
                 self.LOG.info(f"{self.log_name} > Restart #{self.restarts}.")
                 self.full_update()
 
