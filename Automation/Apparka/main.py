@@ -70,7 +70,7 @@ class Monitor:
 
             # check if threads alive
             for th, thread in enumerate(self.threads):
-                if not thread["thread"].isalive():
+                if not thread["thread"].is_alive():
                     self.threads[th]["info"]["status"] = "INACTIVE"
 
             # process data to update status of threads
@@ -214,7 +214,7 @@ def start_updaters(requested_updaters, options):
         "revtec": "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
         "sutran": "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
     }
-    LUTS = {"satimp": 60, "brevete": 50, "revtec": 30, "sutran": 15}
+    LUTS = {"satimp": 60, "brevete": 60, "revtec": 30, "sutran": 15}
 
     for threadnum, updater in enumerate(requested_updaters):
         _parameters = {
