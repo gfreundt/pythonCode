@@ -334,11 +334,11 @@ if __name__ == "__main__":
     MONITOR = Monitor()
     GOOGLE_UTILS = GoogleUtils()
 
-    side()
-    quit()
+    # side()
+    # quit()
 
     # run main code
-    # main()
+    main()
 
     # register program end
     LOG.info("Updater End.")
