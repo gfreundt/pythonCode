@@ -68,6 +68,11 @@ class Monitor:
                 self.timeout_flag = True
                 return
 
+            # check if threads alive
+            for th, thread in enumerate(self.threads):
+                if not thread["thread"].isalive():
+                    self.threads[th]["info"]["status"] = "INACTIVE"
+
             # process data to update status of threads
             self.api_data = self.generate_status()
 
@@ -92,13 +97,9 @@ class Monitor:
         # build body
         for th, thread in enumerate(self.threads):
             info = thread["info"]
-            _status = (
-                "INACTIVE"
-                if not thread["thread"].is_alive()
-                else ("STALLED" if info["stalled"] else f"ACTIVE")
-            )
+
             if (
-                _status == "INACTIVE"
+                thread["info"]["status"] == "INACTIVE"
                 and info.get("finished")
                 and "Ended" not in info["finished"]
             ):
@@ -122,7 +123,7 @@ class Monitor:
                     dt.now()
                     + td(hours=(info["total_records"] - info["current_record"]) / _rate)
                 )[:-7]
-                if _status == "ACTIVE"
+                if thread["info"]["status"] == "ACTIVE"
                 else info.get("finished", "")
             )
             data.append(
@@ -133,7 +134,7 @@ class Monitor:
                     "cur_rec": _cur_rec,
                     "pend_recs": _pend_recs,
                     "complet": _complet,
-                    "status": _status,
+                    "status": thread["info"]["status"],
                     "restarts": _restarts,
                     "rate": f"{_rate:.1f} ",
                     "eta": _eta,
@@ -237,6 +238,7 @@ def start_updaters(requested_updaters, options):
             "last_record_updated": time.time(),
             "stalled": False,
             "complete": False,
+            "status": "ACTIVE",
             "restarts": 0,
             "finished": str(dt.now()),
         }

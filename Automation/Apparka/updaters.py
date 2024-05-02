@@ -87,6 +87,7 @@ class Updater:
         except:
             # in case URL does not load (error with webpage)
             f"{self.log_name} > Error loading URL."
+            self.scraper.WEBD.close()
             time.sleep(300)
             return
 
