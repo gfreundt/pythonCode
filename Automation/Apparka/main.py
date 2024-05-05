@@ -62,16 +62,23 @@ class Monitor:
 
             # check for timeout exceeded or kill button pressed and turn on flag
             if (
-                time.time() - self.timer_on > options["timeout_time"]
+                time.time() - self.timer_on > self.options["timeout_time"]
                 or self.kill_em_all
             ):
                 self.timeout_flag = True
                 return
 
-            # check if threads alive
+            # check if individual thread is alive
+            inactive_threads = 0
             for th, thread in enumerate(self.threads):
                 if not thread["thread"].is_alive():
                     self.threads[th]["info"]["status"] = "INACTIVE"
+                    inactive_threads += 1
+
+            # check if all threads are in "INACTIVE" mode and activate soft kill
+            if inactive_threads == len(self.threads):
+                # TODO: create own flag
+                self.timeout_flag = True
 
             # process data to update status of threads
             self.api_data = self.generate_status()

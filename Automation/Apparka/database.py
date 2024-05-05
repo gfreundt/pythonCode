@@ -206,6 +206,7 @@ class Database:
 
     def upload_to_drive(self):
         """Upload database file to Google Drive."""
+        self.LOG.info(f"DATABASE > Attempting GDrive upload.")
         try:
             self.GOOGLE_UTILS.upload_to_drive(
                 local_path=self.DATABASE_NAME,
