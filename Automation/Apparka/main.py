@@ -75,8 +75,11 @@ class Monitor:
                     self.threads[th]["info"]["status"] = "INACTIVE"
                     inactive_threads += 1
 
-            # check if all threads are in "INACTIVE" mode and activate soft kill
-            if inactive_threads == len(self.threads):
+            # check if all threads are in "INACTIVE" mode (wait 2 minutes before check) and activate soft kill
+            if (
+                inactive_threads == len(self.threads)
+                and (time.time() - self.timer_on) > 120
+            ):
                 # TODO: create own flag
                 self.timeout_flag = True
 
