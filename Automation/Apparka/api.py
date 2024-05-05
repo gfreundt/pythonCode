@@ -51,9 +51,9 @@ def stats_view(MONITOR):
         headless=False, verbose=False, window_size=(1000, 310)
     )
     if pyautogui.size()[0] == 3840:
-        posx, posy = (1640, 1080)
+        posx, posy = (1540, 1080)
     elif pyautogui.size()[0] == 1920:
-        posx, posy = (680, 420)
+        posx, posy = (600, 420)
     webdriver.set_window_position(posx, posy, windowHandle="current")
     webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 
