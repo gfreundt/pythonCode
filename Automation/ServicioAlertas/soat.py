@@ -82,20 +82,17 @@ def captcha_gui(SOAT, placa, canvas):
                     response = SOAT.browser(placa=placa, captcha_txt="".join(chars))
                     if response == -1:
                         msg = "Limit"
-                        disp_capture(chars, message=msg)
                         SOAT.limit = True
-                        time.sleep(2)
 
                     elif response == -2:
                         msg = "Captcha"
-                        disp_capture(chars, message=msg)
-                        time.sleep(2)
 
                     else:
                         msg = "Ok"
-                        disp_capture(chars, message=msg)
                         time.sleep(2)
 
+                    disp_capture(chars, message=msg)
+                    time.sleep(2)
                     return response
 
         disp_capture(chars, message=msg)

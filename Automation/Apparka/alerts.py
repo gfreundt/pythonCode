@@ -1,5 +1,5 @@
 import scrapers
-import json, csv
+import json, csv, sys
 import openpyxl
 from copy import deepcopy as copy
 import time
@@ -10,6 +10,7 @@ import logging
 from jinja2 import Environment, FileSystemLoader
 from pprint import pprint
 import uuid
+import erase1
 
 
 def load_members():
@@ -92,6 +93,8 @@ def add_new_members(all_members, existing_members):
                     "Revtec_Actualizado": "01/01/1999",
                     "Sutran": [],
                     "Sutran_Actualizado": "01/01/1999",
+                    "Soat": [],
+                    "Soat_Actualizado": "01/01/1999",
                 },
                 "Envios": {
                     "Bienvenida": {},
@@ -135,30 +138,24 @@ def get_records_to_process(members):
 
 
 def gather_soat(members, placas_to_process):
-    URL = "https://www.apeseg.org.pe/consultas-soat/"
-    SOAT = scrapers.Soat()
-    SOAT.WEBD = ChromeUtils().init_driver(headless=True, verbose=False, maximized=True)
-    SOAT.WEBD.get(URL)
-    time.sleep(2)
-    responses = []
-    for data in placas_to_process:
-        captcha_txt = ""
-        img = SOAT.browser(placa=data[4], captcha_txt=captcha_txt)
-        img.show()
-        captcha_txt = input("Captcha: ")
-        responses.append(
-            (data[0], data[1], SOAT.browser(placa=data[4], captcha_txt=captcha_txt))
-        )
 
-    pprint(responses)
-    new_response = [{"SOAT": [[], [], []]} for _ in range(len(members))]
-    for rec, pos, data in responses:
-        new_response[rec]["SOAT"][pos] = data
+    SOAT = scrapers.Soat()
+    scraper_responses = erase1.main(SOAT, placas_to_process)
+
+    new_response = [{"Soat": [[], [], []]} for _ in range(len(members))]
+    for response in scraper_responses:
+        rec, pos, data = response
+        new_response[rec]["Soat"][pos] = data
 
     # delete dictionary keys that have no data to update
-    return [
+    new_responses = [
         {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
     ]
+
+    for k, response in enumerate(new_responses):
+        members[k]["Resultados"].update(response)
+        members[k]["Resultados"]["Soat_Actualizado"] = dt.now().strftime("%d/%m/%Y")
+    return members
 
 
 def gather(members, docs_to_process, placas_to_process):
@@ -198,9 +195,18 @@ def gather(members, docs_to_process, placas_to_process):
 
     # delete dictionary keys that have no data to update
     # TODO: Sutran?
-    return [
+    new_responses = [
         {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
     ]
+
+    for k, response in enumerate(new_responses):
+        if response:
+            members[k]["Resultados"].update(response)
+        for header in HEADERS:
+            members[k]["Resultados"][f"{header}_Actualizado"] = dt.now().strftime(
+                "%d/%m/%Y"
+            )
+    return members
 
 
 def full_update(URL, scraper, data_to_process, index):
@@ -228,16 +234,6 @@ def full_update(URL, scraper, data_to_process, index):
         except:
             LOG.warning(f"No proceso {data}")
             responses[index].append((data[0], data[1], ""))
-
-
-def update_member_data(members, new_responses):
-    for k, response in enumerate(new_responses):
-        members[k]["Resultados"].update(response)
-        for header in HEADERS:
-            members[k]["Resultados"][f"{header}_Actualizado"] = dt.now().strftime(
-                "%d/%m/%Y"
-            )
-    return members
 
 
 def get_alert_lists(members):
@@ -476,23 +472,25 @@ def start_logger():
 
 
 def main():
-    # # # Step 1: Download raw list of all members from form and add new ones with default data
-    # members = add_new_members(
-    #     all_members=load_raw_members(), existing_members=load_members()
-    # )
-    members = load_members()
-    # # # Step 2A: Scraping (get list of records to process)
+    # Download raw list of all members from form and add new ones with default data
+    all_members = load_raw_members()
+    existing_members = load_members()
+    members = add_new_members(all_members, existing_members)
+    # Scraping (get list of records to process and run scrapers)
     docs_to_process, placas_to_process = get_records_to_process(members)
-    # # # Step 2B: Scraping (activate scrapers)
-    # new_responses = gather(members, docs_to_process, placas_to_process)
-    new_responses = gather_soat(members, placas_to_process)
-    # # Step 3: Update data (new information from scrapers into database)
-    members = update_member_data(members, new_responses)
-    # Step 4A: Alerting (get list of records to process)
-    # welcome_list, regular_list, warning_list = get_alert_lists(members)
-    # Step 4B: Alerting (send alerts by list)
-    # members = send_alerts(members, welcome_list, regular_list, warning_list)
-    # Step 5: Update file with new scraped information and data from allsent messages
+    members = gather(members, docs_to_process, placas_to_process)
+    # Run SOAT scrape only if manually launched
+    if "SOAT" in sys.argv:
+        members = gather_soat(members, placas_to_process)
+    pprint(members)
+    # Save updated database
+    save_members(members)
+
+    # Alerting (get list of records to process for each alert, compose and send alerts)
+    welcome_list, regular_list, warning_list = get_alert_lists(members)
+    members = send_alerts(members, welcome_list, regular_list, warning_list)
+
+    # Save updated database with timestamps and unique ids of sent alerts
     save_members(members)
 
 

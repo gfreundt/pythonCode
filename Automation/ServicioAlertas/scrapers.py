@@ -619,86 +619,145 @@ class Soat:
         placa = kwargs["placa"]
         captcha_txt = kwargs["captcha_txt"]
 
-        while True:
-
-            if not captcha_txt:
-                _img = self.WEBD.find_element(
-                    By.XPATH,
-                    "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
-                )
-                return Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
-
-            a = self.WEBD.find_element(
+        if not captcha_txt:
+            _img = self.WEBD.find_element(
                 By.XPATH,
-                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[1]/input",
+                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
             )
-            a.send_keys(placa)
+            return Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
 
-            c = self.WEBD.find_element(
+        a = self.WEBD.find_element(
+            By.XPATH,
+            "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[1]/input",
+        )
+        a.send_keys(placa)
+
+        c = self.WEBD.find_element(
+            By.XPATH,
+            "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/input",
+        )
+        c.send_keys(captcha_txt)
+
+        d = self.WEBD.find_element(
+            By.XPATH,
+            "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/button",
+        )
+        d.click()
+
+        time.sleep(1)
+        _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
+        self.WEBD.switch_to.frame(_iframe)
+
+        # Check if limit of scraping exceeded and wait
+        limit_msg = self.WEBD.find_elements(By.XPATH, "/html/body")
+        if limit_msg and "superado" in limit_msg[0].text:
+            # self.WEBD.refresh()
+            return -1
+
+        # Check if error message pops up
+        error_msg = self.WEBD.find_elements(
+            By.XPATH, "/html/body/div[3]/div/div/div[2]"
+        )
+
+        # Error: wrong captcha
+        if error_msg and "incorrecto" in error_msg[0].text:
+            # self.WEBD.refresh()
+            return -2
+
+        # Error: no data for placa
+        if error_msg and "registrados" in error_msg[0].text:
+            # self.WEBD.refresh()
+            return {}
+
+        # No Error: proceed with data capture
+        headers = (
+            "aseguradora",
+            "fecha_inicio",
+            "fecha_fin",
+            "placa",
+            "certificado",
+            "uso",
+            "clase",
+            "vigencia",
+            "tipo",
+            "fecha_venta",
+            "fecha_anulacion",
+        )
+        response = {
+            i: self.WEBD.find_element(
                 By.XPATH,
-                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/input",
-            )
-            c.send_keys(captcha_txt)
+                f"/html/body/div[2]/div/div/div/div[2]/table/tbody/tr[1]/td[{j}]",
+            ).text.strip()
+            for i, j in zip(headers, range(1, 11))
+        }
 
-            d = self.WEBD.find_element(
-                By.XPATH,
-                "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/button",
-            )
-            d.click()
+        # get out of frame and click CERRAR
+        self.WEBD.switch_to.default_content()
+        e = self.WEBD.find_element(
+            By.XPATH,
+            "/html/body/div[1]/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[2]/div/div/div[3]/button",
+        )
+        e.click()
 
-            time.sleep(1)
-            _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
-            self.WEBD.switch_to.frame(_iframe)
+        return response
 
-            # Check if limit of scraping exceeded and wait
-            limit_msg = self.WEBD.find_elements(By.XPATH, "/html/body")
-            if limit_msg and "superado" in limit_msg[0].text:
-                # self.WEBD.refresh()
-                return -1
 
-            # Check if error message pops up
-            error_msg = self.WEBD.find_elements(
-                By.XPATH, "/html/body/div[3]/div/div/div[2]"
-            )
+class Sunarp:
 
-            # Error: wrong captcha
-            if error_msg and "incorrecto" in error_msg[0].text:
-                # self.WEBD.refresh()
-                return -2
+    def browser(self, **kwargs):
+        """returns:
+        -2 = captcha wrong (retry)
+        -1 = captcha ok, image did not load (retry)
+         1 = captcha ok, placa does not exist
+         image object = captcha ok, placa ok
+        """
 
-            # Error: no data for placa
-            if error_msg and "registrados" in error_msg[0].text:
-                # self.WEBD.refresh()
-                return {}
+        placa = kwargs["placa"]
+        captcha_txt = kwargs["captcha_txt"]
 
-            # No Error: proceed with data capture
-            headers = (
-                "aseguradora",
-                "fecha_inicio",
-                "fecha_fin",
-                "placa",
-                "certificado",
-                "uso",
-                "clase",
-                "vigencia",
-                "tipo",
-                "fecha_venta",
-                "fecha_anulacion",
-            )
-            response = {
-                i: self.WEBD.find_element(
-                    By.XPATH,
-                    f"/html/body/div[2]/div/div/div/div[2]/table/tbody/tr[1]/td[{j}]",
-                ).text.strip()
-                for i, j in zip(headers, range(1, 11))
-            }
+        # enter PLACA
+        x = self.WEBD.find_element(
+            By.ID,
+            "MainContent_txtNoPlaca",
+        )
+        x.send_keys(placa)
+        time.sleep(1)
 
-            # get out of frame and click CERRAR
-            self.WEBD.switch_to.default_content()
-            e = self.WEBD.find_element(
-                By.XPATH,
-                "/html/body/div[1]/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[2]/div/div/div[3]/button",
-            )
-            e.click()
+        # enter CAPTCHA
+        y = self.WEBD.find_element(By.ID, "MainContent_txtCaptchaValidPlaca")
+        y.send_keys(captcha_txt)
+        time.sleep(0.5)
+        z = self.WEBD.find_element(By.ID, "MainContent_btnSearch")
+        z.click()
+        time.sleep(0.5)
 
-            return response
+        # captcha incorrect
+        h = self.WEBD.find_elements(By.ID, "MainContent_txtCaptchaValidPlaca")
+        if h and "incorrecto" in h[0].text:
+            return -2
+
+        # captcha correct, no placa information, return no information found
+        c = self.WEBD.find_elements(By.ID, "MainContent_lblWarning")
+        if c and "verifique" in c[0].text:
+            return 2
+
+        # search for SUNARP image
+        _card_image = self.WEBD.find_elements(By.ID, "MainContent_imgPlateCar")
+
+        # no image found, return succesful
+        if not _card_image:
+            self.WEBD.refresh()
+            time.sleep(0.5)
+            return -1
+
+        # grab image and save in file, return succesful
+        else:
+            # load card image into memory
+            image_object = Image.open(io.BytesIO(_card_image[0].screenshot_as_png))
+            time.sleep(0.5)
+
+            # press boton to start over
+            q = self.WEBD.find_element(By.ID, "MainContent_btnReturn")
+            q.click()
+
+            return image_object

@@ -29,8 +29,23 @@ def save_members(members):
     LOG.info("Database updated succesfully.")
 
 
+def side(members):
+
+    docs_to_process, placas_to_process = updates.get_records_to_process(members)
+    updates.gather_sunarp(members, placas_to_process)
+    quit()
+
+    for member in members:
+        for soat in member["Resultados"]["Soat"]:
+            if soat:
+                print(soat["fecha_fin"])
+
+    quit()
+
+
 def main():
     members = load_members()
+    side(members)
     # download raw list of all members from form and add new ones with default data
     if "UPDATE" in sys.argv:
         all_members = updates.load_raw_members(LOG)

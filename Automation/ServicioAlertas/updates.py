@@ -9,7 +9,7 @@ from datetime import datetime as dt, timedelta as td
 import logging
 from pprint import pprint
 import uuid
-import soat, alerts
+import soat, sunarp
 
 
 def load_raw_members(LOG):
@@ -81,7 +81,7 @@ def add_new_members(LOG, all_members, existing_members):
                 },
                 "Envios": {
                     "Bienvenida": {},
-                    "Resumen": [],
+                    "Regular": [],
                     "Alertas": {
                         "Brevete": [],
                         "Satimp": [],
@@ -103,8 +103,8 @@ def add_new_members(LOG, all_members, existing_members):
 def get_records_to_process(members):
     # TODO: beyond welcome
     docs_to_process, placas_to_process = [], []
-    for member in members[15:16]:
-        if not member["Envios"]["Bienvenida"]:
+    for member in members:
+        if True:  # not member["Envios"]["Bienvenida"]:
             docs_to_process.append(
                 (
                     member["Correlativo"],
@@ -121,7 +121,6 @@ def get_records_to_process(members):
 
 
 def gather_soat(members, placas_to_process):
-
     SOAT = scrapers.Soat()
     scraper_responses = soat.main(SOAT, placas_to_process)
 
@@ -138,6 +137,26 @@ def gather_soat(members, placas_to_process):
     for k, response in enumerate(new_responses):
         members[k]["Resultados"].update(response)
         members[k]["Resultados"]["Soat_Actualizado"] = dt.now().strftime("%d/%m/%Y")
+    return members
+
+
+def gather_sunarp(members, placas_to_process):
+    SUNARP = scrapers.Sunarp()
+    scraper_responses = sunarp.main(SUNARP, placas_to_process)
+
+    new_response = [{"Sunarp": [[], [], []]} for _ in range(len(members))]
+    for response in scraper_responses:
+        rec, pos, data = response
+        new_response[rec]["Sunarp"][pos] = data
+
+    # delete dictionary keys that have no data to update
+    new_responses = [
+        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
+    ]
+
+    for k, response in enumerate(new_responses):
+        members[k]["Resultados"].update(response)
+        members[k]["Resultados"]["Sunarp_Actualizado"] = dt.now().strftime("%d/%m/%Y")
     return members
 
 
