@@ -57,7 +57,7 @@ def stats_view(MONITOR):
     webdriver.set_window_position(posx, posy, windowHandle="current")
     webdriver.get(url=f"http://{MONITOR._myip}:{MONITOR._port}/status")
 
-    # forever loop refreshing status page
+    # forever loop refreshing status page until flag is turned on
     while not MONITOR.timeout_flag:
         time.sleep(3)
         webdriver.refresh()

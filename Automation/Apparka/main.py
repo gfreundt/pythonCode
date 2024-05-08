@@ -260,6 +260,9 @@ def start_updaters(requested_updaters, options):
     for thread in MONITOR.threads:
         thread["thread"].join()
 
+    # when all updaters are finished, wait 5 seconds to allow api to close window
+    time.sleep(5)
+
 
 def main():
     # select updaters to run according to parameters or set all updaters if no parameters entered
