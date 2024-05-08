@@ -2,23 +2,16 @@ import sys, os, time, csv, json
 from datetime import datetime as dt, timedelta as td
 import threading
 import logging
-
-# from copy import deepcopy as copy
+from copy import deepcopy as copy
 import platform
 
 # custom imports
-from gft_utils import GoogleUtils, ChromeUtils
+from gft_utils import GoogleUtils
 import updaters
-import database  # , revtec, sutran, brevete, satimp
+import database
 import api
 
-# import and activate Flask, change logging level to reduce messages
-# from flask import Flask, render_template, request
-
-# app = Flask(__name__)
-# logging.getLogger("werkzeug").setLevel(logging.ERROR)
-
-from copy import deepcopy as copy
+# debugging
 from pprint import pprint
 
 
@@ -30,6 +23,7 @@ class Monitor:
         self.DASHBOARD_NAME = os.path.join(os.getcwd(), "data", "dashboard.csv")
         self.threads = []
         self.timeout_flag = False
+        self.updaters_end_flag = False
         self.dash_data = ""
         self.device = str(platform.system()).strip()
         self.PARAMETERS_PATH = "parameters.json"
@@ -75,13 +69,12 @@ class Monitor:
                     self.threads[th]["info"]["status"] = "INACTIVE"
                     inactive_threads += 1
 
-            # check if all threads are in "INACTIVE" mode (wait 2 minutes before check) and activate soft kill
+            # check if all threads are in "INACTIVE" mode (wait 60 seconds before check) and activate soft kill
             if (
                 inactive_threads == len(self.threads)
-                and (time.time() - self.timer_on) > 120
+                and (time.time() - self.timer_on) > 60
             ):
-                # TODO: create own flag
-                self.timeout_flag = True
+                self.updaters_end_flag = True
 
             # process data to update status of threads
             self.api_data = self.generate_status()
@@ -259,9 +252,6 @@ def start_updaters(requested_updaters, options):
     # join updater threads
     for thread in MONITOR.threads:
         thread["thread"].join()
-
-    # when all updaters are finished, wait 5 seconds to allow api to close window
-    time.sleep(5)
 
 
 def main():
