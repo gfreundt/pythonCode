@@ -6,13 +6,12 @@ import time
 from gft_utils import ChromeUtils, GoogleUtils
 import threading
 from datetime import datetime as dt, timedelta as td
-import logging
 from pprint import pprint
 import uuid
-import soat, sunarp
+import soat, sunarp, satmul
 
 
-def load_raw_members(LOG):
+def load_form_members(LOG):
     # download latest form responses
     G = GoogleUtils()
     _folder_id = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
@@ -56,12 +55,10 @@ def load_raw_members(LOG):
     return raw_data
 
 
-def add_new_members(LOG, all_members, existing_members):
-    correlativo = len(existing_members)
-    existing_members_docs = [
-        i["Datos"]["Número de Documento"] for i in existing_members
-    ]
-    for all_member in all_members:
+def add_new_members(LOG, form_members, members):
+    correlativo = len(members)
+    existing_members_docs = [i["Datos"]["Número de Documento"] for i in members]
+    for all_member in form_members:
         if str(all_member["Número de Documento"]) not in existing_members_docs:
             _new_record = {
                 "Correlativo": correlativo,
@@ -92,19 +89,19 @@ def add_new_members(LOG, all_members, existing_members):
             }
 
             correlativo += 1
-            existing_members.append(_new_record)
+            members.append(_new_record)
             LOG.info(
                 f"Appended new record: {_new_record['Correlativo']} - {_new_record['Datos']['Nombre y Apellido']}"
             )
 
-    return existing_members
+    return members
 
 
 def get_records_to_process(members):
     # TODO: beyond welcome
     docs_to_process, placas_to_process = [], []
     for member in members:
-        if True:  # not member["Envios"]["Bienvenida"]:
+        if not member["Envios"]["Bienvenida"]:
             docs_to_process.append(
                 (
                     member["Correlativo"],
@@ -160,6 +157,27 @@ def gather_sunarp(members, placas_to_process):
     return members
 
 
+def gather_satmul(members, placas_to_process):
+    SATMUL = scrapers.Satmul()
+    scraper_responses = satmul.main(SATMUL, placas_to_process)
+
+    new_response = [{"Satmul": [[], [], []]} for _ in range(len(members))]
+    for response in scraper_responses:
+        rec, pos, data = response
+        new_response[rec]["Satmul"][pos] = data
+
+    # delete dictionary keys that have no data to update
+    new_responses = [
+        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
+    ]
+
+    for k, response in enumerate(new_responses):
+        members[k]["Resultados"].update(response)
+        members[k]["Resultados"]["Satmul_Actualizado"] = dt.now().strftime("%d/%m/%Y")
+
+    return members
+
+
 def gather(LOG, members, docs_to_process, placas_to_process, responses):
     HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran"]
     URLS = [
@@ -204,13 +222,15 @@ def gather(LOG, members, docs_to_process, placas_to_process, responses):
         {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
     ]
 
+    pprint(new_responses)
+
     for k, response in enumerate(new_responses):
         if response:
             members[k]["Resultados"].update(response)
-        for header in HEADERS:
-            members[k]["Resultados"][f"{header}_Actualizado"] = dt.now().strftime(
-                "%d/%m/%Y"
-            )
+            for header in HEADERS:
+                members[k]["Resultados"][f"{header}_Actualizado"] = dt.now().strftime(
+                    "%d/%m/%Y"
+                )
     return members
 
 

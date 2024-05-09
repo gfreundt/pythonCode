@@ -120,6 +120,11 @@ def get_captcha_image(SOAT):
 
 
 def main(SOAT, placas):
+
+    # don't run if no records to process
+    if not placas:
+        return []
+
     # turn off VPN
     cmd = "C:\Program Files\Private Internet Access\piactl.exe"
     subprocess.run([cmd, "disconnect"], shell=True)

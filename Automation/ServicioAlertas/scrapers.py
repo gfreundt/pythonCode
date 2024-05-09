@@ -3,6 +3,8 @@ from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime as dt, timedelta as td
 import time
 from PIL import Image
@@ -711,7 +713,6 @@ class Sunarp:
          1 = captcha ok, placa does not exist
          image object = captcha ok, placa ok
         """
-
         placa = kwargs["placa"]
         captcha_txt = kwargs["captcha_txt"]
 
@@ -761,3 +762,68 @@ class Sunarp:
             q.click()
 
             return image_object
+
+
+class Satmul:
+
+    def browser(self, **kwargs):
+
+        placa = kwargs["placa"]
+        # select alternative option from dropdown to reset it
+        drop = Select(self.WEBD.find_element(By.ID, "tipoBusquedaPapeletas"))
+        drop.select_by_value("busqLicencia")
+        time.sleep(0.5)
+        # select Busqueda por Documento from dropdown
+        drop.select_by_value("busqPlaca")
+        time.sleep(0.5)
+        # enter placa
+        c = self.WEBD.find_element(By.ID, "ctl00_cplPrincipal_txtPlaca")
+        c.send_keys(placa)
+
+        # wait until auto-clicking on button actually takes you to next page
+        while self.WEBD.find_elements(By.ID, "ctl00_cplPrincipal_txtPlaca"):
+            time.sleep(2)
+            e = self.WEBD.find_elements(By.ID, "ctl00_cplPrincipal_CaptchaContinue")
+            if e:
+                try:
+                    e[0].click()
+                except:
+                    pass
+
+        time.sleep(2)
+        v = self.WEBD.find_elements(By.ID, "ctl00_cplPrincipal_lblMensajeVacio")
+        return_button = self.WEBD.find_element(By.ID, "menuOption10")
+
+        if v and "No se encontraron" in v[0].text:
+            return_button.click()
+            return []
+
+        n = 2
+        responses = []
+        xpath = lambda row, col: self.WEBD.find_elements(
+            By.XPATH,
+            f"/html/body/form/div[3]/section/div/div/div[2]/div[8]/div/div/div[1]/div/div/table/tbody/tr[{row}]/td[{col}]",
+        )
+        while xpath(n, 1):
+            keys = [
+                "placa",
+                "reglamento",
+                "falta",
+                "documento",
+                "fecha_emision",
+                "importe",
+                "gastos",
+                "descuento",
+                "deuda",
+                "estado",
+                "licencia",
+                "doc_tipo",
+                "doc_num",
+            ]
+            responses.append(
+                {dict_key: xpath(n, k + 2)[0].text for k, dict_key in enumerate(keys)}
+            )
+            n += 1
+            return_button.click()
+
+        return responses

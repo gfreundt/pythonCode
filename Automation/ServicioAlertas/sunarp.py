@@ -131,52 +131,97 @@ def process_image(img_object, path):
 
 def parse_text_from_image(img_path):
 
-    client = vision.ImageAnnotatorClient()
+    # open saved image from scraping
     with open(os.path.join(os.curdir, "data", "images", img_path), "rb") as image_file:
         content = image_file.read()
 
+    # perform ocr
+    client = vision.ImageAnnotatorClient()
     image = vision.Image(content=content)
     response = client.text_detection(image=image)
-    raw_text = [i.description for i in response.text_annotations]
+    content = [i.description for i in response.text_annotations][0]
 
-    print(raw_text)
-
-    z = []
-    # split response in individual lines
-    for line in raw_text.splitlines():
-        # if line has colon, append as two different items
+    # clean text (remove titles)
+    output = []
+    for line in content:
+        line = line.strip()
         if ":" in line:
-            z.append(line.split(":")[0].strip())
-            z.append(line.split(":")[1].strip())
+            output.append(line.split(":")[1])
         else:
-            z.append(line)
+            output.append(line)
 
-    # eliminate empty items
-    y = [i for i in z if i]
+    # clean text (remove empty)
+    values = [i for i in output if i]
 
-    # build structured response
-    col = "SERIE" in y[2]
-    response = {
-        "placa_validacion": y[8] if col else y[2],
-        "serie": y[9] if col else y[4],
-        "vin": y[10] if col else y[6],
-        "motor": y[11] if col else y[8],
-        "color": y[12] if col else y[10],
-        "marca": y[13] if col else y[12],
-        "modelo": y[14],
-        "año": (y[10] if col else y[6]),
-        "placa_vigente": y[16],
-        "placa_anterior": y[18],
-        "estado": y[20],
-        "anotaciones": y[22],
-        "sede": y[24],
-        "propietarios": y[26:],
+    # if ocr does not return expected structure, return empty
+    if len(values) < 14:
+        return {}
+
+    keys = (
+        "placa",
+        "serie",
+        "vin",
+        "motor",
+        "color",
+        "marca",
+        "modelo",
+        "placa",
+        "anterior",
+        "estado",
+        "anotaciones",
+        "sede",
+    )
+
+    year_guide = {
+        "1": "2031",
+        "2": "2032",
+        "3": "2033",
+        "4": "2034",
+        "5": "2035",
+        "6": "2036",
+        "7": "2037",
+        "8": "2038",
+        "9": "2039",
+        "A": "2010",
+        "B": "2011",
+        "C": "2012",
+        "D": "2013",
+        "E": "2014",
+        "F": "2015",
+        "G": "2016",
+        "H": "2017",
+        "J": "2018",
+        "K": "2019",
+        "L": "2020",
+        "M": "2021",
+        "N": "2022",
+        "P": "2023",
+        "R": "2024",
+        "S": "2025",
+        "T": "2026",
+        "V": "2027",
+        "W": "2028",
+        "X": "2029",
+        "Y": "2030",
     }
 
-    return response
+    # build text response from scraping
+    try:
+        _response = {i: j.strip() for i, j in zip(keys, values)}
+        _response.update(
+            {"propietarios": " + ".join(values[12:-1]), "ano": year_guide[values[2][9]]}
+        )
+        return _response
+    except:
+        return {}
 
 
 def main(SUNARP, placas):
+
+    # don't run if no records to process
+    if not placas:
+        return []
+
     URL1 = "https://www.gob.pe/sunarp"
     URL2 = "https://www.sunarp.gob.pe/consulta-vehicular.html"
     SUNARP.WEBD = ChromeUtils().init_driver(
@@ -194,10 +239,8 @@ def main(SUNARP, placas):
             try:
                 # load captcha from webpage
                 captcha_img = get_captcha_image(SUNARP)
-
                 # capture captcha manually
                 captcha_txt = gui(canvas, captcha_img)
-
                 # attempt to scrape image
                 response = SUNARP.browser(placa=placa[4], captcha_txt=captcha_txt)
 
@@ -215,7 +258,6 @@ def main(SUNARP, placas):
                             },
                         )
                     )
-                    pprint(all_responses)
                     # save captcha image with text as filename
                     with open(
                         (
@@ -243,3 +285,8 @@ def main(SUNARP, placas):
             #     break
 
     return all_responses
+
+
+# testing only
+if __name__ == "__main__":
+    main(1, 2)

@@ -32,8 +32,14 @@ def save_members(members):
 def side(members):
 
     docs_to_process, placas_to_process = updates.get_records_to_process(members)
-    updates.gather_sunarp(members, placas_to_process)
-    quit()
+
+    placas_to_process = [(0, 0, 0, 0, "ABV123")]
+
+    for p in placas_to_process:
+        updates.gather_satmul(members, [p])
+        # updates.gather_satmul(members, placas_to_process)
+
+    return members
 
     for member in members:
         for soat in member["Resultados"]["Soat"]:
@@ -44,19 +50,27 @@ def side(members):
 
 
 def main():
+
     members = load_members()
-    side(members)
+
+    # members = side(members)
+    # return
+    # save_members(members)
+
     # download raw list of all members from form and add new ones with default data
     if "UPDATE" in sys.argv:
-        all_members = updates.load_raw_members(LOG)
+        form_members = updates.load_form_members(LOG)
         members = updates.add_new_members(
-            LOG, all_members=all_members, existing_members=members
+            LOG, form_members=form_members, members=members
         )
 
-        # run SOAT scrape first (if selected) then Automated scrapes (cannot run parallel because of VPN use)
+        # run MANUAL scrapes first (if selected) then Automated scrapes
         docs_to_process, placas_to_process = updates.get_records_to_process(members)
-        if "SOAT" in sys.argv:
+
+        if "MAN" in sys.argv:
             members = updates.gather_soat(members, placas_to_process)
+            members = updates.gather_sunarp(members, placas_to_process)
+            members = updates.gather_satmul(members, placas_to_process)
         members = updates.gather(
             LOG, members, docs_to_process, placas_to_process, responses
         )
@@ -95,7 +109,7 @@ if __name__ == "__main__":
     LOG = start_logger()
     LOG.info("Start Program.")
 
-    # defin variable to be used by scraper threads
+    # define variable to be used by scraper threads
     responses = [[] for _ in range(4)]
 
     # run main program
@@ -105,8 +119,8 @@ if __name__ == "__main__":
     LOG.info("-" * 20 + " End Program " + "-" * 20)
 
 """
-Prouction Sequence:
-- python main.py UPDATE SOAT
+ProDuction Sequence:
+- python main.py UPDATE MAN
 - pythom main.py ALERT EMAIL
 
 Automated only:
