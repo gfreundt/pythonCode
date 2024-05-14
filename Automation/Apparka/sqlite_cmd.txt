@@ -1,0 +1,89 @@
+DROP TABLE IF EXISTS usuarios;
+
+CREATE TABLE
+    usuarios (
+        IdUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
+        Nombre TEXT (40),
+        DocTipo TEXT (12),
+        DocNum TEXT (12) UNIQUE,
+        Telefono TEXT (9),
+        Correo TEXT (20),
+        IdPNET INTEGER
+    );
+
+DROP TABLE IF EXISTS brevetes;
+
+CREATE TABLE
+    brevetes (
+        IdBrevete INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdUsuario_FK INT,
+        Clase TEXT (5),
+        Numero TEXT (14) UNIQUE,
+        Tipo TEXT (15),
+        FechaExp DATE,
+        Restricciones TEXT (20),
+        FechaHasta DATE(10),
+        Centro TEXT (20),
+        Actualizado TEXT (10)
+    );
+
+DROP TABLE IF EXISTS satimps;
+
+CREATE TABLE
+    satimps (
+        IdSatimp INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdUsuario_FK INT,
+        Codigo TEXT (8) UNIQUE,
+        Actualizado TEXT (10)
+    );
+
+DROP TABLE IF EXISTS satimpDeudas;
+
+CREATE TABLE
+    satimpDeudas (
+        IdSatImpDeuda INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdSatimp_FK INTEGER,
+        Ano TEXT (4),
+        Periodo INT,
+        Documento TEXT (14),
+        TotalAPagar DECIMAL(7, 2)
+    );
+
+DROP TABLE IF EXISTS placas;
+
+CREATE TABLE
+    placas (
+        IdPlaca INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdUsuario_FK INT,
+        Placa TEXT (6) UNIQUE
+    );
+
+DROP TABLE IF EXISTS revtecs;
+
+CREATE TABLE
+    revtecs (
+        IdRevTec INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdPlaca_FK INT,
+        Certificadora TEXT (40),
+        Placa TEXT (6),
+        Certificado TEXT (22),
+        FechaDesde TEXT (10),
+        FechaHasta TEXT (10),
+        Resultado TEXT (10),
+        Vigencia TEXT (10),
+        Actualizado TEXT (10)
+    );
+
+DROP TABLE IF EXISTS sutrans;
+
+CREATE TABLE
+    sutrans (
+        IdSutran INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdPlaca_FK INT,
+        Documento TEXT (15),
+        Tipo TEXT (30),
+        FechaDoc TEXT (10),
+        CodigoInfrac TEXT (4),
+        Clasificacion TEXT (10),
+        Actualizado TEXT (10)
+    );
