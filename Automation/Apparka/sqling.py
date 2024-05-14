@@ -3,6 +3,10 @@ from tqdm import tqdm
 import sqlite3
 
 
+def dt(text):
+    return f"{text[6:]}-{text[3:5]}-{text[:2]}"
+
+
 def main():
     DB = os.path.join(os.curdir, "test2.db")
     JSONDB = os.path.join(os.curdir, "data", "complete_data.json")
@@ -39,8 +43,6 @@ def main():
         cursor.execute(select, (record["documento"]["numero"],))
         IdUsuario = cursor.fetchone()[0]
 
-        # print(usuario_id)
-
         # brevetes
         cmd = f"""INSERT OR IGNORE INTO brevetes (
             IdUsuario_FK, Clase, Numero, Tipo, FechaExp, Restricciones, FechaHasta, Centro, Actualizado)
@@ -53,11 +55,11 @@ def main():
                 _rec["clase"],
                 _rec["numero"],
                 _rec["tipo"],
-                _rec["fecha_expedicion"],
+                dt(_rec["fecha_expedicion"]),
                 _rec["restricciones"],
-                _rec["fecha_hasta"],
+                dt(_rec["fecha_hasta"]),
                 _rec["centro"],
-                record["documento"]["brevete_actualizado"],
+                dt(record["documento"]["brevete_actualizado"]),
             )
             cursor.execute(cmd, values)
 
@@ -77,7 +79,7 @@ def main():
                 values = (
                     IdUsuario,
                     cdg,
-                    record["documento"]["deuda_tributaria_sat_actualizado"],
+                    dt(record["documento"]["deuda_tributaria_sat_actualizado"]),
                 )
                 cursor.execute(cmd, values)
 
@@ -142,11 +144,11 @@ def main():
                         _rtec["certificadora"],
                         _rtec["placa"],
                         _rtec["certificado"],
-                        _rtec["fecha_desde"],
-                        _rtec["fecha_hasta"],
+                        dt(_rtec["fecha_desde"]),
+                        dt(_rtec["fecha_hasta"]),
                         _rtec["resultado"],
                         _rtec["vigencia"],
-                        vehiculo["rtecs_actualizado"],
+                        dt(vehiculo["rtecs_actualizado"]),
                     )
                     cursor.execute(cmd2, values)
 
@@ -157,10 +159,10 @@ def main():
                         IdPlaca,
                         _sut["documento"],
                         _sut["tipo"],
-                        _sut["fecha_documento"],
+                        dt(_sut["fecha_documento"]),
                         _sut["codigo_infraccion"],
                         _sut["clasificacion"],
-                        vehiculo["multas"]["sutran_actualizado"],
+                        dt(vehiculo["multas"]["sutran_actualizado"]),
                     )
                     cursor.execute(cmd3, values)
 

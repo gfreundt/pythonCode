@@ -24,7 +24,7 @@ CREATE TABLE
         Restricciones TEXT (20),
         FechaHasta DATE(10),
         Centro TEXT (20),
-        Actualizado TEXT (10)
+        Actualizado DATE(10)
     );
 
 DROP TABLE IF EXISTS satimps;
@@ -34,7 +34,7 @@ CREATE TABLE
         IdSatimp INTEGER PRIMARY KEY AUTOINCREMENT,
         IdUsuario_FK INT,
         Codigo TEXT (8) UNIQUE,
-        Actualizado TEXT (10)
+        Actualizado DATE(10)
     );
 
 DROP TABLE IF EXISTS satimpDeudas;
@@ -54,7 +54,7 @@ DROP TABLE IF EXISTS placas;
 CREATE TABLE
     placas (
         IdPlaca INTEGER PRIMARY KEY AUTOINCREMENT,
-        IdUsuario_FK INT,
+        IdUsuario_FK INTEGER,
         Placa TEXT (6) UNIQUE
     );
 
@@ -63,15 +63,15 @@ DROP TABLE IF EXISTS revtecs;
 CREATE TABLE
     revtecs (
         IdRevTec INTEGER PRIMARY KEY AUTOINCREMENT,
-        IdPlaca_FK INT,
+        IdPlaca_FK INTEGER,
         Certificadora TEXT (40),
         Placa TEXT (6),
         Certificado TEXT (22),
-        FechaDesde TEXT (10),
-        FechaHasta TEXT (10),
+        FechaDesde DATE(10),
+        FechaHasta DATE(10),
         Resultado TEXT (10),
         Vigencia TEXT (10),
-        Actualizado TEXT (10)
+        Actualizado DATE(10)
     );
 
 DROP TABLE IF EXISTS sutrans;
@@ -82,8 +82,8 @@ CREATE TABLE
         IdPlaca_FK INT,
         Documento TEXT (15),
         Tipo TEXT (30),
-        FechaDoc TEXT (10),
+        FechaDoc DATE(10),
         CodigoInfrac TEXT (4),
         Clasificacion TEXT (10),
-        Actualizado TEXT (10)
+        Actualizado DATE(10)
     );
