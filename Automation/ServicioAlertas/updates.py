@@ -1,3 +1,4 @@
+import os, io
 import scrapers
 import openpyxl
 from copy import deepcopy as copy
@@ -7,269 +8,515 @@ import threading
 from datetime import datetime as dt, timedelta as td
 from pprint import pprint
 import uuid
-import soat, sunarp, satmul
+from gft_utils import pygameUtils
+import soat, sunarp
+import pygame
+from pygame.locals import *
 
 
-def load_form_members(LOG):
-    # download latest form responses
-    G = GoogleUtils()
-    _folder_id = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
-    _file = [i for i in G.get_drive_files(_folder_id) if "members" in i["title"]][0]
-    G.download_from_drive(_file, ".\data\members.xlsx")
+class Gui:
 
-    # open latest form responses
-    wb = openpyxl.load_workbook(".\data\members.xlsx")
-    sheet = wb["Form Responses 2"]
-    raw_data = [
-        {
-            sheet.cell(row=1, column=j).value: sheet.cell(row=i + 1, column=j).value
-            for j in range(2, sheet.max_column + 1)
-        }
-        for i in range(1, sheet.max_row)
-    ]
+    def __init__(self, zoomto, numchar) -> None:
+        self.zoomto = zoomto
+        self.numchar = numchar
 
-    # clean data and join placas in one list
-    for r, row in enumerate(copy(raw_data)):
-        placas = []
-        for col in row:
-            if type(row[col]) == float:
-                raw_data[r][col] = str(int(row[col]))
-            if type(raw_data[r][col]) == str and "@" in raw_data[r][col]:
-                raw_data[r][col] = raw_data[r][col].lower()
-            if "Nombre" in col:
-                raw_data[r][col] = raw_data[r][col].title()
-            if "Correo" in col:
-                raw_data[r]["Correo"] = raw_data[r].pop(col)
-            if "Placa" in col:
-                if raw_data[r][col]:
-                    placas.append(
-                        raw_data[r][col].replace("-", "").replace(" ", "").upper()
-                    )
-                del raw_data[r][col]
-        raw_data[r].update(
+    def gui(self, canvas, captcha_img):
+        TEXTBOX = pygame.Surface((80, 120))
+        UPPER_LEFT = (10, 10)
+        image = pygame.image.load(io.BytesIO(captcha_img)).convert()
+        image = pygame.transform.scale(image, self.zoomto)
+        canvas.MAIN_SURFACE.fill(canvas.COLORS["BLACK"])
+        canvas.MAIN_SURFACE.blit(image, UPPER_LEFT)
+
+        chars, col = [], 0
+        while True:
+            # pygame capture screen update
+            charsx = f"{''.join(chars):<6}"
+            for colx in range(6):
+                text = canvas.FONTS["NUN80B"].render(
+                    charsx[colx],
+                    True,
+                    canvas.COLORS["BLACK"],
+                    canvas.COLORS["WHITE"],
+                )
+                TEXTBOX.fill(canvas.COLORS["WHITE"])
+                TEXTBOX.blit(text, (12, 5))
+                canvas.MAIN_SURFACE.blit(
+                    TEXTBOX,
+                    (
+                        colx * 90 + UPPER_LEFT[0] + 20 + 500,
+                        UPPER_LEFT[1],
+                    ),
+                )
+            pygame.display.flip()
+
+            # capture keystrokes and add to manual captcha input
+            events = pygame.event.get()
+            numpad = (
+                K_KP0,
+                K_KP1,
+                K_KP2,
+                K_KP3,
+                K_KP4,
+                K_KP5,
+                K_KP6,
+                K_KP7,
+                K_KP8,
+                K_KP9,
+            )
+            for event in events:
+                if event.type == QUIT or (event.type == KEYDOWN and event.key == 27):
+                    quit()
+                elif event.type == KEYDOWN:
+                    if event.key == K_BACKSPACE:
+                        if col == 0:
+                            continue
+                        chars = chars[:-1]
+                        col -= 1
+                    elif event.key in (K_SPACE, K_RETURN):
+                        continue
+                    elif event.key in numpad:
+                        chars.append(str(numpad.index(event.key)))
+                        col += 1
+                    else:
+                        try:
+                            chars.append(chr(event.key))
+                            col += 1
+                        except Exception:
+                            pass
+
+            # if all chars are complete, return manual captcha as string
+            if col == self.numchar:
+                canvas.MAIN_SURFACE.fill(canvas.COLORS["GREEN"])
+                pygame.display.flip()
+                return "".join(chars)
+
+
+class Updates:
+
+    def __init__(self, LOG, DB) -> None:
+        self.LOG = LOG
+        self.cursor = DB.cursor
+        self.conn = DB.conn
+        self.sql = DB.sql
+
+    def load_form_members(self):
+        # download latest form responses
+        G = GoogleUtils()
+        _folder_id = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
+        _file = [i for i in G.get_drive_files(_folder_id) if "members" in i["title"]][0]
+        G.download_from_drive(_file, ".\data\members.xlsx")
+
+        # open latest form responses
+        wb = openpyxl.load_workbook(".\data\members.xlsx")
+        sheet = wb["Form Responses 2"]
+        raw_data = [
             {
-                "Placas": placas,
+                sheet.cell(row=1, column=j).value: sheet.cell(row=i + 1, column=j).value
+                for j in range(2, sheet.max_column + 1)
             }
+            for i in range(1, sheet.max_row)
+        ]
+
+        # clean data and join placas in one list
+        for r, row in enumerate(copy(raw_data)):
+            placas = []
+            for col in row:
+                if type(row[col]) == float:
+                    raw_data[r][col] = str(int(row[col]))
+                if type(raw_data[r][col]) == str and "@" in raw_data[r][col]:
+                    raw_data[r][col] = raw_data[r][col].lower()
+                if "Nombre" in col:
+                    raw_data[r][col] = raw_data[r][col].title()
+                if "Correo" in col:
+                    raw_data[r]["Correo"] = raw_data[r].pop(col)
+                if "Placa" in col:
+                    if raw_data[r][col]:
+                        placas.append(
+                            raw_data[r][col].replace("-", "").replace(" ", "").upper()
+                        )
+                    del raw_data[r][col]
+            raw_data[r].update(
+                {
+                    "Placas": placas,
+                }
+            )
+        return raw_data
+
+    def add_new_members(self):
+        # download form and structure data to add to database
+        form_members = self.load_form_members()
+
+        # get DocNum from existing members as index to avoid duplicates
+        self.cursor.execute("SELECT DocNum FROM members")
+        existing_members_docs = [i[0] for i in self.cursor.fetchall()]
+
+        # iterate on all members from online form and only add new ones (new DocNum)
+        for member in form_members:
+            # add basic information to members table
+            if str(member["Número de Documento"]) not in existing_members_docs:
+                cmd = self.sql(
+                    "members",
+                    [
+                        "NombreCompleto",
+                        "DocTipo",
+                        "DocNum",
+                        "Celular",
+                        "Correo",
+                        "CodMember",
+                    ],
+                )
+                values = list(member.values())[:5] + [
+                    "SAP-" + str(uuid.uuid4())[-6:].upper()
+                ]
+                self.cursor.execute(cmd, values)
+
+                # get autoindex number to link to placas table
+                cmd = f"SELECT * FROM members WHERE DocNum = '{values[2]}'"
+                self.cursor.execute(cmd)
+                idmember = self.cursor.fetchone()[0]
+
+                # add placas to placas table
+                for placa in member["Placas"]:
+                    cmd = self.sql("placas", ["IdMember_FK", "Placa"])
+                    values = [idmember] + [placa]
+                    self.cursor.execute(cmd, values)
+
+                self.LOG.info(
+                    f"Appended new record: {idmember} - {member['Número de Documento']}"
+                )
+
+    def get_records_to_process(self):
+
+        # process BIENVENIDA
+
+        # get documentos with no bienvenida message
+        cmd = """SELECT IdMember, DocTipo, DocNum FROM members
+                EXCEPT
+                SELECT IdMember, DocTipo, DocNum FROM (
+                SELECT mensajes.IdMember_FK FROM mensajes JOIN mensajeContenidos ON mensajes.IdMensaje = mensajeContenidos.IdMensaje_FK
+                WHERE IdTipoMensaje_FK = 12)
+                JOIN members
+                ON members.IdMember = IdMember_FK"""
+        self.cursor.execute(cmd)
+        self.docs_to_process = self.cursor.fetchall()
+
+        # get placas with no bienvenida message
+        cmd = """SELECT IdMember, Placa FROM placas
+                JOIN (SELECT IdMember, DocTipo, DocNum FROM members
+                EXCEPT
+                SELECT IdMember, DocTipo, DocNum FROM (
+                SELECT mensajes.IdMember_FK FROM mensajes JOIN mensajeContenidos ON mensajes.IdMensaje = mensajeContenidos.IdMensaje_FK
+                WHERE IdTipoMensaje_FK = 12)
+                JOIN members
+                ON members.IdMember = IdMember_FK)
+                ON placas.IdMember_FK = IdMember"""
+        self.cursor.execute(cmd)
+        self.placas_to_process = self.cursor.fetchall()
+
+        print(self.placas_to_process)
+        print(self.docs_to_process)
+
+    def gather_soat(self):
+        # open URL and activate scraper
+        URL = "https://www.apeseg.org.pe/consultas-soat/"
+        WEBD = ChromeUtils().init_driver(headless=True, maximized=True, incognito=True)
+        WEBD.get(URL)
+        canvas = pygameUtils(screen_size=(1050, 130))
+        SCRAPER = scrapers.Soat(WEBD)
+        GUI = Gui(zoomto=(465, 105), numchar=6)
+
+        # iterate on every placa and write to database
+        for placa in self.placas_to_process:
+            try:
+                while True:
+                    captcha_img = SCRAPER.get_captcha_img(WEBD)
+                    captcha = GUI.gui(canvas, captcha_img)
+                    response = SCRAPER.browser(placa=placa[1], captcha_txt=captcha)
+                    # wrong captcha - restart loop with same placa
+                    if response == -2:
+                        WEBD.refresh()
+                        continue
+                    # exceed limit of manual captchas - abort iteration
+                    elif response == -1:
+                        return
+                    # if there is data in response, enter into database, go to next placa
+                    elif response:
+                        cmd = self.sql(
+                            "soats",
+                            [
+                                "IdPlaca_FK",
+                                "Aseguradora",
+                                "FechaInicio",
+                                "FechaFin",
+                                "PlacaValidate",
+                                "Certificado",
+                                "Uso",
+                                "Clase",
+                                "Vigencia",
+                                "Tipo",
+                                "FechaVenta",
+                                "LastUpdate",
+                            ],
+                        )
+                        values = (
+                            [placa[0]]
+                            + list(response.values())
+                            + [dt.now().strftime("%Y-%m-%d")]
+                        )
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()  # writes every time - maybe take away later
+                        break
+            except KeyboardInterrupt:
+                quit()
+            except:
+                time.sleep(3)
+                WEBD.refresh()
+                break
+
+    def gather_sunarp(self):
+        # open first URL, wait and open second URL and activate scraper
+        URL1 = "https://www.gob.pe/sunarp"
+        URL2 = "https://www.sunarp.gob.pe/consulta-vehicular.html"
+        WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True, incognito=True
         )
-    return raw_data
+        WEBD.get(URL1)
+        time.sleep(2)
+        WEBD.get(URL2)
+        time.sleep(1)
+        canvas = pygameUtils(screen_size=(1070, 140))
+        SCRAPER = scrapers.Sunarp(WEBD)
+        GUI = Gui(zoomto=(500, 120), numchar=6)
 
+        # iterate on every placa and write to database
+        for placa in self.placas_to_process:
+            try:
+                while True:
+                    captcha_img = SCRAPER.get_captcha_image()
+                    captcha = GUI.gui(canvas, captcha_img)
+                    response = SCRAPER.browser(placa=placa[1], captcha_txt=captcha)
+                    # wrong captcha or correct catpcha, no image loaded - restart loop with same placa
+                    if response < 0:
+                        WEBD.refresh()
+                        continue
+                    # correct captcha, no data for placa - enter update attempt to database, go to next placa
+                    elif response == 1:
+                        cmd = self.sql("sunarps", ["IdPlaca_FK", "ImgUpdate"])
+                        values = [placa[0], dt.now().strftime("%Y-%m-%d")]
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()  # writes every time - maybe take away later
+                        break
+                    # if there is data in response, enter into database, go to next placa
+                    elif response:
+                        # process image and save to disk, update database with file infomration
+                        _img_filename = f"SUNARP_{placa[1]}.png"
+                        sunarp.process_image(response, _img_filename)
+                        cmd = self.sql(
+                            "sunarps", ["IdPlaca_FK", "ImgFilename", "ImgUpdate"]
+                        )
+                        values = [
+                            placa[0],
+                            _img_filename,
+                            dt.now().strftime("%Y-%m-%d"),
+                        ]
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()  # writes every time - maybe take away later
+                        # attempt ocr on image, update database with file information if succesful
+                        ocr_result = sunarp.ocr_and_parse(_img_filename)
+                        if ocr_result:
+                            cmd = """UPDATE TABLE sunarps SET
+                              IdPlaca_FK,
+                              PlacaValidate,
+                              Serie,
+                              VIN,
+                              Motor,
+                              Color,
+                              Marca,
+                              Modelo,
+                              PlacaVigente,
+                              PlacaAnterior,
+                              Estado,
+                              Anotaciones,
+                              Sede,
+                              Propietarios,
+                              Ano
+                              LastUpdate
+                              VALUES
+                              (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
+                            values = (
+                                [placa[0]]
+                                + ocr_result
+                                + [dt.now().strftime("%Y-%m-%d")]
+                            )
+                            self.cursor.execute(cmd, values)
+                            break
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     time.sleep(3)
+            #     WEBD.refresh()
+            #     break
 
-def add_new_members(LOG, form_members, members):
-    correlativo = len(members)
-    existing_members_docs = [i["Datos"]["Número de Documento"] for i in members]
-    for all_member in form_members:
-        if str(all_member["Número de Documento"]) not in existing_members_docs:
-            _new_record = {
-                "Correlativo": correlativo,
-                "Codigo": "SAP-" + str(uuid.uuid4())[-6:].upper(),
-                "Datos": all_member,
-                "Resultados": {
-                    "Satimp": [],
-                    "Satimp_Actualizado": "01/01/1999",
-                    "Brevete": {},
-                    "Brevete_Actualizado": "01/01/1999",
-                    "Revtec": [],
-                    "Revtec_Actualizado": "01/01/1999",
-                    "Sutran": [],
-                    "Sutran_Actualizado": "01/01/1999",
-                    "Soat": [],
-                    "Soat_Actualizado": "01/01/1999",
-                },
-                "Envios": {
-                    "Bienvenida": {},
-                    "Regular": [],
-                    "Alertas": {
-                        "Brevete": [],
-                        "Satimp": [],
-                        "Revtec": [],
-                        "Sutran": [],
-                    },
-                },
+    def gather_satmul(self):
+        # open URL and activate scraper
+        URL = "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx"
+        WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True, incognito=False
+        )
+        WEBD.get(URL)
+        _target = (
+            "https://www.sat.gob.pe/VirtualSAT/modulos/papeletas.aspx?tri=T&mysession="
+            + WEBD.current_url.split("=")[-1]
+        )
+        time.sleep(2)
+        WEBD.get(_target)
+        SCRAPER = scrapers.Satmul()
+
+        # iterate on every placa and write to database
+        for placa in self.placas_to_process:
+            try:
+                while True:
+                    response = SCRAPER.browser(placa=placa[1])
+                    # unsuccesful scrape - restart loop with same placa
+                    if response < 0:
+                        WEBD.refresh()
+                        continue
+                    # if there is data in response, enter into database, go to next placa
+                    elif response:
+                        cmd = self.sql(
+                            "satmul",
+                            [
+                                "IdPlaca_FK",
+                                "Aseguradora",
+                                "FechaInicio",
+                                "FechaFin",
+                                "PlacaValidate",
+                                "Certificado",
+                                "Uso",
+                                "Clase",
+                                "Vigencia",
+                                "Tipo",
+                                "FechaVenta",
+                                "LastUpdate",
+                            ],
+                        )
+                        values = (
+                            [placa[0]]
+                            + list(response.values())
+                            + [dt.now().strftime("%Y-%m-%d")]
+                        )
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()  # writes every time - maybe take away later
+                        break
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     time.sleep(3)
+            #     WEBD.refresh()
+            #     break
+
+    def gather_auto(self, members, docs_to_process, placas_to_process):
+        HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran", "SoatImage", "CallaoMulta"]
+        URLS = [
+            "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
+            "https://licencias.mtc.gob.pe/#/index",
+            "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
+            "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
+            "https://www.pacifico.com.pe/consulta-soat",
+            "https://pagopapeletascallao.pe/",
+        ]
+        scraper = [
+            (scrapers.Satimp(None), docs_to_process),
+            (scrapers.Brevete(None, URLS[1]), docs_to_process),
+            (scrapers.Revtec(None), placas_to_process),
+            (scrapers.Sutran(None), placas_to_process),
+            (scrapers.SoatImage(), placas_to_process),
+            (scrapers.CallaoMulta(), placas_to_process),
+        ]
+
+        # # TEST ONLY
+        # URLS = ["https://www.pacifico.com.pe/consulta-soat"]
+        # scraper = [(scrapers.SoatImage(), placas_to_process)]
+
+        threads = []
+        for index, (url, scrap) in enumerate(zip(URLS, scraper)):
+            _t = threading.Thread(
+                target=self.full_update,
+                args=(
+                    self.LOG,
+                    url,
+                    scrap[0],
+                    scrap[1],
+                    index,
+                    responses,
+                    HEADERS[index],
+                ),
+            )
+            threads.append(_t)
+            _t.start()
+
+        for thread in threads:
+            thread.join()
+
+        # join responses in member list order
+        new_response = [
+            {
+                "Satimp": {},
+                "Brevete": {},
+                "Revtec": [[], [], []],
+                "Sutran": [[], [], []],
+                "SoatImage": {},
             }
+            for _ in range(len(members))
+        ]
+        for response, header in zip(responses, HEADERS):
+            for resp in response:
+                rec, pos, data = resp
+                if pos == -1:
+                    new_response[rec].update({header: data})
+                else:
+                    new_response[rec][header][pos] = data
 
-            correlativo += 1
-            members.append(_new_record)
-            LOG.info(
-                f"Appended new record: {_new_record['Correlativo']} - {_new_record['Datos']['Nombre y Apellido']}"
-            )
+        # delete dictionary keys that have no data to update
+        # TODO: Sutran?
+        new_responses = [
+            {k: v for k, v in j.items() if v and v != [[], [], []]}
+            for j in new_response
+        ]
 
-    return members
+        pprint(new_responses)
 
+        for k, response in enumerate(new_responses):
+            if response:
+                members[k]["Resultados"].update(response)
+                for header in HEADERS:
+                    members[k]["Resultados"][
+                        f"{header}_Actualizado"
+                    ] = dt.now().strftime("%d/%m/%Y")
+        return members
 
-def get_records_to_process(members):
-    # TODO: beyond welcome
-    docs_to_process, placas_to_process = [], []
-    for member in members:
-        if True:  # not member["Envios"]["Bienvenida"]:
-            docs_to_process.append(
-                (
-                    member["Correlativo"],
-                    -1,
-                    member["Datos"]["Documento Tipo"],
-                    member["Datos"]["Número de Documento"],
-                    "",
-                )
-            )
-            for k, placa in enumerate(member["Datos"]["Placas"]):
-                placas_to_process.append((member["Correlativo"], k, "", "", placa))
-
-    return docs_to_process, placas_to_process
-
-
-def gather_soat(members, placas_to_process):
-    SOAT = scrapers.Soat()
-    scraper_responses = soat.main(SOAT, placas_to_process)
-
-    new_response = [{"Soat": [[], [], []]} for _ in range(len(members))]
-    for response in scraper_responses:
-        rec, pos, data = response
-        new_response[rec]["Soat"][pos] = data
-
-    # delete dictionary keys that have no data to update
-    new_responses = [
-        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
-    ]
-
-    for k, response in enumerate(new_responses):
-        members[k]["Resultados"].update(response)
-        members[k]["Resultados"]["Soat_Actualizado"] = dt.now().strftime("%d/%m/%Y")
-    return members
-
-
-def gather_sunarp(members, placas_to_process):
-    SUNARP = scrapers.Sunarp()
-    scraper_responses = sunarp.main(SUNARP, placas_to_process)
-
-    new_response = [{"Sunarp": [[], [], []]} for _ in range(len(members))]
-    for response in scraper_responses:
-        rec, pos, data = response
-        new_response[rec]["Sunarp"][pos] = data
-
-    # delete dictionary keys that have no data to update
-    new_responses = [
-        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
-    ]
-
-    for k, response in enumerate(new_responses):
-        members[k]["Resultados"].update(response)
-        members[k]["Resultados"]["Sunarp_Actualizado"] = dt.now().strftime("%d/%m/%Y")
-    return members
-
-
-def gather_satmul(members, placas_to_process):
-    SATMUL = scrapers.Satmul()
-    scraper_responses = satmul.main(SATMUL, placas_to_process)
-
-    new_response = [{"Satmul": [[], [], []]} for _ in range(len(members))]
-    for response in scraper_responses:
-        rec, pos, data = response
-        new_response[rec]["Satmul"][pos] = data
-
-    # delete dictionary keys that have no data to update
-    new_responses = [
-        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
-    ]
-
-    for k, response in enumerate(new_responses):
-        members[k]["Resultados"].update(response)
-        members[k]["Resultados"]["Satmul_Actualizado"] = dt.now().strftime("%d/%m/%Y")
-
-    return members
-
-
-def gather_auto(LOG, members, docs_to_process, placas_to_process, responses):
-    HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran", "SoatImage", "CallaoMulta"]
-    URLS = [
-        "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
-        "https://licencias.mtc.gob.pe/#/index",
-        "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
-        "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
-        "https://www.pacifico.com.pe/consulta-soat",
-        "https://pagopapeletascallao.pe/",
-    ]
-    scraper = [
-        (scrapers.Satimp(None), docs_to_process),
-        (scrapers.Brevete(None, URLS[1]), docs_to_process),
-        (scrapers.Revtec(None), placas_to_process),
-        (scrapers.Sutran(None), placas_to_process),
-        (scrapers.SoatImage(), placas_to_process),
-        (scrapers.CallaoMulta(), placas_to_process),
-    ]
-
-    # # TEST ONLY
-    # URLS = ["https://www.pacifico.com.pe/consulta-soat"]
-    # scraper = [(scrapers.SoatImage(), placas_to_process)]
-
-    threads = []
-    for index, (url, scrap) in enumerate(zip(URLS, scraper)):
-        _t = threading.Thread(
-            target=full_update,
-            args=(LOG, url, scrap[0], scrap[1], index, responses, HEADERS[index]),
+    def full_update(self, URL, scraper, data_to_process, index, responses, name):
+        # define Chromedriver and open url for first time
+        scraper.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
         )
-        threads.append(_t)
-        _t.start()
+        scraper.WEBD.get(URL)
+        time.sleep(3)
 
-    for thread in threads:
-        thread.join()
-
-    # join responses in member list order
-    new_response = [
-        {
-            "Satimp": {},
-            "Brevete": {},
-            "Revtec": [[], [], []],
-            "Sutran": [[], [], []],
-            "SoatImage": {},
-        }
-        for _ in range(len(members))
-    ]
-    for response, header in zip(responses, HEADERS):
-        for resp in response:
-            rec, pos, data = resp
-            if pos == -1:
-                new_response[rec].update({header: data})
-            else:
-                new_response[rec][header][pos] = data
-
-    # delete dictionary keys that have no data to update
-    # TODO: Sutran?
-    new_responses = [
-        {k: v for k, v in j.items() if v and v != [[], [], []]} for j in new_response
-    ]
-
-    pprint(new_responses)
-
-    for k, response in enumerate(new_responses):
-        if response:
-            members[k]["Resultados"].update(response)
-            for header in HEADERS:
-                members[k]["Resultados"][f"{header}_Actualizado"] = dt.now().strftime(
-                    "%d/%m/%Y"
+        # iterate on all records that require updating
+        for k, data in enumerate(data_to_process):
+            # get scraper data
+            try:
+                new_record, _ = scraper.browser(
+                    doc_tipo=data[2], doc_num=data[3], placa=data[4]
                 )
-    return members
+                responses[index].append((data[0], data[1], new_record))
+            except KeyboardInterrupt:
+                quit()
+            except:
+                self.LOG.warning(f"No proceso {data}")
+                responses[index].append((data[0], data[1], ""))
+                scraper.WEBD.refresh()
 
-
-def full_update(LOG, URL, scraper, data_to_process, index, responses, name):
-    # define Chromedriver and open url for first time
-    scraper.WEBD = ChromeUtils().init_driver(
-        headless=False, verbose=False, maximized=True
-    )
-    scraper.WEBD.get(URL)
-    time.sleep(3)
-
-    # iterate on all records that require updating
-    for k, data in enumerate(data_to_process):
-        # get scraper data
-        try:
-            new_record, _ = scraper.browser(
-                doc_tipo=data[2], doc_num=data[3], placa=data[4]
-            )
-            responses[index].append((data[0], data[1], new_record))
-        except KeyboardInterrupt:
-            quit()
-        except:
-            LOG.warning(f"No proceso {data}")
-            responses[index].append((data[0], data[1], ""))
-            scraper.WEBD.refresh()
-
-        print(f"{name}: {(k+1)/len(data_to_process)*100:.1f}%")
+            print(f"{name}: {(k+1)/len(data_to_process)*100:.1f}%")
