@@ -31,13 +31,15 @@ def save_members(members):
 
 def side(members):
 
+    f = [i["Datos"]["Placas"][0] for i in members]
+    print(f)
+    return
     docs_to_process, placas_to_process = updates.get_records_to_process(members)
 
-    placas_to_process = [(0, 0, 0, 0, "ABV123")]
+    # placas_to_process = [(0, 0, 0, 0, "ABV123")]
 
-    for p in placas_to_process:
-        updates.gather_satmul(members, [p])
-        # updates.gather_satmul(members, placas_to_process)
+    updates.gather_auto(members, placas_to_process)
+    # updates.gather_satmul(members, placas_to_process)
 
     return members
 
@@ -71,7 +73,8 @@ def main():
             members = updates.gather_soat(members, placas_to_process)
             members = updates.gather_sunarp(members, placas_to_process)
             members = updates.gather_satmul(members, placas_to_process)
-        members = updates.gather(
+
+        members = updates.gather_auto(
             LOG, members, docs_to_process, placas_to_process, responses
         )
 
@@ -110,7 +113,7 @@ if __name__ == "__main__":
     LOG.info("Start Program.")
 
     # define variable to be used by scraper threads
-    responses = [[] for _ in range(4)]
+    responses = [[] for _ in range(10)]
 
     # run main program
     main()

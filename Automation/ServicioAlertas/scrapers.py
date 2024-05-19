@@ -3,14 +3,14 @@ from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime as dt, timedelta as td
 import time
 from PIL import Image
 import io, urllib
+import os, shutil
 import random
 import easyocr
+from gft_utils import PDFUtils
 
 
 class Satimp:
@@ -514,7 +514,6 @@ class Revtec:
 class Sutran:
     def __init__(self, db) -> None:
         self.DB = db
-        self.READER = easyocr.Reader(["es"], gpu=False)
 
     def records_to_update(self, last_update_threshold):
         to_update = [[] for _ in range(2)]
@@ -616,6 +615,165 @@ class Sutran:
         return response, captcha_attempts
 
 
+class SoatImage:
+
+    def __init__(self):
+        self.pdf = PDFUtils()
+
+    def browser(self, **kwargs):
+
+        while True:
+
+            # required data for scrape
+            placa = kwargs["placa"]
+
+            url = f"https://soat.pacifico.com.pe/certificado-soat/?numero-placa={placa}&consent=false&origen=Seguros-ParaTusBienes-ConsultaSOAT-Top-Hero-01-Boton-ConsultaSoatIngresaTuPlacaConsultar"
+            self.WEBD.get(url)
+
+            # placa not found
+            z = self.WEBD.find_elements(
+                By.XPATH,
+                "/html/body/div[1]/div[1]/div/div[1]/div/div[2]/div[1]/div/h1",
+            )
+            if z:  # and "No tienes" in z[0].text:
+                return {"Soat_Imagen": None}, None
+
+            # wair for button and click DESCARGAR for 10 seconds
+            z = False
+            count = 0
+            while not z and count < 10:
+                z = self.WEBD.find_elements(
+                    By.XPATH,
+                    "/html/body/div[1]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/button",
+                )
+                time.sleep(1)
+                count += 1
+
+            try:
+                z[0].click()
+                time.sleep(2)
+            except:
+                return {"Soat_Imagen": None}, None
+
+            _file_name = f"SOAT-{placa.upper()}-{dt.strftime(dt.now(),'%Y%m%d')}.pdf"
+            # wait up to 15 seconds while file is downloaded
+            count = 0
+            while (
+                not os.path.isfile(
+                    os.path.join(r"C:\Users", "Gabriel", "Downloads", _file_name)
+                )
+                and count < 10
+            ):
+                time.sleep(1)
+                count += 1
+
+            # take downloaded PDF, process image and save in data folder
+            try:
+                from_path = os.path.join(
+                    r"C:\Users", "Gabriel", "Downloads", _file_name
+                )
+                to_path = os.path.join(
+                    r"D:\pythonCode",
+                    "Automation",
+                    "ServicioAlertas",
+                    "data",
+                    "images",
+                    f"SOAT_{placa.upper()}.png",
+                )
+
+                img = self.pdf.pdf_to_png(from_path, scale=1.3).crop(
+                    (135, 64, 635, 844)
+                )
+                img.save(to_path)
+
+                return {"Soat_Imagen": os.path.basename(to_path)}, None
+
+            except:
+                return {"Soat_Imagen": None}, None
+
+
+class CallaoMulta:
+    def __init__(self, db) -> None:
+        self.READER = easyocr.Reader(["es"], gpu=False)
+
+    def browser(self, **kwargs):
+        import numpy as np
+
+        placa = kwargs["placa"]
+
+        retry_captcha = False
+        while True:
+            # get captcha in string format
+            captcha_txt = ""
+            while not captcha_txt:
+                if retry_captcha:
+                    self.WEBD.refresh()
+                    time.sleep(1)
+
+                # captura captcha image from webpage store in variable
+                _captcha_img = self.WEBD.find_element(
+                    By.XPATH, "/html/body/div[3]/div[1]/div[3]/p/img"
+                ).screenshot_as_png
+
+                _img = Image.open(io.BytesIO(_captcha_img))
+                imgs = [
+                    _img.crop((i, 0, j, 40)).resize((110, 80))
+                    for i, j in [(0, 55), (55, 110), (110, 165)]
+                ]
+
+                captcha_txt = ""
+                # convert image to text using OCR
+                for img in imgs:
+                    _captcha = self.READER.readtext(np.asarray(img), text_threshold=0.5)
+                    captcha = (
+                        _captcha[0][1]
+                        if len(_captcha) > 0 and len(_captcha[0]) > 0
+                        else "X"
+                    )
+                    captcha_txt += captcha
+
+                if not captcha_txt.isnumeric():
+                    captcha_txt = False
+                    retry_captcha = True
+                else:
+                    retry_captcha = False
+
+            # enter data into fields and run
+            self.WEBD.find_element(By.ID, "valor_busqueda").send_keys(placa)
+            time.sleep(1)
+            self.WEBD.find_element(By.ID, "captcha").send_keys(captcha_txt)
+            time.sleep(0.5)
+            self.WEBD.find_element(By.ID, "idBuscar").click()
+            time.sleep(1)
+
+            # captcha correct, no result
+            x = self.WEBD.find_elements(By.XPATH, "/html/body/div[3]/div[2]/p")
+            y = self.WEBD.find_elements(By.XPATH, "/html/body/div[3]/div[1]/div[6]/p")
+
+            if x:
+                # return empty
+                time.sleep(0.5)
+                return [], 0
+            elif y:
+                # captcha error, retry
+                time.sleep(0.5)
+            else:
+                # captcha ok, data found
+                break
+
+        # extract data from table and parse relevant data, return a dictionary with RTEC data for each PLACA
+        # TODO: find record with data
+        print("EEEEEEEEEEEEEEE", placa)
+        response = "NAKALAPIRINAKA"
+
+        # clear webpage for next response
+        time.sleep(1)
+        self.WEBD.refresh()
+        time.sleep(1)
+
+        return [response], 0
+
+
 class Soat:
     def browser(self, **kwargs):
         placa = kwargs["placa"]
@@ -710,7 +868,7 @@ class Sunarp:
         """returns:
         -2 = captcha wrong (retry)
         -1 = captcha ok, image did not load (retry)
-         1 = captcha ok, placa does not exist
+         2 = captcha ok, placa does not exist
          image object = captcha ok, placa ok
         """
         placa = kwargs["placa"]

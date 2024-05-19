@@ -1,5 +1,4 @@
 import scrapers
-import json, sys, os
 import openpyxl
 from copy import deepcopy as copy
 import time
@@ -101,7 +100,7 @@ def get_records_to_process(members):
     # TODO: beyond welcome
     docs_to_process, placas_to_process = [], []
     for member in members:
-        if not member["Envios"]["Bienvenida"]:
+        if True:  # not member["Envios"]["Bienvenida"]:
             docs_to_process.append(
                 (
                     member["Correlativo"],
@@ -178,24 +177,34 @@ def gather_satmul(members, placas_to_process):
     return members
 
 
-def gather(LOG, members, docs_to_process, placas_to_process, responses):
-    HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran"]
+def gather_auto(LOG, members, docs_to_process, placas_to_process, responses):
+    HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran", "SoatImage", "CallaoMulta"]
     URLS = [
         "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
         "https://licencias.mtc.gob.pe/#/index",
         "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
         "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
+        "https://www.pacifico.com.pe/consulta-soat",
+        "https://pagopapeletascallao.pe/",
     ]
     scraper = [
         (scrapers.Satimp(None), docs_to_process),
         (scrapers.Brevete(None, URLS[1]), docs_to_process),
         (scrapers.Revtec(None), placas_to_process),
         (scrapers.Sutran(None), placas_to_process),
+        (scrapers.SoatImage(), placas_to_process),
+        (scrapers.CallaoMulta(), placas_to_process),
     ]
+
+    # # TEST ONLY
+    # URLS = ["https://www.pacifico.com.pe/consulta-soat"]
+    # scraper = [(scrapers.SoatImage(), placas_to_process)]
+
     threads = []
     for index, (url, scrap) in enumerate(zip(URLS, scraper)):
         _t = threading.Thread(
-            target=full_update, args=(LOG, url, scrap[0], scrap[1], index, responses)
+            target=full_update,
+            args=(LOG, url, scrap[0], scrap[1], index, responses, HEADERS[index]),
         )
         threads.append(_t)
         _t.start()
@@ -205,7 +214,13 @@ def gather(LOG, members, docs_to_process, placas_to_process, responses):
 
     # join responses in member list order
     new_response = [
-        {"Satimp": {}, "Brevete": {}, "Revtec": [[], [], []], "Sutran": [[], [], []]}
+        {
+            "Satimp": {},
+            "Brevete": {},
+            "Revtec": [[], [], []],
+            "Sutran": [[], [], []],
+            "SoatImage": {},
+        }
         for _ in range(len(members))
     ]
     for response, header in zip(responses, HEADERS):
@@ -234,28 +249,27 @@ def gather(LOG, members, docs_to_process, placas_to_process, responses):
     return members
 
 
-def full_update(LOG, URL, scraper, data_to_process, index, responses):
+def full_update(LOG, URL, scraper, data_to_process, index, responses, name):
     # define Chromedriver and open url for first time
     scraper.WEBD = ChromeUtils().init_driver(
-        headless=True, verbose=False, maximized=True
+        headless=False, verbose=False, maximized=True
     )
     scraper.WEBD.get(URL)
     time.sleep(3)
 
     # iterate on all records that require updating
     for k, data in enumerate(data_to_process):
-        print(f"{index}: {(k+1)/len(data_to_process)*100:.1f}%")
         # get scraper data
         try:
-            attempts, new_record = 0, ""
-            while not new_record and attempts < 5:
-                new_record, _ = scraper.browser(
-                    doc_tipo=data[2], doc_num=data[3], placa=data[4]
-                )
-                responses[index].append((data[0], data[1], new_record))
-                attempts += 1
+            new_record, _ = scraper.browser(
+                doc_tipo=data[2], doc_num=data[3], placa=data[4]
+            )
+            responses[index].append((data[0], data[1], new_record))
         except KeyboardInterrupt:
             quit()
         except:
             LOG.warning(f"No proceso {data}")
             responses[index].append((data[0], data[1], ""))
+            scraper.WEBD.refresh()
+
+        print(f"{name}: {(k+1)/len(data_to_process)*100:.1f}%")

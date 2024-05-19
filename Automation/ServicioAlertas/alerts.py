@@ -213,10 +213,9 @@ def send_alerts(
         email_id = f"{member['Codigo']}|{str(uuid.uuid4())[-12:]}"
         content = compose_message1(member, template_welcome, email_id)
 
-        # member["Datos"]["Correo"],
         messages.append(
             {
-                "to": "gfreundt@gmail.com",
+                "to": member["Datos"]["Correo"],
                 "cc": "gabfre@gmail.com",
                 "subject": "Bienvenido al Servicio de Alertas Perú",
                 "body": content,
@@ -243,7 +242,7 @@ def send_alerts(
             {
                 "to": member["Datos"]["Correo"],
                 "cc": "gabfre@gmail.com",
-                "subject": "Aviso del Servicio de Alertas Perú",
+                "subject": "Tu Correo Mensual del Servicio de Alertas Perú",
                 "body": content,
                 "attachments": [],
             }
@@ -268,7 +267,7 @@ def send_alerts(
             {
                 "to": member["Datos"]["Correo"],
                 "cc": "gabfre@gmail.com",
-                "subject": "Tu Correo Mensual del Servicio de Alertas Perú",
+                "subject": "Aviso del Servicio de Alertas Perú",
                 "body": content,
                 "attachments": [],
             }
@@ -318,7 +317,7 @@ def compose_message1(member, template, email_id):
             (int(i["ano"]), int(i["periodo"])) for i in _combina_deudas_sat[0] if i
         ]
 
-    # create list of alerts (5 possible)
+    # create list of alerts
     _alertas = [
         (
             "Licencia de Conducir vencida o vence en menos de 30 días."
@@ -329,7 +328,7 @@ def compose_message1(member, template, email_id):
             else ""
         ),
         (
-            "Al menos una Revision Tecnica vencida o vence en menos de 15 días."
+            "Al menos una Revision Técnica vencida o vence en menos de 15 días."
             if any(
                 [
                     member["Resultados"]["Revtec"]
@@ -342,7 +341,7 @@ def compose_message1(member, template, email_id):
             else ""
         ),
         (
-            "Al menos un certificado SOAT vence en menos de 15 días."
+            "Al menos un certificado SOAT vencido o vence en menos de 15 días."
             if any(
                 [
                     member["Resultados"]["Soat"]
