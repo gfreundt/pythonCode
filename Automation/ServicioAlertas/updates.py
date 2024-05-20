@@ -194,7 +194,8 @@ class Members:
                 SELECT mensajes.IdMember_FK FROM mensajes JOIN mensajeContenidos ON mensajes.IdMensaje = mensajeContenidos.IdMensaje_FK
                 WHERE IdTipoMensaje_FK = 12)
                 JOIN members
-                ON members.IdMember = IdMember_FK"""
+                ON members.IdMember = IdMember_FK
+                """
         self.cursor.execute(cmd)
         self.docs_to_process = self.cursor.fetchall()
 
@@ -207,12 +208,41 @@ class Members:
                 WHERE IdTipoMensaje_FK = 12)
                 JOIN members
                 ON members.IdMember = IdMember_FK)
-                ON placas.IdMember_FK = IdMember"""
+                ON placas.IdMember_FK = IdMember
+                """
         self.cursor.execute(cmd)
         self.placas_to_process = self.cursor.fetchall()
 
         print(self.placas_to_process)
         print(self.docs_to_process)
+
+        # process DOCS
+        base_cmd = (
+            lambda i: f"""
+                SELECT IdMember, DocTipo, DocNum FROM ({i})
+                JOIN members
+                ON members.IdMember = IdMember_FK
+                """
+        )
+
+        sutran = base_cmd("SELECT * FROM soat WHERE XXXXXXXXXXXXX date statement")
+        brevete = base_cmd("SELECT * FROM brevete WHERE XXXXXXXXXXXXX date statement")
+        satimp = base_cmd("SELECT * FROM satimp WHERE XXXXXXXXXXXXX date statement")
+
+        # process PLACAS
+
+        base_cmd = (
+            lambda i: f"""SELECT IdMember, IdPlaca, Placa FROM placas
+                JOIN (
+                SELECT IdMember, DocTipo, DocNum FROM ({i})
+                JOIN members
+                ON members.IdMember = IdMember_FK)
+                ON placas.IdMember_FK = IdMember
+                """
+        )
+
+        soat = base_cmd("SELECT * FROM soat WHERE XXXXXXXXXXXXX date statement")
+        satmul = base_cmd("SELECT * FROM satmul WHERE XXXXXXXXXXXXX date statement")
 
 
 class ManualUpdates:
