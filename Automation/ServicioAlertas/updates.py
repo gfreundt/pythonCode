@@ -1,17 +1,14 @@
-import os, io, json
-import scrapers
+import os, io, time
 import openpyxl
 from copy import deepcopy as copy
-import time
-from gft_utils import ChromeUtils, GoogleUtils
 import threading
 from datetime import datetime as dt, timedelta as td
-from pprint import pprint
 import uuid
-from gft_utils import pygameUtils
-import sunarp
 import pygame
 from pygame.locals import *
+
+import scrapers, sunarp
+from gft_utils import ChromeUtils, GoogleUtils, pygameUtils
 
 
 class Gui:
