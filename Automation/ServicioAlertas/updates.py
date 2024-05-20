@@ -92,16 +92,13 @@ class Gui:
                 return "".join(chars)
 
 
-class Updates:
+class Members:
 
     def __init__(self, LOG, DB) -> None:
         self.LOG = LOG
         self.cursor = DB.cursor
         self.conn = DB.conn
         self.sql = DB.sql
-        self.responses = [[] for _ in range(10)]
-        with open("scraper_guide.json", "r") as file:
-            self.scraper_guide = json.load(file)
 
     def load_form_members(self):
         # download latest form responses
@@ -219,6 +216,15 @@ class Updates:
 
         print(self.placas_to_process)
         print(self.docs_to_process)
+
+
+class ManualUpdates:
+
+    def __init__(self, LOG, DB) -> None:
+        self.LOG = LOG
+        self.cursor = DB.cursor
+        self.conn = DB.conn
+        self.sql = DB.sql
 
     def gather_soat(self):
         # open URL and activate scraper
@@ -418,8 +424,25 @@ class Updates:
             #     WEBD.refresh()
             #     break
 
-    def parallel_updates(self):
-        scrapers = ["satimp", "brevete", "revtec", "sutran", "soatimage", "callaomulta"]
+
+class AutoUpdates:
+
+    def __init__(self, LOG, DB) -> None:
+        self.LOG = LOG
+        self.cursor = DB.cursor
+        self.conn = DB.conn
+        self.sql = DB.sql
+
+    def launch_threads():
+        scrapers = [
+            "satimp",
+            "brevete",
+            "revtec",
+            "sutran",
+            "soatimage",
+            "callaomulta",
+            "osiptel",
+        ]
         threads = [threading.Thread(target=f"gather_{s}") for s in scrapers]
         for thread in threads:
             thread.start()
@@ -456,9 +479,9 @@ class Updates:
                         + list(new_record["Brevete"].values())
                         + [dt.now().strftime("%Y-%m-%d")]
                     )
-                self.cursor.execute(cmd, values)
-                self.conn.commit()  # writes every time - maybe take away later
-                break
+                    self.cursor.execute(cmd, values)
+                    self.conn.commit()  # writes every time - maybe take away later
+                    break
             except KeyboardInterrupt:
                 quit()
             # except:
@@ -466,8 +489,6 @@ class Updates:
             #     scraper.WEBD.refresh()
 
             print(f"Brevete: {(k+1)/len(self.docs_to_process)*100:.1f}%")
-
-        self.conn.commit()
 
     def gather_revtec(self):
         scraper = scrapers.Revtec()
@@ -510,8 +531,6 @@ class Updates:
 
             print(f"RevTec: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
-        self.conn.commit()
-
     def gather_sutran(self):
         scraper = scrapers.Sutran()
         WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
@@ -553,8 +572,6 @@ class Updates:
 
             print(f"Sutran: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
-        self.conn.commit()
-
     def gather_soatimage(self):
         scraper = scrapers.SoatImage()
         WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
@@ -589,7 +606,8 @@ class Updates:
                         + [dt.now().strftime("%Y-%m-%d")]
                     )
                     self.cursor.execute(cmd, values)
-                    self.cursor.execute(cmd, new_record)
+                    self.conn.commit()
+                    break
             except KeyboardInterrupt:
                 quit()
             # except:
@@ -597,8 +615,6 @@ class Updates:
             #     scraper.WEBD.refresh()
 
             print(f"SoatImage {(k+1)/len(self.docs_to_process)*100:.1f}%")
-
-        self.conn.commit()
 
     def gather_callaomulta(self):
         scraper = scrapers.CallaoMulta()
@@ -618,12 +634,14 @@ class Updates:
             except:
                 self.LOG.warning(f"No proceso {rec}")
                 scraper.WEBD.refresh()
+                self.conn.commit()
+                break
 
             print(f"CallaoMultas: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
-        self.conn.commit()
-
-    def gather_satimp(self):
+    def gather_osiptel(self):
+        # TODO
+        return
         scraper = scrapers.Satimp()
         WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
         WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
@@ -641,7 +659,7 @@ class Updates:
             except:
                 self.LOG.warning(f"No proceso {rec}")
                 scraper.WEBD.refresh()
+                self.conn.commit()
+                break
 
             print(f"Satimp: {(k+1)/len(self.docs_to_process)*100:.1f}%")
-
-        self.conn.commit()

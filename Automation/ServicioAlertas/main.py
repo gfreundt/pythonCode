@@ -70,27 +70,32 @@ def side(members):
 
 def main():
 
+    MEMBERS = updates.Members(LOG, DB)
+    MANUAL = updates.ManualUpdates(LOG, DB)
+    AUTO = updates.AutoUpdates(LOG, DB)
+
     # members = side(members)
     # return
     # save_members(members)
 
     if "UPDATE" in sys.argv:
         # download raw list of all members from form and add new ones
-        UPDATE.add_new_members()
+        MEMBERS.add_new_members()
         # select docs and placas to update
-        UPDATE.get_records_to_process()
+        MEMBERS.get_records_to_process()
 
         # TEST ONLY
-        # UPDATE.gather_soat()
-        UPDATE.gather_sunarp()
+        # MANUAL.gather_soat()
+        MANUAL.gather_sunarp()
         return
 
-        # run MANUAL scrapes first (if selected) then Automated scrapes
+        # run MANUAL (requires user action) scrapes first
         if "MAN" in sys.argv:
-            members = UPDATE.gather_soat()
-            members = UPDATE.gather_sunarp()
-            members = UPDATE.gather_satmul()
-        UPDATE.parallel_updates()
+            MANUAL.gather_soat()
+            MANUAL.gather_sunarp()
+            MANUAL.gather_satmul()
+        # run AUTO (do not require user action) scrapes after
+        AUTO.launch_threads()
 
     if "ALERT" in sys.argv:
         # get list of records to process for each alert
@@ -120,7 +125,6 @@ if __name__ == "__main__":
     LOG.info("Start Program.")
 
     DB = Database()
-    UPDATE = updates.Updates(LOG, DB)
 
     # define variable to be used by scraper threads
     # responses = [[] for _ in range(10)]
