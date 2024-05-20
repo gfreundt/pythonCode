@@ -225,9 +225,13 @@ class Members:
                 """
         )
 
-        sutran = base_cmd("SELECT * FROM soat WHERE XXXXXXXXXXXXX date statement")
-        brevete = base_cmd("SELECT * FROM brevete WHERE XXXXXXXXXXXXX date statement")
-        satimp = base_cmd("SELECT * FROM satimp WHERE XXXXXXXXXXXXX date statement")
+        criteria = {"soat": [15, 5, 0], "brevete": [30, 15, 0]}
+        cmds = []
+        for c in criteria:
+            txt = f"SELECT * FROM {c} WHERE FALSE "
+            for d in criteria[c]:
+                txt += f"OR DATE('now', '-{d} days') = LastUpdate "
+            cmds.append(base_cmd(txt))
 
         # process PLACAS
 
