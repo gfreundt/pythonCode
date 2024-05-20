@@ -1,7 +1,7 @@
 import json, sys, os
 import logging
 from pprint import pprint
-import updates  # , alerts
+import updates, alerts
 import sqlite3
 
 
@@ -18,19 +18,24 @@ class Database:
         self.conn = sqlite3.connect(SQLDATABASE)
         self.cursor = self.conn.cursor()
 
-        SQLSCRIPT1 = os.path.join(os.getcwd(), "sql_script1.sql")
-        with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
-            cmd = file.read()
-        self.cursor.executescript(cmd)
+        # only when building - take way later
+        self.restart_database()
 
     def sql(self, table, fields):
         qmarks = ",".join(["?" for _ in range(len(fields))])
         return f"INSERT INTO {table} ({','.join(fields)}) VALUES ({qmarks})"
 
     def load_scripts(self):
+        # Placeholder if we start loading more scripts into it
         SQLSCRIPTS = os.path.join(os.getcwd(), "sql_script1.sql")
         with open(SQLSCRIPTS, mode="r", encoding="utf-8") as file:
             self.SCRIPTS = json.load(file)
+
+    def restart_database(self):
+        SQLSCRIPT1 = os.path.join(os.getcwd(), "sql_script1.sql")
+        with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
+            cmd = file.read()
+        self.cursor.executescript(cmd)
 
 
 def start_logger():
@@ -74,10 +79,6 @@ def main():
     MANUAL = updates.ManualUpdates(LOG, DB)
     AUTO = updates.AutoUpdates(LOG, DB)
 
-    # members = side(members)
-    # return
-    # save_members(members)
-
     if "UPDATE" in sys.argv:
         # download raw list of all members from form and add new ones
         MEMBERS.add_new_members()
@@ -99,11 +100,9 @@ def main():
 
     if "ALERT" in sys.argv:
         # get list of records to process for each alert
-        welcome_list, regular_list, warning_list, timestamps = alerts.get_alert_lists(
-            members
-        )
+        welcome_list, regular_list, warning_list, timestamps = alerts.get_alert_lists()
         # compose and send alerts
-        members = alerts.send_alerts(
+        alerts.send_alerts(
             LOG,
             members,
             welcome_list,
@@ -112,9 +111,6 @@ def main():
             EMAIL="EMAIL" in sys.argv,
             timestamps=timestamps,
         )
-
-        # save updated database with timestamps and unique ids of sent alerts
-        DB.save_members(members)
 
 
 if __name__ == "__main__":
