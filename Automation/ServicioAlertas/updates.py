@@ -1,4 +1,4 @@
-import os, io
+import os, io, json
 import scrapers
 import openpyxl
 from copy import deepcopy as copy
@@ -9,7 +9,7 @@ from datetime import datetime as dt, timedelta as td
 from pprint import pprint
 import uuid
 from gft_utils import pygameUtils
-import soat, sunarp
+import sunarp
 import pygame
 from pygame.locals import *
 
@@ -99,6 +99,9 @@ class Updates:
         self.cursor = DB.cursor
         self.conn = DB.conn
         self.sql = DB.sql
+        self.responses = [[] for _ in range(10)]
+        with open("scraper_guide.json", "r") as file:
+            self.scraper_guide = json.load(file)
 
     def load_form_members(self):
         # download latest form responses
@@ -202,7 +205,7 @@ class Updates:
         self.docs_to_process = self.cursor.fetchall()
 
         # get placas with no bienvenida message
-        cmd = """SELECT IdMember, Placa FROM placas
+        cmd = """SELECT IdMember, IdPlaca, Placa FROM placas
                 JOIN (SELECT IdMember, DocTipo, DocNum FROM members
                 EXCEPT
                 SELECT IdMember, DocTipo, DocNum FROM (
@@ -232,7 +235,7 @@ class Updates:
                 while True:
                     captcha_img = SCRAPER.get_captcha_img(WEBD)
                     captcha = GUI.gui(canvas, captcha_img)
-                    response = SCRAPER.browser(placa=placa[1], captcha_txt=captcha)
+                    response = SCRAPER.browser(placa=placa[2], captcha_txt=captcha)
                     # wrong captcha - restart loop with same placa
                     if response == -2:
                         WEBD.refresh()
@@ -260,7 +263,7 @@ class Updates:
                             ],
                         )
                         values = (
-                            [placa[0]]
+                            [placa[1]]
                             + list(response.values())
                             + [dt.now().strftime("%Y-%m-%d")]
                         )
@@ -295,7 +298,7 @@ class Updates:
                 while True:
                     captcha_img = SCRAPER.get_captcha_image()
                     captcha = GUI.gui(canvas, captcha_img)
-                    response = SCRAPER.browser(placa=placa[1], captcha_txt=captcha)
+                    response = SCRAPER.browser(placa=placa[2], captcha_txt=captcha)
                     # wrong captcha or correct catpcha, no image loaded - restart loop with same placa
                     if response < 0:
                         WEBD.refresh()
@@ -303,20 +306,20 @@ class Updates:
                     # correct captcha, no data for placa - enter update attempt to database, go to next placa
                     elif response == 1:
                         cmd = self.sql("sunarps", ["IdPlaca_FK", "ImgUpdate"])
-                        values = [placa[0], dt.now().strftime("%Y-%m-%d")]
+                        values = [placa[1], dt.now().strftime("%Y-%m-%d")]
                         self.cursor.execute(cmd, values)
                         self.conn.commit()  # writes every time - maybe take away later
                         break
                     # if there is data in response, enter into database, go to next placa
                     elif response:
-                        # process image and save to disk, update database with file infomration
-                        _img_filename = f"SUNARP_{placa[1]}.png"
+                        # process image and save to disk, update database with file information
+                        _img_filename = f"SUNARP_{placa[2]}.png"
                         sunarp.process_image(response, _img_filename)
                         cmd = self.sql(
                             "sunarps", ["IdPlaca_FK", "ImgFilename", "ImgUpdate"]
                         )
                         values = [
-                            placa[0],
+                            placa[1],
                             _img_filename,
                             dt.now().strftime("%Y-%m-%d"),
                         ]
@@ -345,7 +348,7 @@ class Updates:
                               VALUES
                               (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"""
                             values = (
-                                [placa[0]]
+                                [placa[1]]
                                 + ocr_result
                                 + [dt.now().strftime("%Y-%m-%d")]
                             )
@@ -360,11 +363,10 @@ class Updates:
 
     def gather_satmul(self):
         # open URL and activate scraper
-        URL = "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx"
         WEBD = ChromeUtils().init_driver(
             headless=False, verbose=False, maximized=True, incognito=False
         )
-        WEBD.get(URL)
+        WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
         _target = (
             "https://www.sat.gob.pe/VirtualSAT/modulos/papeletas.aspx?tri=T&mysession="
             + WEBD.current_url.split("=")[-1]
@@ -377,7 +379,7 @@ class Updates:
         for placa in self.placas_to_process:
             try:
                 while True:
-                    response = SCRAPER.browser(placa=placa[1])
+                    response = SCRAPER.browser(placa=placa[2])
                     # unsuccesful scrape - restart loop with same placa
                     if response < 0:
                         WEBD.refresh()
@@ -402,7 +404,7 @@ class Updates:
                             ],
                         )
                         values = (
-                            [placa[0]]
+                            [placa[1]]
                             + list(response.values())
                             + [dt.now().strftime("%Y-%m-%d")]
                         )
@@ -416,107 +418,230 @@ class Updates:
             #     WEBD.refresh()
             #     break
 
-    def gather_auto(self, members, docs_to_process, placas_to_process):
-        HEADERS = ["Satimp", "Brevete", "Revtec", "Sutran", "SoatImage", "CallaoMulta"]
-        URLS = [
-            "https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx",
-            "https://licencias.mtc.gob.pe/#/index",
-            "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx",
-            "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/",
-            "https://www.pacifico.com.pe/consulta-soat",
-            "https://pagopapeletascallao.pe/",
-        ]
-        scraper = [
-            (scrapers.Satimp(None), docs_to_process),
-            (scrapers.Brevete(None, URLS[1]), docs_to_process),
-            (scrapers.Revtec(None), placas_to_process),
-            (scrapers.Sutran(None), placas_to_process),
-            (scrapers.SoatImage(), placas_to_process),
-            (scrapers.CallaoMulta(), placas_to_process),
-        ]
-
-        # # TEST ONLY
-        # URLS = ["https://www.pacifico.com.pe/consulta-soat"]
-        # scraper = [(scrapers.SoatImage(), placas_to_process)]
-
-        threads = []
-        for index, (url, scrap) in enumerate(zip(URLS, scraper)):
-            _t = threading.Thread(
-                target=self.full_update,
-                args=(
-                    self.LOG,
-                    url,
-                    scrap[0],
-                    scrap[1],
-                    index,
-                    responses,
-                    HEADERS[index],
-                ),
-            )
-            threads.append(_t)
-            _t.start()
-
+    def parallel_updates(self):
+        scrapers = ["satimp", "brevete", "revtec", "sutran", "soatimage", "callaomulta"]
+        threads = [threading.Thread(target=f"gather_{s}") for s in scrapers]
+        for thread in threads:
+            thread.start()
         for thread in threads:
             thread.join()
 
-        # join responses in member list order
-        new_response = [
-            {
-                "Satimp": {},
-                "Brevete": {},
-                "Revtec": [[], [], []],
-                "Sutran": [[], [], []],
-                "SoatImage": {},
-            }
-            for _ in range(len(members))
-        ]
-        for response, header in zip(responses, HEADERS):
-            for resp in response:
-                rec, pos, data = resp
-                if pos == -1:
-                    new_response[rec].update({header: data})
-                else:
-                    new_response[rec][header][pos] = data
-
-        # delete dictionary keys that have no data to update
-        # TODO: Sutran?
-        new_responses = [
-            {k: v for k, v in j.items() if v and v != [[], [], []]}
-            for j in new_response
-        ]
-
-        pprint(new_responses)
-
-        for k, response in enumerate(new_responses):
-            if response:
-                members[k]["Resultados"].update(response)
-                for header in HEADERS:
-                    members[k]["Resultados"][
-                        f"{header}_Actualizado"
-                    ] = dt.now().strftime("%d/%m/%Y")
-        return members
-
-    def full_update(self, URL, scraper, data_to_process, index, responses, name):
-        # define Chromedriver and open url for first time
-        scraper.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
-        )
-        scraper.WEBD.get(URL)
+    def gather_brevete(self):
+        scraper = scrapers.Brevete()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get("https://licencias.mtc.gob.pe/#/index")
         time.sleep(3)
 
-        # iterate on all records that require updating
-        for k, data in enumerate(data_to_process):
-            # get scraper data
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.docs_to_process):
             try:
-                new_record, _ = scraper.browser(
-                    doc_tipo=data[2], doc_num=data[3], placa=data[4]
-                )
-                responses[index].append((data[0], data[1], new_record))
+                new_record, _ = scraper.browser(doc_tipo=rec[1], doc_num=rec[2])
+                if new_record:
+                    cmd = self.sql(
+                        "brevetes",
+                        [
+                            "IdMember_FK",
+                            "Clase",
+                            "Numero",
+                            "Tipo",
+                            "FechaExp",
+                            "Restricciones",
+                            "FechaHasta",
+                            "Centro",
+                            "LastUpdate",
+                        ],
+                    )
+                    values = (
+                        [rec[2]]
+                        + list(new_record["Brevete"].values())
+                        + [dt.now().strftime("%Y-%m-%d")]
+                    )
+                self.cursor.execute(cmd, values)
+                self.conn.commit()  # writes every time - maybe take away later
+                break
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     self.LOG.warning(f"No proceso {rec}")
+            #     scraper.WEBD.refresh()
+
+            print(f"Brevete: {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()
+
+    def gather_revtec(self):
+        scraper = scrapers.Revtec()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get("https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx")
+        time.sleep(3)
+
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.placas_to_process):
+            try:
+                new_record, _ = scraper.browser(placa=rec[2])
+                if new_record:
+                    cmd = self.sql(
+                        "revtecs",
+                        [
+                            "Placa_FK",
+                            "Certificadora",
+                            "PlacaValidate",
+                            "Certificado",
+                            "FechaDesde",
+                            "FechaHasta",
+                            "Resultado",
+                            "Vigencia",
+                            "LastUpdate",
+                        ],
+                    )
+                    values = (
+                        [rec[2]]
+                        + list(new_record.values())
+                        + [dt.now().strftime("%Y-%m-%d")]
+                    )
+                    self.cursor.execute(cmd, values)
+                    self.conn.commit()
+                    break
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     self.LOG.warning(f"No proceso {rec}")
+            #     scraper.WEBD.refresh()
+
+            print(f"RevTec: {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()
+
+    def gather_sutran(self):
+        scraper = scrapers.Sutran()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get(
+            "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
+        )
+        time.sleep(3)
+
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.docs_to_process):
+            try:
+                new_record, _ = scraper.browser(doc_tipo=rec[1], doc_num=rec[2])
+                if new_record:
+                    cmd = self.sql(
+                        "sutrans",
+                        [
+                            "IdPlaca_FK",
+                            "Documento",
+                            "Tipo",
+                            "FechaDoc",
+                            "CodigoInfrac",
+                            "Clasificacion",
+                            "LastUpdate",
+                        ],
+                    )
+                    values = (
+                        [rec[2]]
+                        + list(new_record.values())
+                        + [dt.now().strftime("%Y-%m-%d")]
+                    )
+                    self.cursor.execute(cmd, values)
+                    self.conn.commit()
+                    break
             except KeyboardInterrupt:
                 quit()
             except:
-                self.LOG.warning(f"No proceso {data}")
-                responses[index].append((data[0], data[1], ""))
+                self.LOG.warning(f"No proceso {rec}")
                 scraper.WEBD.refresh()
 
-            print(f"{name}: {(k+1)/len(data_to_process)*100:.1f}%")
+            print(f"Sutran: {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()
+
+    def gather_soatimage(self):
+        scraper = scrapers.SoatImage()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get("https://www.pacifico.com.pe/consulta-soat")
+        time.sleep(3)
+
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.placas_to_process):
+            try:
+                new_record, _ = scraper.browser(placa=rec[2])
+                if new_record:
+                    cmd = self.sql(
+                        "soats",
+                        [
+                            "IdPlaca_FK",
+                            "Aseguradora",
+                            "FechaInicio",
+                            "FechaFin",
+                            "PlacaValidate",
+                            "Certificado",
+                            "Uso",
+                            "Clase",
+                            "Vigencia",
+                            "Tipo",
+                            "FechaVenta",
+                            "LastUpdate",
+                        ],
+                    )
+                    values = (
+                        [rec[2]]
+                        + list(new_record.values())
+                        + [dt.now().strftime("%Y-%m-%d")]
+                    )
+                    self.cursor.execute(cmd, values)
+                    self.cursor.execute(cmd, new_record)
+            except KeyboardInterrupt:
+                quit()
+            # except:
+            #     self.LOG.warning(f"No proceso {rec}")
+            #     scraper.WEBD.refresh()
+
+            print(f"SoatImage {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()
+
+    def gather_callaomulta(self):
+        scraper = scrapers.CallaoMulta()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get("https://pagopapeletascallao.pe/")
+        time.sleep(3)
+
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.placas_to_process):
+            try:
+                new_record, _ = scraper.browser(placa=rec[2])
+                if new_record:
+                    cmd = """ """
+                    self.cursor.execute(cmd, new_record)
+            except KeyboardInterrupt:
+                quit()
+            except:
+                self.LOG.warning(f"No proceso {rec}")
+                scraper.WEBD.refresh()
+
+            print(f"CallaoMultas: {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()
+
+    def gather_satimp(self):
+        scraper = scrapers.Satimp()
+        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
+        WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
+        time.sleep(3)
+
+        # iterate on all records that require updating and get scraper results
+        for k, rec in enumerate(self.placas_to_process):
+            try:
+                new_record, _ = scraper.browser(placa=rec[2])
+                if new_record:
+                    cmd = """ """
+                    self.cursor.execute(cmd, new_record)
+            except KeyboardInterrupt:
+                quit()
+            except:
+                self.LOG.warning(f"No proceso {rec}")
+                scraper.WEBD.refresh()
+
+            print(f"Satimp: {(k+1)/len(self.docs_to_process)*100:.1f}%")
+
+        self.conn.commit()

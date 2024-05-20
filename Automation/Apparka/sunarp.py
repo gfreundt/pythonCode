@@ -10,10 +10,6 @@ from google.cloud import vision
 import numpy as np
 from PIL import Image
 from statistics import mean
-
-
-# Custom imports
-sys.path.append(r"\pythonCode\Resources\Scripts")
 from gft_utils import ChromeUtils
 
 

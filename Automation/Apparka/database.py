@@ -38,41 +38,44 @@ class Database:
         """
 
         # define local functions that create dictionary structure of vehiculo and record
-        create_record = lambda i: {
-            "correlative": 0,
-            "nombre": i[0].strip(),
-            "documento": {
-                "tipo": i[1],
-                "numero": i[2],
-                "brevete": None,
-                "brevete_actualizado": "01/01/2018",
-            },
-            "telefono": i[4],
-            "correo": i[3].lower(),
-            "vehiculos": vehiculos,
-        }
-        create_vehiculo = lambda i: {
-            "placa": i[5] if len(i) == 6 else None,
-            "rtecs": None,
-            "rtecs_actualizado": "01/01/2019",
-            "multas": {
-                "sutran": None,
-                "sat": None,
-                "mtc": None,
-                "sutran_actualizado": "01/01/2020",
-                "sat_actualizado": "01/01/2021",
-                "mtc_actualizado": "01/01/2022",
-            },
-        }
+        # create_record = lambda i: {
+        #     "correlative": 0,
+        #     "nombre": i[0].strip(),
+        #     "documento": {
+        #         "tipo": i[1],
+        #         "numero": i[2],
+        #         "brevete": None,
+        #         "brevete_actualizado": "01/01/2018",
+        #     },
+        #     "telefono": i[4],
+        #     "correo": i[3].lower(),
+        #     "vehiculos": vehiculos,
+        # }
+        # create_vehiculo = lambda i: {
+        #     "placa": i[5] if len(i) == 6 else None,
+        #     "rtecs": None,
+        #     "rtecs_actualizado": "01/01/2019",
+        #     "multas": {
+        #         "sutran": None,
+        #         "sat": None,
+        #         "mtc": None,
+        #         "sutran_actualizado": "01/01/2020",
+        #         "sat_actualizado": "01/01/2021",
+        #         "mtc_actualizado": "01/01/2022",
+        #     },
+        # }
         # load raw csv data file
         with open(csv_path, mode="r", encoding="utf-8") as csv_file:
             csv_data = [
                 [i.strip().upper() for i in j]
                 for j in csv.reader(csv_file, delimiter=",")
             ]
+
+        csv_data = csv_data[2:]
         print(
             f"Merging {self.len_database:,} existing records with {len(csv_data):,} new."
         )
+
         # process data to accumulate different placas for same person (record)
         json_data = []
         for k, row in enumerate(csv_data):

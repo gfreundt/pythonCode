@@ -1,11 +1,41 @@
 import json, sys, os
 import logging
 from pprint import pprint
-import updates, alerts
+import updates  # , alerts
+import sqlite3
+
+
+class Database:
+
+    def __init__(self) -> None:
+        # select production or test database
+        if not "TEST" in sys.argv:
+            SQLDATABASE = os.path.join(os.getcwd(), "data", "members.sqlite")
+        else:
+            SQLDATABASE = os.path.join(os.getcwd(), "data", "membersTEST.sqlite")
+
+        # connect to database
+        self.conn = sqlite3.connect(SQLDATABASE)
+        self.cursor = self.conn.cursor()
+
+        SQLSCRIPT1 = os.path.join(os.getcwd(), "sql_script1.sql")
+        with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
+            cmd = file.read()
+        self.cursor.executescript(cmd)
+
+    def sql(self, table, fields):
+        qmarks = ",".join(["?" for _ in range(len(fields))])
+        return f"INSERT INTO {table} ({','.join(fields)}) VALUES ({qmarks})"
+
+    def load_scripts(self):
+        SQLSCRIPTS = os.path.join(os.getcwd(), "sql_script1.sql")
+        with open(SQLSCRIPTS, mode="r", encoding="utf-8") as file:
+            self.SCRIPTS = json.load(file)
 
 
 def start_logger():
     # simple log using same file
+    LOG_PATH = os.path.join(os.getcwd(), "logs", "alerts_log.txt")
     logging.basicConfig(
         filename=LOG_PATH,
         filemode="a",
@@ -14,19 +44,6 @@ def start_logger():
     _log = logging.getLogger(__name__)
     _log.setLevel(logging.INFO)
     return _log
-
-
-def load_members():
-    # loads database
-    with open(DATABASE, mode="r", encoding="utf-8") as file:
-        return json.load(file)
-
-
-def save_members(members):
-    # writes database
-    with open(DATABASE, mode="w+", encoding="utf-8") as file:
-        json.dump(members, file, indent=4)
-    LOG.info("Database updated succesfully.")
 
 
 def side(members):
@@ -53,33 +70,27 @@ def side(members):
 
 def main():
 
-    members = load_members()
-
     # members = side(members)
     # return
     # save_members(members)
 
-    # download raw list of all members from form and add new ones with default data
     if "UPDATE" in sys.argv:
-        form_members = updates.load_form_members(LOG)
-        members = updates.add_new_members(
-            LOG, form_members=form_members, members=members
-        )
+        # download raw list of all members from form and add new ones
+        UPDATE.add_new_members()
+        # select docs and placas to update
+        UPDATE.get_records_to_process()
+
+        # TEST ONLY
+        # UPDATE.gather_soat()
+        UPDATE.gather_sunarp()
+        return
 
         # run MANUAL scrapes first (if selected) then Automated scrapes
-        docs_to_process, placas_to_process = updates.get_records_to_process(members)
-
         if "MAN" in sys.argv:
-            members = updates.gather_soat(members, placas_to_process)
-            members = updates.gather_sunarp(members, placas_to_process)
-            members = updates.gather_satmul(members, placas_to_process)
-
-        members = updates.gather_auto(
-            LOG, members, docs_to_process, placas_to_process, responses
-        )
-
-        # save updated database from scraping
-        save_members(members)
+            members = UPDATE.gather_soat()
+            members = UPDATE.gather_sunarp()
+            members = UPDATE.gather_satmul()
+        UPDATE.parallel_updates()
 
     if "ALERT" in sys.argv:
         # get list of records to process for each alert
@@ -98,25 +109,26 @@ def main():
         )
 
         # save updated database with timestamps and unique ids of sent alerts
-        save_members(members)
+        DB.save_members(members)
 
 
 if __name__ == "__main__":
-    # select production or test database
-    if not "TEST" in sys.argv:
-        DATABASE = os.path.join(os.getcwd(), "data", "members.json")
-    else:
-        DATABASE = os.path.join(os.getcwd(), "data", "members_test.json")
+
     # activate logger and log start of program
-    LOG_PATH = os.path.join(os.getcwd(), "logs", "alerts_log.txt")
+
     LOG = start_logger()
     LOG.info("Start Program.")
 
+    DB = Database()
+    UPDATE = updates.Updates(LOG, DB)
+
     # define variable to be used by scraper threads
-    responses = [[] for _ in range(10)]
+    # responses = [[] for _ in range(10)]
 
     # run main program
     main()
+    DB.conn.commit()
+    DB.conn.close()
 
     # log end of program
     LOG.info("-" * 20 + " End Program " + "-" * 20)

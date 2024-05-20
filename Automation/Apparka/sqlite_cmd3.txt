@@ -1,0 +1,64 @@
+DROP TABLE IF EXISTS newtable;
+
+CREATE TABLE
+    newtable AS
+SELECT DISTINCT
+    *
+FROM
+    (
+        SELECT
+            Nombre,
+            DocTipo,
+            DocNum,
+            Telefono
+        FROM
+            usuarios
+        UNION ALL
+        SELECT
+            Nombre,
+            DocTipo,
+            DocNum,
+            Telefono
+        FROM
+            nuevosusuarios
+    );
+
+DROP TABLE IF EXISTS usuarios3;
+
+DROP TABLE IF EXISTS usuarios2;
+
+CREATE TABLE
+    usuarios2 AS
+SELECT
+    *
+FROM
+    (
+        SELECT
+            usuarios.IdUsuario,
+            newtable.DocNum,
+            newtable.DocTipo,
+            newtable.Nombre,
+            newtable.Telefono
+        FROM
+            newtable
+            LEFT JOIN usuarios ON usuarios.DocNum = newtable.DocNum
+    );
+
+CREATE TABLE
+    usuarios3 AS
+SELECT
+    *
+FROM
+    (
+        SELECT
+            usuarios2.IdUsuario,
+            usuarios2.DocNum,
+            usuarios2.DocTipo,
+            usuarios2.Nombre,
+            usuarios2.Telefono,
+            nuevosusuarios.Correo,
+            nuevosusuarios.IdUsuario AS IdPNET
+        FROM
+            usuarios2
+            LEFT JOIN nuevosusuarios ON usuarios2.DocNum = nuevosusuarios.DocNum
+    );

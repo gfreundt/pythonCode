@@ -168,9 +168,8 @@ class Satimp:
 
 
 class Brevete:
-    def __init__(self, db, reload_url) -> None:
+    def __init__(self, db) -> None:
         self.DB = db
-        self.URL = reload_url
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.SWITCH_TO_LIMITED = 1200  # records
         self.limited_scrape = True  # TODO:flexible
@@ -213,6 +212,7 @@ class Brevete:
         ] = dt.now().strftime("%d/%m/%Y")
 
     def browser(self, doc_tipo, doc_num, placa):
+        reload_url = self.WEBD.current_url
         captcha_attempts = 0
         retry_captcha = False
         # outer loop: in case captcha is not accepted by webpage, try with a new one
@@ -246,7 +246,7 @@ class Brevete:
                     # captcha image did not load, reset webpage
                     self.WEBD.refresh()
                     time.sleep(1.5)
-                    self.WEBD.get(self.URL)
+                    self.WEBD.get(reload_url)
                     time.sleep(1.5)
 
             # enter data into fields and run
@@ -775,6 +775,20 @@ class CallaoMulta:
 
 
 class Soat:
+
+    def __init__(self, WEBD) -> None:
+        self.WEBD = WEBD
+
+    def get_captcha_img(self, WEBD):
+        WEBD.refresh()
+        _img = WEBD.find_element(
+            By.XPATH,
+            "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
+        )
+        return _img.screenshot_as_png
+        captcha_img = Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
+        captcha_img.save("captcha_soat.png")
+
     def browser(self, **kwargs):
         placa = kwargs["placa"]
         captcha_txt = kwargs["captcha_txt"]
@@ -864,11 +878,22 @@ class Soat:
 
 class Sunarp:
 
+    def __init__(self, WEBD) -> None:
+        self.WEBD = WEBD
+
+    def get_captcha_image(self):
+        self.WEBD.refresh()
+        _img = self.WEBD.find_element(
+            By.ID,
+            "ctl00_MainContent_captcha_Placa",
+        )
+        return _img.screenshot_as_png
+
     def browser(self, **kwargs):
         """returns:
         -2 = captcha wrong (retry)
         -1 = captcha ok, image did not load (retry)
-         2 = captcha ok, placa does not exist
+         1 = captcha ok, placa does not exist
          image object = captcha ok, placa ok
         """
         placa = kwargs["placa"]
@@ -898,12 +923,12 @@ class Sunarp:
         # captcha correct, no placa information, return no information found
         c = self.WEBD.find_elements(By.ID, "MainContent_lblWarning")
         if c and "verifique" in c[0].text:
-            return 2
+            return 1
 
         # search for SUNARP image
         _card_image = self.WEBD.find_elements(By.ID, "MainContent_imgPlateCar")
 
-        # no image found, return succesful
+        # no image found, return unsuccesful
         if not _card_image:
             self.WEBD.refresh()
             time.sleep(0.5)
@@ -923,6 +948,9 @@ class Sunarp:
 
 
 class Satmul:
+
+    def __init__(self, WEBD) -> None:
+        self.WEBD = WEBD
 
     def browser(self, **kwargs):
 

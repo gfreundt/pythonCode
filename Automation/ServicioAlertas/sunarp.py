@@ -1,87 +1,12 @@
-import time, io, os
-from selenium.webdriver.common.by import By
-import pygame
-from pygame.locals import *
+import os
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from statistics import mean
 from datetime import datetime as dt
 from google.cloud import vision
-from pprint import pprint
 
 
-from gft_utils import ChromeUtils, pygameUtils
-
-pygame.init()
-
-
-def gui(canvas, captcha_img):
-    TEXTBOX = pygame.Surface((80, 120))
-    UPPER_LEFT = (10, 10)
-    image = pygame.image.load(io.BytesIO(captcha_img)).convert()
-    image = pygame.transform.scale(image, (500, 120))
-    canvas.MAIN_SURFACE.fill(canvas.COLORS["BLACK"])
-    canvas.MAIN_SURFACE.blit(image, UPPER_LEFT)
-
-    chars, col = [], 0
-    while True:
-        # pygame capture screen update
-        charsx = f"{''.join(chars):<6}"
-        for colx in range(6):
-            text = canvas.FONTS["NUN80B"].render(
-                charsx[colx],
-                True,
-                canvas.COLORS["BLACK"],
-                canvas.COLORS["WHITE"],
-            )
-            TEXTBOX.fill(canvas.COLORS["WHITE"])
-            TEXTBOX.blit(text, (12, 5))
-            canvas.MAIN_SURFACE.blit(
-                TEXTBOX,
-                (
-                    colx * 90 + UPPER_LEFT[0] + 20 + 500,
-                    UPPER_LEFT[1],
-                ),
-            )
-        pygame.display.flip()
-
-        # capture keystrokes and add to manual captcha input
-        events = pygame.event.get()
-        for event in events:
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == 27):
-                quit()
-            elif event.type == KEYDOWN:
-                if event.key == K_BACKSPACE:
-                    if col == 0:
-                        continue
-                    chars = chars[:-1]
-                    col -= 1
-                elif event.key in (K_SPACE, K_RETURN):
-                    continue
-                else:
-                    try:
-                        chars.append(chr(event.key))
-                        col += 1
-                    except KeyboardInterrupt:
-                        pass
-
-        # if all chars are complete, return manual captcha as string
-        if col == 6:
-            canvas.MAIN_SURFACE.fill(canvas.COLORS["GREEN"])
-            pygame.display.flip()
-            return "".join(chars)
-
-
-def get_captcha_image(SUNARP):
-    SUNARP.WEBD.refresh()
-    _img = SUNARP.WEBD.find_element(
-        By.ID,
-        "ctl00_MainContent_captcha_Placa",
-    )
-    return _img.screenshot_as_png
-
-
-def process_image(img_object, path):
+def process_image(img_object, img_filename):
     WHITE = np.asarray((255, 255, 255, 255))
     BLACK = np.asarray((0, 0, 0, 0))
 
@@ -125,14 +50,14 @@ def process_image(img_object, path):
     # enlarge image and save
     factor = 2.5
     img = img.resize((int(width * factor), int(height * factor)))
-    _new_path = os.path.join(os.curdir, "data", "images", os.path.basename(path))
-    img.save(_new_path, mode="RGB")
+    img.save(os.path.join(os.curdir, "data", "images", img_filename), mode="RGB")
 
 
-def parse_text_from_image(img_path):
-
+def ocr_and_parse(img_filename):
     # open saved image from scraping
-    with open(os.path.join(os.curdir, "data", "images", img_path), "rb") as image_file:
+    with open(
+        os.path.join(os.curdir, "data", "images", img_filename), "rb"
+    ) as image_file:
         content = image_file.read()
 
     # perform ocr
@@ -155,22 +80,7 @@ def parse_text_from_image(img_path):
 
     # if ocr does not return expected structure, return empty
     if len(values) < 14:
-        return {}
-
-    keys = (
-        "placa",
-        "serie",
-        "vin",
-        "motor",
-        "color",
-        "marca",
-        "modelo",
-        "placa",
-        "anterior",
-        "estado",
-        "anotaciones",
-        "sede",
-    )
+        return []
 
     year_guide = {
         "1": "2031",
@@ -207,86 +117,9 @@ def parse_text_from_image(img_path):
 
     # build text response from scraping
     try:
-        _response = {i: j.strip() for i, j in zip(keys, values)}
-        _response.update(
-            {"propietarios": " + ".join(values[12:-1]), "ano": year_guide[values[2][9]]}
-        )
+        _response = [j.strip() for j in values]
+        _response.append(" + ".join(values[12:-1]))
+        _response.append(year_guide[values[2][9]])
         return _response
     except:
-        return {}
-
-
-def main(SUNARP, placas):
-
-    # don't run if no records to process
-    if not placas:
         return []
-
-    URL1 = "https://www.gob.pe/sunarp"
-    URL2 = "https://www.sunarp.gob.pe/consulta-vehicular.html"
-    SUNARP.WEBD = ChromeUtils().init_driver(
-        headless=True, verbose=False, maximized=True, incognito=True
-    )
-    SUNARP.WEBD.get(URL1)
-    time.sleep(2)
-    SUNARP.WEBD.get(URL2)
-    time.sleep(1)
-    canvas = pygameUtils(screen_size=(1070, 140))
-
-    all_responses = []
-    for placa in placas:
-        while True:
-            try:
-                # load captcha from webpage
-                captcha_img = get_captcha_image(SUNARP)
-                # capture captcha manually
-                captcha_txt = gui(canvas, captcha_img)
-                # attempt to scrape image
-                response = SUNARP.browser(placa=placa[4], captcha_txt=captcha_txt)
-
-                # scrape succesful: process image and save to disk
-                if type(response) != int:
-                    img_path = f"SUNARP_{placa[4]}.png"
-                    process_image(response, img_path)
-                    all_responses.append(
-                        (
-                            placa[0],
-                            placa[1],
-                            {
-                                "archivo": img_path,
-                                "informacion": parse_text_from_image(img_path),
-                            },
-                        )
-                    )
-                    # save captcha image with text as filename
-                    with open(
-                        (
-                            os.path.join(
-                                os.curdir,
-                                "images",
-                                "captchas_sunarp",
-                                f"{captcha_txt}.png",
-                            )
-                        ),
-                        "wb",
-                    ) as outfile:
-                        outfile.write(captcha_img)
-                    break
-                # scrape succesful: no image in database, respond blank
-                elif response > 0:
-                    all_responses.append((placa[0], placa[1], ""))
-                    break
-                # if scrape unsuccesful (wrong captcha or image did not load) recycle
-            except KeyboardInterrupt:
-                quit()
-            # except:
-            #     time.sleep(3)
-            #     SUNARP.WEBD.refresh()
-            #     break
-
-    return all_responses
-
-
-# testing only
-if __name__ == "__main__":
-    main(1, 2)

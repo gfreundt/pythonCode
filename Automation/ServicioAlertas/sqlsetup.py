@@ -1,4 +1,4 @@
-import os, json
+import os, json, uuid
 import sqlite3
 
 
@@ -36,9 +36,12 @@ def main():
 
         # members table
         cmd = sql(
-            "members", ["NombreCompleto", "DocTipo", "DocNum", "Celular", "Correo"]
+            "members",
+            ["NombreCompleto", "DocTipo", "DocNum", "Celular", "Correo", "CodMember"],
         )
-        values = list(member["Datos"].values())[:5]
+        values = list(member["Datos"].values())[:5] + [
+            "SAP-" + str(uuid.uuid4())[-6:].upper()
+        ]
         cursor.execute(cmd, values)
 
         cmd = f"SELECT * FROM members WHERE DocNum = '{values[2]}'"
@@ -159,7 +162,6 @@ def main():
                     "sunarps",
                     [
                         "IdPlaca_FK",
-                        "IdPlaca_FK",
                         "PlacaValidate",
                         "Serie",
                         "VIN",
@@ -173,6 +175,7 @@ def main():
                         "Anotaciones",
                         "Sede",
                         "Propietarios",
+                        "Ano",
                         "LastUpdate",
                         "ImgFilename",
                         "ImgUpdate",
@@ -180,7 +183,7 @@ def main():
                 )
                 values = (
                     [idplaca]
-                    + [None] * 14
+                    + [None] * 13
                     + [res["Sunarp_Actualizado"]]
                     + [res["Sunarp"][pla]["archivo"]]
                     + [res["Sunarp_Actualizado"]]

@@ -2,12 +2,12 @@ DROP TABLE IF EXISTS usuarios;
 
 CREATE TABLE
     usuarios (
-        IdUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
+        IdUsuario INTEGER PRIMARY KEY,
         Nombre TEXT (40),
         DocTipo TEXT (12),
         DocNum TEXT (12) UNIQUE,
         Telefono TEXT (9),
-        Correo TEXT (20),
+        Correo TEXT (30),
         IdPNET INTEGER
     );
 

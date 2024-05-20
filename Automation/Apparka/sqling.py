@@ -1,19 +1,15 @@
-import os, json
-from tqdm import tqdm
+import os, json, csv
 import sqlite3
+from tqdm import tqdm
+import time
 
 
 def dt(text):
     return f"{text[6:]}-{text[3:5]}-{text[:2]}"
 
 
-def main():
-    DB = os.path.join(os.curdir, "test2.db")
+def json_to_sql():
     JSONDB = os.path.join(os.curdir, "data", "complete_data.json")
-
-    conn = sqlite3.connect(DB)
-
-    cursor = conn.cursor()
 
     with open("sqlite_cmd.txt", "r") as sql:
         cmd = sql.read()
@@ -23,14 +19,20 @@ def main():
     with open(JSONDB, mode="r") as file:
         data_raw = json.load(file)
 
-    for r, record in enumerate(data_raw):
+    for record in data_raw:
+
+        # if IdUsuario has no unique ID from PNET do not include
+        if record["idUsuario"] == 0:
+            continue
 
         # usuarios
         cmd = f"""INSERT OR IGNORE INTO usuarios (
-            Nombre, DocTipo, DocNum, Telefono, Correo )
-            VALUES (?,?,?,?,?)"""
+            IdUsuario, Nombre, DocTipo, DocNum, Telefono, Correo)
+            VALUES (?,?,?,?,?,?)
+            """
 
         values = (
+            record["idUsuario"],
             record["nombre"],
             record["documento"]["tipo"],
             record["documento"]["numero"],
@@ -41,7 +43,11 @@ def main():
 
         select = "SELECT IdUsuario FROM usuarios WHERE DocNum = ?"
         cursor.execute(select, (record["documento"]["numero"],))
-        IdUsuario = cursor.fetchone()[0]
+        IdUsuario = cursor.fetchone()
+        if not IdUsuario:
+            continue
+        else:
+            IdUsuario = IdUsuario[0]
 
         # brevetes
         cmd = f"""INSERT OR IGNORE INTO brevetes (
@@ -167,54 +173,99 @@ def main():
                     cursor.execute(cmd3, values)
 
     conn.commit()
-    conn.close()
-
-    return
 
 
-'''
+def csv_to_sql():
 
-        # placas
-        cmd = f"""INSERT OR IGNORE INTO placas (
-            Clase, Numero, Tipo, FechaExp, Restricciones, FechaHasta, Centro, Actualizado)
-            VALUES (?,?,?,?,?,?,?,?)"""
+    # create table usuarios and placasnew
+    cmd = """
+            DROP TABLE IF EXISTS usuarios;
 
-        # cmd = f"""INSERT OR IGNORE INTO satimpsDetalle (
-        #     Codigo, Ano, Periodo, Documento, TotalAPagar)
-        #     VALUES (?,?,?,?,?)"""
+            CREATE TABLE
+                usuarios (
+                IdUsuario INTEGER PRIMARY KEY,
+                Nombre TEXT (40),
+                DocTipo TEXT (12),
+                DocNum TEXT (12) UNIQUE,
+                Telefono TEXT (9),
+                Correo TEXT (30)
+                );
 
-        # _rec = record["documento"]["deuda_tributaria_sat"]
-        # if _rec:
-        #     for deuda in _rec:
-        #         _de = deuda["deudas"]
-        #         if _de:
-        #             for d in _de:
-        #                 values = (
-        #                     deuda["codigo"],
-        #                     d["ano"],
-        #                     d["periodo"],
-        #                     d["documento"],
-        #                     d["total_a_pagar"],
-        #                 )
-        #                 cursor.execute(cmd, values)
-        #         else:
-        #             values = (deuda["codigo"], "", "", "", "")
-        #             cursor.execute(cmd, values)
+            DROP TABLE IF EXISTS placasNew;
 
-        # cmd = f"""INSERT OR IGNORE INTO satimps (
-        #     Codigo, Actualizado)
-        #     VALUES (?,?)"""
+            CREATE TABLE
+                placasNew (
+                IdPlacas INTEGER,
+                IdUsuario_FK INTEGER,
+                Placa TEXT (6)
+                );
+         """
 
-        # _rec = record["documento"]["deuda_tributaria_sat"]
-        # if _rec:
-        #     for deuda in _rec:
-        #         values = (
-        #             f'{deuda["codigo"]:0>7}',
-        #             record["documento"]["deuda_tributaria_sat_actualizado"],
-        #         )
-        #         cursor.execute(cmd, values)
+    cursor.executescript(cmd)
+
+    # read csv file (raw) imported from FTP (PNET data)
+    csv_path = os.path.join(os.curdir, "data", "raw", "USUARIOS APPARKA MAY 2024.csv")
+    with open(csv_path, mode="r", encoding="utf-8") as csv_file:
+        csv_data = [
+            [i.strip().upper() for i in j] for j in csv.reader(csv_file, delimiter=",")
+        ][2:]
+
+    # populate data into tables
+    for line in csv_data:
+        if line[1] and line[1][0].isalpha():
+            # populate usuarios table
+            cmd = """INSERT OR IGNORE INTO usuarios (
+                     IdUsuario, Nombre, DocTipo, DocNum, Correo, Telefono)
+                     VALUES (?,?,?,?,?,?)            
+                  """
+            conn.execute(cmd, line[:6])
+
+            if len(line[6]) == 6:
+                # populate placasNew table
+                cmd = """INSERT OR IGNORE INTO placasNew (
+                        IdPlacas, IdUsuario_FK, Placa)
+                        VALUES (NULL, ?,?)            
+                    """
+                conn.execute(cmd, (line[0], line[6]))
 
     conn.commit()
-    conn.close()
-'''
-main()
+
+
+def merge_placas():
+
+    cursor.executescript(
+        """ CREATE TABLE temp AS
+            SELECT placas.IdPlaca, placasNew.IdUsuario_FK, placas.Placa
+            FROM placas
+            LEFT JOIN placasNew
+            ON placas.Placa = placasNew.Placa;
+            
+            DROP TABLE placas;
+
+            CREATE TABLE placas AS
+            SELECT DISTINCT *
+            FROM temp;
+
+            DROP TABLE temp;
+
+            DROP TABLE placasNew
+            """
+    )
+
+    conn.commit()
+
+
+start = time.time()
+
+DB = os.path.join(os.curdir, "test3.db")
+conn = sqlite3.connect(DB)
+cursor = conn.cursor()
+
+
+json_to_sql()  # only while scraping is done on json file -- stop when scraping directly into SQL
+csv_to_sql()  # reset usuarios with outside data
+merge_placas()  # incorporate new placas to old placas, keep old placas key
+
+end = time.time()
+
+print(f"Total time: {end-start:.2f}")

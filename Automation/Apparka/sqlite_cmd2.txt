@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS nuevosusuarios;
+
+CREATE TABLE
+    nuevosusuarios (
+        IdUsuario INTEGER PRIMARY KEY,
+        Nombre TEXT (40),
+        DocTipo TEXT (12),
+        DocNum TEXT (12) UNIQUE,
+        Telefono TEXT (9),
+        Correo TEXT (30),
+        Placa TEXT (7)
+    );

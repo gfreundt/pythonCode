@@ -275,19 +275,32 @@ def main():
 
 def side():
 
-    s = []
-
+    cnt = 0
     for i in DB.database:
-        try:
-            x = i["vehiculos"][0]["rtecs"][0]["certificadora"]
-            if len(x) > 6:
-                s.append(x)
-        except:
-            pass
+        if i["idUsuario"] == 0:
+            print(i["correlative"])
+            cnt += 1
+    print(cnt)
 
-    a = set(s)
-    for i in a:
-        print(i)
+    return
+
+    from tqdm import tqdm
+
+    csv_path = os.path.join(os.curdir, "data", "raw", "USUARIOS APPARKA MAY 2024.csv")
+    with open(csv_path, mode="r", encoding="utf-8") as csv_file:
+        csv_data = [
+            [i.strip().upper() for i in j] for j in csv.reader(csv_file, delimiter=",")
+        ][2:]
+
+    for rec, record in tqdm(enumerate(DB.database), total=len(DB.database)):
+        if record["idUsuario"] == 0:
+            for csv_rec in csv_data:
+
+                if record.get("telefono", "").strip() == csv_rec[5].upper().strip():
+                    DB.database[rec]["idUsuario"] = csv_rec[0]
+                    break
+
+    DB.write_database()
 
     return
 

@@ -5,13 +5,11 @@ from PIL import Image
 import pygame
 from pygame.locals import *
 from gft_utils import pygameUtils
-import subprocess
-import random
 
 pygame.init()
 
 
-def captcha_gui(SOAT, placa, canvas):
+def captcha_gui(placa, canvas):
 
     def disp_capture(chars, message):
         if message:
@@ -79,6 +77,8 @@ def captcha_gui(SOAT, placa, canvas):
                 disp_capture(chars, message=msg)
 
                 if col == 6:
+                    return "".join(chars)
+
                     response = SOAT.browser(placa=placa, captcha_txt="".join(chars))
                     if response == -1:
                         msg = "Limit"
@@ -96,63 +96,3 @@ def captcha_gui(SOAT, placa, canvas):
                     return response
 
         disp_capture(chars, message=msg)
-
-
-def get_captcha_image(SOAT):
-    cmd = "C:\Program Files\Private Internet Access\piactl.exe"
-    regions = ["chile", "argentina", "peru", "brazil", "mexico", "ecuador"]
-
-    # turn off VPN if limit reached to get captcha image
-    if SOAT.limit:
-        subprocess.run([cmd, "disconnect"], shell=True)
-
-    SOAT.WEBD.refresh()
-    _img = SOAT.WEBD.find_element(
-        By.XPATH,
-        "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
-    )
-    # turn on VPN if limit reached to skip IP limiting
-    if SOAT.limit:
-        subprocess.run([cmd, "set", "region", random.choice(regions)], shell=True)
-        subprocess.run([cmd, "connect"], shell=True)
-    captcha_img = Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
-    captcha_img.save("captcha_soat.png")
-
-
-def main(SOAT, placas):
-
-    # don't run if no records to process
-    if not placas:
-        return []
-
-    # turn off VPN
-    cmd = "C:\Program Files\Private Internet Access\piactl.exe"
-    subprocess.run([cmd, "disconnect"], shell=True)
-
-    URL = "https://www.apeseg.org.pe/consultas-soat/"
-    SOAT.WEBD = ChromeUtils().init_driver(
-        headless=True, verbose=False, maximized=True, incognito=True
-    )
-    SOAT.WEBD.get(URL)
-    SOAT.limit = False
-    canvas = pygameUtils(screen_size=(1050, 130))
-
-    all_responses = []
-    for placa in placas:
-        while True:
-            try:
-                get_captcha_image(SOAT)
-                response = captcha_gui(SOAT, placa[4], canvas)
-                if type(response) != int:
-                    all_responses.append((placa[0], placa[1], response))
-                    break
-            except KeyboardInterrupt:
-                quit()
-            except:
-                time.sleep(3)
-                SOAT.WEBD.refresh()
-                break
-
-    # turn off VPN and return responses
-    subprocess.run([cmd, "disconnect"], shell=True)
-    return all_responses
