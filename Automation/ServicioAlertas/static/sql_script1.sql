@@ -8,10 +8,12 @@ CREATE TABLE "brevetes" (
 	"Restricciones" TEXT,
 	"FechaHasta" DATE,
 	"Centro" TEXT,
+	"Puntos" TEXT,
+	"Record" TEXT,
+	"PapeletasImpagas" TEXT,
 	"LastUpdate" DATE,
-	FOREIGN KEY (IdMember_FK) REFERENCES members(IdMember)
-);
-DROP TABLE IF EXISTS members;
+	FOREIGN KEY(IdMember_FK) REFERENCES members(IdMember)
+) DROP TABLE IF EXISTS members;
 CREATE TABLE "members" (
 	"IdMember" INTEGER NOT NULL,
 	"CodMember" TEXT NOT NULL,

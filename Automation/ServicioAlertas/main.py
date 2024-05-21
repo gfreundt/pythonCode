@@ -15,11 +15,11 @@ class Database:
             SQLDATABASE = os.path.join(os.getcwd(), "data", "membersTEST.sqlite")
 
         # connect to database
-        self.conn = sqlite3.connect(SQLDATABASE)
+        self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
         # only when building - take way later
-        self.restart_database()
+        # self.restart_database()
 
     def sql(self, table, fields):
         qmarks = ",".join(["?" for _ in range(len(fields))])
@@ -32,7 +32,7 @@ class Database:
             self.SCRIPTS = json.load(file)
 
     def restart_database(self):
-        SQLSCRIPT1 = os.path.join(os.getcwd(), "sql_script1.sql")
+        SQLSCRIPT1 = os.path.join(os.getcwd(), "static", "sql_script1.sql")
         with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
             cmd = file.read()
         self.cursor.executescript(cmd)
@@ -75,28 +75,38 @@ def side(members):
 
 def main():
 
-    MEMBERS = updates.Members(LOG, DB)
-    MANUAL = updates.ManualUpdates(LOG, DB)
-    AUTO = updates.AutoUpdates(LOG, DB)
-
     if "UPDATE" in sys.argv:
+        # define instances
+        UPDATES = updates.Update(LOG, DB)
+
         # download raw list of all members from form and add new ones
-        MEMBERS.add_new_members()
+        # MEMBERS.add_new_members()
         # select docs and placas to update
-        MEMBERS.get_records_to_process()
+        UPDATES.get_records_to_process()
 
         # TEST ONLY
-        # MANUAL.gather_soat()
-        MANUAL.gather_sunarp()
-        return
+        # UPDATES.gather_soat()
+        # UPDATES.gather_sunarp()
+        # return
 
-        # run MANUAL (requires user action) scrapes first
+        # run UPDATES (requires user action) scrapes first
         if "MAN" in sys.argv:
-            MANUAL.gather_soat()
-            MANUAL.gather_sunarp()
-            MANUAL.gather_satmul()
+            UPDATES.gather_soat()
+            UPDATES.gather_sunarp()
+            UPDATES.gather_satmul()
         # run AUTO (do not require user action) scrapes after
-        AUTO.launch_threads()
+        if "AUTO" in sys.argv:
+            threads = [
+                # UPDATES.gather_satimp(),
+                UPDATES.gather_brevete(),
+                # UPDATES.gather_callaomulta(),
+                # UPDATES.gather_osiptel(),
+                # UPDATES.gather_revtec(),
+                # UPDATES.gather_soatimage(),
+                # UPDATES.gather_sutran(),
+            ]
+            for thread in threads:
+                thread.join()
 
     if "ALERT" in sys.argv:
         # get list of records to process for each alert

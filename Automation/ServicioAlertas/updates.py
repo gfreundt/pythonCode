@@ -8,7 +8,7 @@ import pygame
 from pygame.locals import *
 
 import scrapers, sunarp
-from gft_utils import ChromeUtils, GoogleUtils, pygameUtils
+from gft_utils import GoogleUtils, pygameUtils
 
 
 class Gui:
@@ -89,7 +89,16 @@ class Gui:
                 return "".join(chars)
 
 
-class Members:
+def threader(func):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
+    return wrapper
+
+
+class Update:
 
     def __init__(self, LOG, DB) -> None:
         self.LOG = LOG
@@ -248,34 +257,21 @@ class Members:
         soat = base_cmd("SELECT * FROM soat WHERE XXXXXXXXXXXXX date statement")
         satmul = base_cmd("SELECT * FROM satmul WHERE XXXXXXXXXXXXX date statement")
 
-
-class ManualUpdates:
-
-    def __init__(self, LOG, DB) -> None:
-        self.LOG = LOG
-        self.cursor = DB.cursor
-        self.conn = DB.conn
-        self.sql = DB.sql
-
     def gather_soat(self):
-        # open URL and activate scraper
-        URL = "https://www.apeseg.org.pe/consultas-soat/"
-        WEBD = ChromeUtils().init_driver(headless=True, maximized=True, incognito=True)
-        WEBD.get(URL)
+        scraper = scrapers.Soat()
         canvas = pygameUtils(screen_size=(1050, 130))
-        SCRAPER = scrapers.Soat(WEBD)
         GUI = Gui(zoomto=(465, 105), numchar=6)
 
         # iterate on every placa and write to database
         for placa in self.placas_to_process:
             try:
                 while True:
-                    captcha_img = SCRAPER.get_captcha_img(WEBD)
+                    captcha_img = scraper.get_captcha_img(self.WEBD)
                     captcha = GUI.gui(canvas, captcha_img)
-                    response = SCRAPER.browser(placa=placa[2], captcha_txt=captcha)
+                    response = scraper.browser(placa=placa[2], captcha_txt=captcha)
                     # wrong captcha - restart loop with same placa
                     if response == -2:
-                        WEBD.refresh()
+                        self.WEBD.refresh()
                         continue
                     # exceed limit of manual captchas - abort iteration
                     elif response == -1:
@@ -311,22 +307,13 @@ class ManualUpdates:
                 quit()
             except:
                 time.sleep(3)
-                WEBD.refresh()
+                self.WEBD.refresh()
                 break
 
     def gather_sunarp(self):
-        # open first URL, wait and open second URL and activate scraper
-        URL1 = "https://www.gob.pe/sunarp"
-        URL2 = "https://www.sunarp.gob.pe/consulta-vehicular.html"
-        WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True, incognito=True
-        )
-        WEBD.get(URL1)
-        time.sleep(2)
-        WEBD.get(URL2)
-        time.sleep(1)
+
         canvas = pygameUtils(screen_size=(1070, 140))
-        SCRAPER = scrapers.Sunarp(WEBD)
+        SCRAPER = scrapers.Sunarp()
         GUI = Gui(zoomto=(500, 120), numchar=6)
 
         # iterate on every placa and write to database
@@ -338,7 +325,7 @@ class ManualUpdates:
                     response = SCRAPER.browser(placa=placa[2], captcha_txt=captcha)
                     # wrong captcha or correct catpcha, no image loaded - restart loop with same placa
                     if response < 0:
-                        WEBD.refresh()
+                        self.WEBD.refresh()
                         continue
                     # correct captcha, no data for placa - enter update attempt to database, go to next placa
                     elif response == 1:
@@ -399,27 +386,15 @@ class ManualUpdates:
             #     break
 
     def gather_satmul(self):
-        # open URL and activate scraper
-        WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True, incognito=False
-        )
-        WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
-        _target = (
-            "https://www.sat.gob.pe/VirtualSAT/modulos/papeletas.aspx?tri=T&mysession="
-            + WEBD.current_url.split("=")[-1]
-        )
-        time.sleep(2)
-        WEBD.get(_target)
-        SCRAPER = scrapers.Satmul()
-
+        scraper = scrapers.Satmul()
         # iterate on every placa and write to database
         for placa in self.placas_to_process:
             try:
                 while True:
-                    response = SCRAPER.browser(placa=placa[2])
+                    response = scraper.browser(placa=placa[2])
                     # unsuccesful scrape - restart loop with same placa
                     if response < 0:
-                        WEBD.refresh()
+                        scraper.WEBD.refresh()
                         continue
                     # if there is data in response, enter into database, go to next placa
                     elif response:
@@ -455,36 +430,13 @@ class ManualUpdates:
             #     WEBD.refresh()
             #     break
 
+    @threader
+    def gather_satimp(self):
+        print("inside gather")
 
-class AutoUpdates:
-
-    def __init__(self, LOG, DB) -> None:
-        self.LOG = LOG
-        self.cursor = DB.cursor
-        self.conn = DB.conn
-        self.sql = DB.sql
-
-    def launch_threads():
-        scrapers = [
-            "satimp",
-            "brevete",
-            "revtec",
-            "sutran",
-            "soatimage",
-            "callaomulta",
-            "osiptel",
-        ]
-        threads = [threading.Thread(target=f"gather_{s}") for s in scrapers]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
+    @threader
     def gather_brevete(self):
         scraper = scrapers.Brevete()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get("https://licencias.mtc.gob.pe/#/index")
-        time.sleep(3)
 
         # iterate on all records that require updating and get scraper results
         for k, rec in enumerate(self.docs_to_process):
@@ -502,17 +454,20 @@ class AutoUpdates:
                             "Restricciones",
                             "FechaHasta",
                             "Centro",
+                            "Puntos",
+                            "Record",
+                            "PapeletasImpagas",
                             "LastUpdate",
                         ],
                     )
                     values = (
-                        [rec[2]]
-                        + list(new_record["Brevete"].values())
+                        [rec[0]]
+                        + list(new_record.values())
                         + [dt.now().strftime("%Y-%m-%d")]
                     )
                     self.cursor.execute(cmd, values)
                     self.conn.commit()  # writes every time - maybe take away later
-                    break
+
             except KeyboardInterrupt:
                 quit()
             # except:
@@ -521,11 +476,10 @@ class AutoUpdates:
 
             print(f"Brevete: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
+    @threader
     def gather_revtec(self):
+
         scraper = scrapers.Revtec()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get("https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx")
-        time.sleep(3)
 
         # iterate on all records that require updating and get scraper results
         for k, rec in enumerate(self.placas_to_process):
@@ -562,14 +516,10 @@ class AutoUpdates:
 
             print(f"RevTec: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
+    @threader
     def gather_sutran(self):
-        scraper = scrapers.Sutran()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get(
-            "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
-        )
-        time.sleep(3)
 
+        scraper = scrapers.Sutran()
         # iterate on all records that require updating and get scraper results
         for k, rec in enumerate(self.docs_to_process):
             try:
@@ -603,12 +553,10 @@ class AutoUpdates:
 
             print(f"Sutran: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
+    @threader
     def gather_soatimage(self):
-        scraper = scrapers.SoatImage()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get("https://www.pacifico.com.pe/consulta-soat")
-        time.sleep(3)
 
+        scraper = scrapers.SoatImage()
         # iterate on all records that require updating and get scraper results
         for k, rec in enumerate(self.placas_to_process):
             try:
@@ -647,11 +595,9 @@ class AutoUpdates:
 
             print(f"SoatImage {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
+    @threader
     def gather_callaomulta(self):
         scraper = scrapers.CallaoMulta()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get("https://pagopapeletascallao.pe/")
-        time.sleep(3)
 
         # iterate on all records that require updating and get scraper results
         for k, rec in enumerate(self.placas_to_process):
@@ -670,27 +616,7 @@ class AutoUpdates:
 
             print(f"CallaoMultas: {(k+1)/len(self.docs_to_process)*100:.1f}%")
 
+    @threader
     def gather_osiptel(self):
         # TODO
         return
-        scraper = scrapers.Satimp()
-        WEBD = ChromeUtils().init_driver(headless=False, verbose=False, maximized=True)
-        WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
-        time.sleep(3)
-
-        # iterate on all records that require updating and get scraper results
-        for k, rec in enumerate(self.placas_to_process):
-            try:
-                new_record, _ = scraper.browser(placa=rec[2])
-                if new_record:
-                    cmd = """ """
-                    self.cursor.execute(cmd, new_record)
-            except KeyboardInterrupt:
-                quit()
-            except:
-                self.LOG.warning(f"No proceso {rec}")
-                scraper.WEBD.refresh()
-                self.conn.commit()
-                break
-
-            print(f"Satimp: {(k+1)/len(self.docs_to_process)*100:.1f}%")

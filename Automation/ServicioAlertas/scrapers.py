@@ -10,48 +10,28 @@ import io, urllib
 import os, shutil
 import random
 import easyocr
-from gft_utils import PDFUtils
+from gft_utils import PDFUtils, ChromeUtils
 
 
 class Satimp:
-    def __init__(self, db) -> None:
-        self.DB = db
+    def __init__(self) -> None:
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True, incognito=False
+        )
+        self.WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
+        # navigate once to Tributo Detalles page with internal URL
+        _target = (
+            "https://www.sat.gob.pe/VirtualSAT/modulos/TributosResumen.aspx?tri=T&mysession="
+            + self.WEBD.current_url.split("=")[-1]
+        )
+        self.WEBD.get(_target)
+        time.sleep(2)
+
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.opening = True
 
-    def records_to_update(self, last_update_threshold):
-        to_update = [[]]
-        for record_index, record in enumerate(self.DB.database):
-            actualizado = dt.strptime(
-                record["documento"]["deuda_tributaria_sat_actualizado"], "%d/%m/%Y"
-            )
-            # Skip all records than have already been updated in last day
-            if dt.now() - actualizado < td(days=1):
-                continue
-            # Priority 0: last update over 30 days
-            if dt.now() - actualizado >= td(days=last_update_threshold):
-                to_update[0].append((record_index, 0))
-        return to_update
-
-    def update_record(self, record_index, position, new_record):
-        self.DB.database[record_index]["documento"]["deuda_tributaria_sat"] = new_record
-        self.DB.database[record_index]["documento"][
-            "deuda_tributaria_sat_actualizado"
-        ] = dt.now().strftime("%d/%m/%Y")
-
-    def browser(self, doc_tipo, doc_num, placa):
-        if not doc_num:
-            return [], 0
-
-        if self.opening:
-            # navigate once to Tributo Detalles page with internal URL
-            _target = (
-                "https://www.sat.gob.pe/VirtualSAT/modulos/TributosResumen.aspx?tri=T&mysession="
-                + self.WEBD.current_url.split("=")[-1]
-            )
-            self.WEBD.get(_target)
-            time.sleep(2)
-            self.opening = False
+    def browser(self, **kwargs):
+        doc_num = kwargs["doc_num"]
+        doc_tipo = kwargs["doc_tipo"]
 
         captcha_attempts = 0
 
@@ -168,53 +148,24 @@ class Satimp:
 
 
 class Brevete:
-    def __init__(self, db) -> None:
-        self.DB = db
+    def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
-        self.SWITCH_TO_LIMITED = 1200  # records
-        self.limited_scrape = True  # TODO:flexible
+        self.limited_scrape = False
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
 
-    def records_to_update(self, last_update_threshold):
-        to_update = [[] for _ in range(3)]
-
-        for record_index, record in enumerate(self.DB.database):
-            brevete = record["documento"]["brevete"]
-            actualizado = dt.strptime(
-                record["documento"]["brevete_actualizado"], "%d/%m/%Y"
-            )
-
-            # Skip all records than have already been updated in last 24 hours
-            if dt.now() - actualizado < td(days=1):
-                continue
-
-            # Priority 0: brevete will expire in 15 days or has expired in the last 30 days
-            if brevete:
-                hasta = dt.strptime(brevete["fecha_hasta"], "%d/%m/%Y")
-                if td(days=-15) <= dt.now() - hasta <= td(days=30):
-                    to_update[0].append((record_index, 0))
-
-            # Priority 1: last update was LUT days ago
-            if dt.now() - actualizado >= td(days=last_update_threshold):
-                to_update[1].append((record_index, 0))
-
-            # # Priority 2: brevete will expire in more than 30 days and last update was 10+ days ago
-            # if dt.now() - hasta > td(days=30) and dt.now() - actualizado >= td(
-            #     days=last_update_threshold
-            # ):
-            #     to_update[2].append((record_index, 0))
-
-        return to_update
-
-    def update_record(self, record_index, position, new_record):
-        self.DB.database[record_index]["documento"]["brevete"] = new_record
-        self.DB.database[record_index]["documento"][
-            "brevete_actualizado"
-        ] = dt.now().strftime("%d/%m/%Y")
-
-    def browser(self, doc_tipo, doc_num, placa):
+    def browser(self, **kwargs):
+        doc_num = kwargs["doc_num"]
         reload_url = self.WEBD.current_url
         captcha_attempts = 0
         retry_captcha = False
+
+        self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
+        time.sleep(1)
+        self.WEBD.refresh()
+        time.sleep(1)
+        self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
         # outer loop: in case captcha is not accepted by webpage, try with a new one
         while True:
             captcha_txt = ""
@@ -339,8 +290,9 @@ class Brevete:
             _puntos = self.WEBD.find_element(
                 By.XPATH,
                 "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[2]/div/div/mat-card/mat-card-content/div/app-visor-sclp/mat-card/mat-card-content/div/div[2]/label",
-            ).text
-            _puntos = int(_puntos.split(" ")[0]) if " " in _puntos else None
+            )
+
+            _puntos = int(_puntos.text.split(" ")[0]) if " " in _puntos.text else 0
             response.update({"puntos": _puntos})
 
             # next tab (Record)
@@ -388,53 +340,18 @@ class Brevete:
 
 
 class Revtec:
-    def __init__(self, db) -> None:
-        self.DB = db
+    def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get(
+            "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
+        )
+        time.sleep(3)
 
-    def records_to_update(self, last_update_threshold):
-        to_update = [[] for _ in range(4)]
-
-        for record_index, record in enumerate(self.DB.database):
-            for veh_index, vehiculo in enumerate(record["vehiculos"]):
-                actualizado = dt.strptime(vehiculo["rtecs_actualizado"], "%d/%m/%Y")
-                rtecs = vehiculo["rtecs"]
-
-                # Skip all records than have already been updated in same date
-                if dt.now() - actualizado <= td(days=1):
-                    continue
-
-                # Priority 0: rtec will expire in 3 days or has expired in the last 60 days
-                if rtecs and rtecs[0]["fecha_hasta"]:
-                    hasta = dt.strptime(rtecs[0]["fecha_hasta"], "%d/%m/%Y")
-                    if td(days=-3) <= dt.now() - hasta <= td(days=60):
-                        to_update[0].append((record_index, veh_index))
-
-                # Priority 1: rtecs with no fecha hasta
-                if rtecs and not rtecs[0]["fecha_hasta"]:
-                    to_update[1].append((record_index, veh_index))
-
-                # Priority 2: no rtec information and last update was 7+ days ago
-                if not rtecs and dt.now() - actualizado >= td(
-                    days=last_update_threshold
-                ):
-                    to_update[2].append((record_index, veh_index))
-
-                # Priority 3: rtec will expire in more than 60 days and last update was 7+ days ago
-                if dt.now() - hasta > td(days=60) and dt.now() - actualizado >= td(
-                    days=last_update_threshold
-                ):
-                    to_update[3].append((record_index, veh_index))
-
-        return to_update
-
-    def update_record(self, record_index, position, new_record):
-        self.DB.database[record_index]["vehiculos"][position]["rtecs"] = new_record
-        self.DB.database[record_index]["vehiculos"][position][
-            "rtecs_actualizado"
-        ] = dt.now().strftime("%d/%m/%Y")
-
-    def browser(self, doc_tipo, doc_num, placa):
+    def browser(self, **kwargs):
+        placa = kwargs["placa"]
         captcha_attempts = 0
         retry_captcha = False
         while True:
@@ -512,39 +429,17 @@ class Revtec:
 
 
 class Sutran:
-    def __init__(self, db) -> None:
-        self.DB = db
+    def __init__(self) -> None:
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get(
+            "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
+        )
+        time.sleep(3)
 
-    def records_to_update(self, last_update_threshold):
-        to_update = [[] for _ in range(2)]
-
-        for record_index, record in enumerate(self.DB.database):
-
-            vehiculos = record["vehiculos"]
-            for veh_index, vehiculo in enumerate(vehiculos):
-                actualizado = dt.strptime(
-                    vehiculo["multas"]["sutran_actualizado"], "%d/%m/%Y"
-                )
-
-                # Skip all records than have already been updated in last 22 hours
-                if dt.now() - actualizado < td(days=1):
-                    continue
-
-                # Priority 0: last update over n days
-                if dt.now() - actualizado >= td(days=last_update_threshold):
-                    to_update[0].append((record_index, veh_index))
-
-        return to_update
-
-    def update_record(self, record_index, position, new_record):
-        self.DB.database[record_index]["vehiculos"][position]["multas"][
-            "sutran"
-        ] = new_record
-        self.DB.database[record_index]["vehiculos"][position]["multas"][
-            "sutran_actualizado"
-        ] = dt.now().strftime("%d/%m/%Y")
-
-    def browser(self, doc_tipo, doc_num, placa):
+    def browser(self, **kwargs):
+        placa = kwargs["placa"]
         captcha_attempts = 0
         while True:
             # capture captcha image from frame name
@@ -619,11 +514,14 @@ class SoatImage:
 
     def __init__(self):
         self.pdf = PDFUtils()
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get("https://www.pacifico.com.pe/consulta-soat")
+        time.sleep(3)
 
     def browser(self, **kwargs):
-
         while True:
-
             # required data for scrape
             placa = kwargs["placa"]
 
@@ -693,8 +591,13 @@ class SoatImage:
 
 
 class CallaoMulta:
-    def __init__(self, db) -> None:
+    def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get("https://pagopapeletascallao.pe/")
+        time.sleep(3)
 
     def browser(self, **kwargs):
         import numpy as np
@@ -777,7 +680,10 @@ class CallaoMulta:
 class Soat:
 
     def __init__(self, WEBD) -> None:
-        self.WEBD = WEBD
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, maximized=True, incognito=True
+        )
+        WEBD.get("https://www.apeseg.org.pe/consultas-soat/")
 
     def get_captcha_img(self, WEBD):
         WEBD.refresh()
@@ -878,8 +784,15 @@ class Soat:
 
 class Sunarp:
 
-    def __init__(self, WEBD) -> None:
-        self.WEBD = WEBD
+    def __init__(self) -> None:
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True, incognito=True
+        )
+        # open first URL, wait and open second URL (avoids limiting requests)
+        self.WEBD.get("https://www.gob.pe/sunarp")
+        time.sleep(2)
+        self.WEBD.get("https://www.sunarp.gob.pe/consulta-vehicular.html")
+        time.sleep(1)
 
     def get_captcha_image(self):
         self.WEBD.refresh()
@@ -949,11 +862,20 @@ class Sunarp:
 
 class Satmul:
 
-    def __init__(self, WEBD) -> None:
-        self.WEBD = WEBD
+    def __init__(self) -> None:
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True, incognito=False
+        )
+        self.WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
+        time.sleep(2)
+        _target = (
+            "https://www.sat.gob.pe/VirtualSAT/modulos/papeletas.aspx?tri=T&mysession="
+            + self.WEBD.current_url.split("=")[-1]
+        )
+        self.WEBD.get(_target)
+        time.sleep(2)
 
     def browser(self, **kwargs):
-
         placa = kwargs["placa"]
         # select alternative option from dropdown to reset it
         drop = Select(self.WEBD.find_element(By.ID, "tipoBusquedaPapeletas"))
