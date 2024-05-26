@@ -66,20 +66,26 @@ def ocr_and_parse(img_filename):
     response = client.text_detection(image=image)
     content = [i.description for i in response.text_annotations][0]
 
-    # clean text (remove titles)
-    output = []
-    for line in content:
-        line = line.strip()
-        if ":" in line:
-            output.append(line.split(":")[1])
-        else:
-            output.append(line)
+    # print(content)
 
-    # clean text (remove empty)
-    values = [i for i in output if i]
+    output = []
+    # clean text (remove titles)
+    content = content.replace(";", ":")
+    for symbol in "*./-'+" + '"':
+        content = content.replace(symbol, "")
+
+    for line in content.splitlines()[:-1]:
+        if ":" in line:
+            if len(line.split(":")[1]) > 1:
+                output.append(line.split(":")[1].strip())
+        else:
+            output.append(line.strip())
+
+    # remove fields with one character
+    output = [i for i in output if len(i) > 1]
 
     # if ocr does not return expected structure, return empty
-    if len(values) < 14:
+    if len(output) < 14:
         return []
 
     year_guide = {
@@ -117,9 +123,9 @@ def ocr_and_parse(img_filename):
 
     # build text response from scraping
     try:
-        _response = [j.strip() for j in values]
-        _response.append(" + ".join(values[12:-1]))
-        _response.append(year_guide[values[2][9]])
+        _response = [j.strip() for j in output[:12]]
+        _response.append(" + ".join(output[12:]))
+        _response.append(year_guide[output[2][9]])
         return _response
     except:
         return []

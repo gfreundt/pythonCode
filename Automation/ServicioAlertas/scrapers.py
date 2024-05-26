@@ -7,7 +7,7 @@ from datetime import datetime as dt, timedelta as td
 import time
 from PIL import Image
 import io, urllib
-import os, shutil
+import os
 import random
 import easyocr
 from gft_utils import PDFUtils, ChromeUtils
@@ -95,7 +95,7 @@ class Satimp:
 
         _qty = int("".join([i for i in x if i.isdigit()]))
         if _qty == 0:
-            return [], captcha_attempts
+            return []
 
         response = []
         for row in range(_qty):
@@ -144,7 +144,7 @@ class Satimp:
 
         time.sleep(0.5)
 
-        return response, captcha_attempts
+        return response
 
 
 class Brevete:
@@ -158,23 +158,21 @@ class Brevete:
     def browser(self, **kwargs):
         doc_num = kwargs["doc_num"]
         reload_url = self.WEBD.current_url
-        captcha_attempts = 0
         retry_captcha = False
 
         self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
         time.sleep(1)
         self.WEBD.refresh()
-        time.sleep(1)
-        self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
+        # time.sleep(0.5)
+        # self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
         # outer loop: in case captcha is not accepted by webpage, try with a new one
         while True:
             captcha_txt = ""
             # inner loop: in case OCR cannot figure out captcha, retry new captcha
             while not captcha_txt:
-                captcha_attempts += 1
                 if retry_captcha:
                     self.WEBD.refresh()
-                    time.sleep(1)
+                    time.sleep(2)
                 # capture captcha image from webpage and store in variable
                 try:
                     _captcha_img_url = self.WEBD.find_element(
@@ -222,9 +220,9 @@ class Brevete:
                 # clear webpage for next iteration and small wait
                 time.sleep(1)
                 self.WEBD.back()
-                time.sleep(0.2)
+                time.sleep(0.5)
                 self.WEBD.refresh()
-                return [], captcha_attempts
+                return []
             elif _alerta and "captcha" in _alerta[0].text:
                 # click on "Ok" to close pop-up
                 self.WEBD.find_element(
@@ -259,17 +257,14 @@ class Brevete:
         except NoSuchElementException:
             response = []
 
-        # skip rest of scrape if limited
-        if self.limited_scrape:
-            # clear webpage for next iteration and small wait
+        # next tab (Puntos) - make sure all is populated before tabbing along (with timeout)
+        timeout = 0
+        while not self.WEBD.find_elements(By.ID, "mat-tab-label-0-0"):
             time.sleep(1)
-            self.WEBD.back()
-            time.sleep(0.2)
-            self.WEBD.refresh()
-            return response, captcha_attempts
+            timeout += 1
+            if timeout > 10:
+                raise TimeoutError
 
-        # next tab (Puntos)
-        time.sleep(0.4)
         action = ActionChains(self.WEBD)
         try:
             # enter key combination to open tab
@@ -334,9 +329,9 @@ class Brevete:
             self.WEBD.back()
             time.sleep(0.2)
             self.WEBD.refresh()
-            return response, captcha_attempts
+            return response
 
-        return response, captcha_attempts
+        return response
 
 
 class Revtec:
@@ -352,7 +347,6 @@ class Revtec:
 
     def browser(self, **kwargs):
         placa = kwargs["placa"]
-        captcha_attempts = 0
         retry_captcha = False
         while True:
             # get captcha in string format
@@ -383,18 +377,16 @@ class Revtec:
             self.WEBD.find_element(By.ID, "BtnBuscar").click()
             time.sleep(1)
 
-            # captcha tries counter
-            captcha_attempts += 1
-
             # if captcha is not correct, refresh and restart cycle, if no data found, return None
             _alerta = self.WEBD.find_element(By.ID, "lblAlertaMensaje").text
             if "no es correcto" in _alerta:
                 continue
             elif "encontraron resultados" in _alerta:
+                print("no se encontraron")
                 # clear webpage for next iteration and return None
                 self.WEBD.refresh()
                 time.sleep(0.5)
-                return [], captcha_attempts
+                return []
             else:
                 break
 
@@ -425,7 +417,7 @@ class Revtec:
         self.WEBD.refresh()
         time.sleep(1)
 
-        return [response], captcha_attempts
+        return response
 
 
 class Sutran:
@@ -440,7 +432,6 @@ class Sutran:
 
     def browser(self, **kwargs):
         placa = kwargs["placa"]
-        captcha_attempts = 0
         while True:
             # capture captcha image from frame name
             _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
@@ -468,9 +459,6 @@ class Sutran:
                 elements[1][0].click()
             time.sleep(0.5)
 
-            # captcha tries counter
-            captcha_attempts += 1
-
             # if no text response, restart
             elements = self.WEBD.find_elements(By.ID, "LblMensaje")
             if elements:
@@ -482,7 +470,7 @@ class Sutran:
             if "pendientes" in _alerta:
                 self.WEBD.refresh()
                 time.sleep(0.2)
-                return [], captcha_attempts
+                return []
             else:
                 break
 
@@ -507,7 +495,7 @@ class Sutran:
         self.WEBD.refresh()
         time.sleep(0.2)
 
-        return response, captcha_attempts
+        return response
 
 
 class SoatImage:
@@ -534,7 +522,7 @@ class SoatImage:
                 "/html/body/div[1]/div[1]/div/div[1]/div/div[2]/div[1]/div/h1",
             )
             if z:  # and "No tienes" in z[0].text:
-                return {"Soat_Imagen": None}, None
+                return ""
 
             # wair for button and click DESCARGAR for 10 seconds
             z = False
@@ -551,7 +539,7 @@ class SoatImage:
                 z[0].click()
                 time.sleep(2)
             except:
-                return {"Soat_Imagen": None}, None
+                return ""
 
             _file_name = f"SOAT-{placa.upper()}-{dt.strftime(dt.now(),'%Y%m%d')}.pdf"
             # wait up to 15 seconds while file is downloaded
@@ -582,12 +570,19 @@ class SoatImage:
                 img = self.pdf.pdf_to_png(from_path, scale=1.3).crop(
                     (135, 64, 635, 844)
                 )
+
+                # delete image with same name (previous version) from destination folder if it exists
+                if os.path.exists(to_path):
+                    os.remove(to_path)
                 img.save(to_path)
 
-                return {"Soat_Imagen": os.path.basename(to_path)}, None
+                # delete original downloaded file (saves space and avoids "(1)" appended on filename in future)
+                os.remove(from_path)
 
-            except:
-                return {"Soat_Imagen": None}, None
+                return str(os.path.basename(to_path))
+
+            except KeyboardInterrupt:
+                return ""
 
 
 class CallaoMulta:
@@ -656,7 +651,7 @@ class CallaoMulta:
             if x:
                 # return empty
                 time.sleep(0.5)
-                return [], 0
+                return []
             elif y:
                 # captcha error, retry
                 time.sleep(0.5)
@@ -674,20 +669,20 @@ class CallaoMulta:
         self.WEBD.refresh()
         time.sleep(1)
 
-        return [response], 0
+        return response
 
 
 class Soat:
 
-    def __init__(self, WEBD) -> None:
+    def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
             headless=False, maximized=True, incognito=True
         )
-        WEBD.get("https://www.apeseg.org.pe/consultas-soat/")
+        self.WEBD.get("https://www.apeseg.org.pe/consultas-soat/")
 
-    def get_captcha_img(self, WEBD):
-        WEBD.refresh()
-        _img = WEBD.find_element(
+    def get_captcha_img(self):
+        self.WEBD.refresh()
+        _img = self.WEBD.find_element(
             By.XPATH,
             "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
         )
@@ -862,6 +857,8 @@ class Sunarp:
 
 class Satmul:
 
+    # BJK193
+
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
             headless=False, verbose=False, maximized=True, incognito=False
@@ -890,7 +887,7 @@ class Satmul:
 
         # wait until auto-clicking on button actually takes you to next page
         while self.WEBD.find_elements(By.ID, "ctl00_cplPrincipal_txtPlaca"):
-            time.sleep(2)
+            time.sleep(0.5)
             e = self.WEBD.find_elements(By.ID, "ctl00_cplPrincipal_CaptchaContinue")
             if e:
                 try:
@@ -928,10 +925,48 @@ class Satmul:
                 "doc_tipo",
                 "doc_num",
             ]
-            responses.append(
-                {dict_key: xpath(n, k + 2)[0].text for k, dict_key in enumerate(keys)}
+            resp = {
+                dict_key: xpath(n, k + 2)[0].text for k, dict_key in enumerate(keys)
+            }
+
+            # search if ticket image exists
+            imgs = self.WEBD.find_elements(
+                By.ID, "ctl00_cplPrincipal_grdEstadoCuenta_ctl02_lnkImagen"
             )
+            # no image found, empty filename string
+            if not imgs:
+                img_filename = ""
+            # image found, grab image and save in file,
+            else:
+                img_filename = os.path.join(
+                    r"D:\pythonCode",
+                    "Automation",
+                    "ServicioAlertas",
+                    "data",
+                    "images",
+                    f"SATMUL_{placa.upper()}.png",
+                )
+                # navigate to page with image
+                self.WEBD.get(imgs[0].get_attribute("href"))
+                time.sleep(0.5)
+                # save to file
+                with open(img_filename, "wb") as file:
+                    file.write(
+                        self.WEBD.find_element(By.ID, "imgPapel").screenshot_as_png
+                    )
+                time.sleep(0.5)
+                # back to papeleta screen
+                self.WEBD.back()
+
+            time.sleep(0.5)
+
+            # add image filename to response
+            resp.update({"img_filename": str(os.path.basename(img_filename))})
+            responses.append(resp)
             n += 1
-            return_button.click()
+
+        # click return button for next placa
+        return_button = self.WEBD.find_element(By.ID, "menuOption10")
+        return_button.click()
 
         return responses

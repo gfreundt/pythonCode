@@ -1,41 +1,7 @@
-import json, sys, os
+import sys, os
 import logging
-from pprint import pprint
-import updates, alerts
-import sqlite3
-
-
-class Database:
-
-    def __init__(self) -> None:
-        # select production or test database
-        if not "TEST" in sys.argv:
-            SQLDATABASE = os.path.join(os.getcwd(), "data", "members.sqlite")
-        else:
-            SQLDATABASE = os.path.join(os.getcwd(), "data", "membersTEST.sqlite")
-
-        # connect to database
-        self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
-        self.cursor = self.conn.cursor()
-
-        # only when building - take way later
-        # self.restart_database()
-
-    def sql(self, table, fields):
-        qmarks = ",".join(["?" for _ in range(len(fields))])
-        return f"INSERT INTO {table} ({','.join(fields)}) VALUES ({qmarks})"
-
-    def load_scripts(self):
-        # Placeholder if we start loading more scripts into it
-        SQLSCRIPTS = os.path.join(os.getcwd(), "sql_script1.sql")
-        with open(SQLSCRIPTS, mode="r", encoding="utf-8") as file:
-            self.SCRIPTS = json.load(file)
-
-    def restart_database(self):
-        SQLSCRIPT1 = os.path.join(os.getcwd(), "static", "sql_script1.sql")
-        with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
-            cmd = file.read()
-        self.cursor.executescript(cmd)
+import members, updates, alerts
+import scrapers
 
 
 def start_logger():
@@ -51,70 +17,83 @@ def start_logger():
     return _log
 
 
-def side(members):
+def side():
+    MEMBERS = members.Members(LOG)
+    # MEMBERS.add_new_members()
+    # MEMBERS.restart_database()
+    # return
+    UPDATES = updates.Update(LOG, MEMBERS)
 
-    f = [i["Datos"]["Placas"][0] for i in members]
-    print(f)
-    return
-    docs_to_process, placas_to_process = updates.get_records_to_process(members)
+    # import sunarp
 
-    # placas_to_process = [(0, 0, 0, 0, "ABV123")]
+    # c = sunarp.ocr_and_parse(
+    #     "D:\pythonCode\Automation\ServicioAlertas\data\images\SUNARP_BEX012.png"
+    # )
+    # return
+    # select docs and placas to update
+    UPDATES.get_records_to_process()
 
-    updates.gather_auto(members, placas_to_process)
-    # updates.gather_satmul(members, placas_to_process)
+    # Generic Scrapers - AUTO:
+    # UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes")
+    # UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs")
+    # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans")
+    # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
-    return members
+    # Specific Scrapers - AUTO:
+    # UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
-    for member in members:
-        for soat in member["Resultados"]["Soat"]:
-            if soat:
-                print(soat["fecha_fin"])
+    # Specfic Scrapers - MANUAL:
+    # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls")
+    # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats")
+    # UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
-    quit()
+    # Pending
+    # UPDATES.gather_jneMultas(scraper=scrapers.jneMultas(), table="jnes")
+    # UPDATES.gather_osiptel(scraper=scrapers.osiptelLineas(), table="osipteles")
+    # Siniestralidad SBS
 
 
 def main():
 
-    if "UPDATE" in sys.argv:
-        # define instances
-        UPDATES = updates.Update(LOG, DB)
+    # load member database
+    MEMBERS = members.Members()
 
-        # download raw list of all members from form and add new ones
-        # MEMBERS.add_new_members()
+    if "CHECKNEW" in sys.argv:
+        # check online form for new members and add them to database
+        MEMBERS.add_new_members()
+
+    if "UPDATE" in sys.argv:
+        # instanciate updates
+        UPDATES = updates.Update(LOG, MEMBERS)
         # select docs and placas to update
         UPDATES.get_records_to_process()
 
-        # TEST ONLY
-        # UPDATES.gather_soat()
-        # UPDATES.gather_sunarp()
-        # return
-
-        # run UPDATES (requires user action) scrapes first
+        # manual scrapers first (serial)
         if "MAN" in sys.argv:
-            UPDATES.gather_soat()
-            UPDATES.gather_sunarp()
-            UPDATES.gather_satmul()
-        # run AUTO (do not require user action) scrapes after
+            UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls")
+            UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats")
+            UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+
+        # auto scrapers (threaded)
         if "AUTO" in sys.argv:
-            threads = [
-                # UPDATES.gather_satimp(),
-                UPDATES.gather_brevete(),
-                # UPDATES.gather_callaomulta(),
-                # UPDATES.gather_osiptel(),
-                # UPDATES.gather_revtec(),
-                # UPDATES.gather_soatimage(),
-                # UPDATES.gather_sutran(),
-            ]
-            for thread in threads:
-                thread.join()
+            # Generic Scrapers
+            UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes")
+            UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs")
+            UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans")
+            UPDATES.gather_with_placa(
+                scraper=scrapers.CallaoMulta(), table="callaoMultas"
+            )
+            # Specific Scrapers
+            UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     if "ALERT" in sys.argv:
+        ALERTS = alerts.Alerts()
         # get list of records to process for each alert
         welcome_list, regular_list, warning_list, timestamps = alerts.get_alert_lists()
         # compose and send alerts
         alerts.send_alerts(
             LOG,
-            members,
+            MEMBERS,
             welcome_list,
             regular_list,
             warning_list,
@@ -126,31 +105,12 @@ def main():
 if __name__ == "__main__":
 
     # activate logger and log start of program
-
     LOG = start_logger()
     LOG.info("Start Program.")
 
-    DB = Database()
-
-    # define variable to be used by scraper threads
-    # responses = [[] for _ in range(10)]
-
     # run main program
-    main()
-    DB.conn.commit()
-    DB.conn.close()
+    side()
+    # main()
 
     # log end of program
     LOG.info("-" * 20 + " End Program " + "-" * 20)
-
-"""
-ProDuction Sequence:
-- python main.py UPDATE MAN
-- pythom main.py ALERT EMAIL
-
-Automated only:
-- python main.py UPDATE
-
-Testing Alerts only (no update)
-- python main.py ALERT
-"""
