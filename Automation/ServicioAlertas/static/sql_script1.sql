@@ -114,10 +114,10 @@ DROP TABLE IF EXISTS soats;
 CREATE TABLE soats (
 	Id INTEGER,
 	IdPlaca_FK INTEGER NOT NULL,
-	PlacaValidate TEXT,
 	Aseguradora TEXT,
 	FechaInicio DATE,
-	FechaFin DATE,
+	FechaHasta DATE,
+	PlacaValidate TEXT,
 	Certificado TEXT,
 	Uso TEXT,
 	Clase TEXT,
@@ -221,7 +221,7 @@ DROP TABLE IF EXISTS mensajes;
 CREATE TABLE mensajes (
 	IdMensaje INTEGER,
 	IdMember_FK INTEGER,
-	Fecha DATE Hash TEXT UNIQUE,
+	Fecha DATE Hash TEXT,
 	PRIMARY KEY (IdMensaje AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS mensajeContenidos;

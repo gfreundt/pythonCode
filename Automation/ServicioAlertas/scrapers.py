@@ -163,8 +163,9 @@ class Brevete:
         self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
         time.sleep(1)
         self.WEBD.refresh()
-        # time.sleep(0.5)
-        # self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
+        time.sleep(0.5)
+        self.WEBD.get("https://licencias.mtc.gob.pe/#/index")
+        time.sleep(0.5)
         # outer loop: in case captcha is not accepted by webpage, try with a new one
         while True:
             captcha_txt = ""

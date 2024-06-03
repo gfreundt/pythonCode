@@ -34,17 +34,17 @@ def side():
     UPDATES.get_records_to_process()
 
     # Generic Scrapers - AUTO:
-    # UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes")
-    # UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs")
-    # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans")
+    # UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
+    # UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
+    # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
     # Specific Scrapers - AUTO:
     # UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     # Specfic Scrapers - MANUAL:
-    # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls")
-    # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats")
+    # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
+    # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
     # UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
     # Pending
@@ -64,27 +64,26 @@ def main():
 
     if "UPDATE" in sys.argv:
         # instanciate updates
-        UPDATES = updates.Update(LOG, MEMBERS)
+        UPD = updates.Update(LOG, MEMBERS)
         # select docs and placas to update
-        UPDATES.get_records_to_process()
+        UPD.get_records_to_process()
 
         # manual scrapers first (serial)
         if "MAN" in sys.argv:
-            UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls")
-            UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats")
-            UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+            UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
+            UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+            UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
         # auto scrapers (threaded)
         if "AUTO" in sys.argv:
             # Generic Scrapers
-            UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes")
-            UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs")
-            UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans")
-            UPDATES.gather_with_placa(
-                scraper=scrapers.CallaoMulta(), table="callaoMultas"
-            )
+            UPD.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
+            UPD.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
+            UPD.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
+            UPD.gather_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
+
             # Specific Scrapers
-            UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
+            UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     if "ALERT" in sys.argv:
         ALERTS = alerts.Alerts()
