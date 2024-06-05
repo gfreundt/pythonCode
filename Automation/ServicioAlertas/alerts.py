@@ -20,6 +20,77 @@ class Alerts:
 
     def get_alert_lists(self):
 
+        regular_list = []
+        warning_list = []
+
+        # 1. generate BIENVENIDA list (records with no previous BIENVENIDA email)
+        cmd = """SELECT IdMember FROM members
+                EXCEPT
+                SELECT IdMember FROM (
+                SELECT mensajes.IdMember_FK FROM mensajes JOIN mensajeContenidos ON mensajes.IdMensaje = mensajeContenidos.IdMensaje_FK
+                WHERE IdTipoMensaje_FK = 12)
+                JOIN members
+                ON members.IdMember = IdMember_FK
+                """
+
+        self.cursor.execute(cmd)
+        welcome_list = [i[0] for i in self.cursor.fetchall()]
+
+        # 2. generate REGULAR list (records with previous REGULAR or BIENVENIDA email at least 1 month ago)
+        cmd = """SELECT IdMember FROM members
+                EXCEPT
+	            SELECT IdMember_FK FROM mensajes
+		            JOIN mensajeContenidos
+		            ON IdMensaje = IdMensaje_FK
+		            WHERE fecha >= date('now','-1 month')
+			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
+                """
+
+        self.cursor.execute(cmd)
+        regular_list = [i[0] for i in self.cursor.fetchall()]
+        # welcome_list = self.cursor.fetchall()
+
+        # 3. generate WARNING list (only expiration records that meet date criteria)
+
+        # TODO: make dates dynamic - low priority
+        cmd = f"""  DROP TABLE IF EXISTS temp;
+                    CREATE TABLE temp (CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo);
+
+                    INSERT INTO temp (CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo)
+                    SELECT CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo FROM members
+                    JOIN (
+                        SELECT * FROM placas 
+                        JOIN (
+                        SELECT idplaca_FK, FechaHasta, "SOAT" AS TipoAlerta FROM soats WHERE DATE('now', '10 days') = FechaHasta OR DATE('now', '5 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta
+                        UNION
+                        SELECT idplaca_FK, FechaHasta, "REVTEC" FROM revtecs WHERE DATE('now', '30 days') = FechaHasta OR DATE('now', '15 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta)
+                        ON idplaca = IdPlaca_FK)
+                    ON IdMember = IdMember_FK;
+
+                    INSERT INTO temp (CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo)
+                    SELECT CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo from members 
+                        JOIN (
+                            SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', '60 days') = FechaHasta OR DATE('now', '30 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta
+						UNION
+							SELECT IdMember_FK, FechaHasta, "SATIMP" AS TipoAlerta FROM satimpDeudas 
+							JOIN
+							(SELECT * FROM satimpCodigos)
+							ON IdCodigo_FK = IdCodigo
+							WHERE DATE('now', '10 days') = FechaHasta OR DATE('now', '5 days') = FechaHasta OR DATE('now', '0 days') = FechaHasta)
+                    ON IdMember = IdMember_FK;"""
+
+        self.cursor.executescript(cmd)
+        self.cursor.execute("SELECT * FROM temp")
+        warning_list = self.cursor.fetchall()
+
+        pprint(welcome_list)
+        pprint(regular_list)
+        pprint(warning_list)
+
+        return welcome_list, regular_list, warning_list
+
+    def get_alert_lists2(self):
+
         BREVETE_CHECKPOINTS = (-30, -15, -5, 0)
         REVTEC_CHECKPOINTS = (-10, -5, 0)
         SOAT_CHECKPOINTS = (-10, -5, 0)
