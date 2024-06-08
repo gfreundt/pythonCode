@@ -21,6 +21,7 @@ class Members:
         # connect to database
         self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
         self.cursor = self.conn.cursor()
+        # self.cursor.row_factory = sqlite3.Row
 
         # only when building - take way later
         # self.restart_database()

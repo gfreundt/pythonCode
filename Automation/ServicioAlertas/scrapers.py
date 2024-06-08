@@ -18,6 +18,7 @@ class Satimp:
         self.WEBD = ChromeUtils().init_driver(
             headless=False, verbose=False, maximized=True, incognito=False
         )
+        self.WEBD.set_page_load_timeout(20)
         self.WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
         # navigate once to Tributo Detalles page with internal URL
         _target = (
@@ -118,17 +119,23 @@ class Satimp:
                 y = f"{_placeholder}Anio"
                 x = self.WEBD.find_elements(By.ID, y)
                 if x:
+                    periodo = self.WEBD.find_element(
+                        By.ID, f"{_placeholder}Periodo"
+                    ).text
+                    ano = x[0].text
+                    # build fecha_hasta based on ano and periodo
+                    _f = ("03-31", "06-30", "09-30", "12-31")
+                    fecha_hasta = f"{ano}-{_f[int(periodo)-1]}"
                     _fila = {
-                        "ano": x[0].text,
-                        "periodo": self.WEBD.find_element(
-                            By.ID, f"{_placeholder}Periodo"
-                        ).text,
+                        "ano": ano,
+                        "periodo": periodo,
                         "documento": self.WEBD.find_element(
                             By.ID, f"{_placeholder}Documento"
                         ).text,
                         "total_a_pagar": self.WEBD.find_element(
                             By.ID, f"{_placeholder}Deuda"
                         ).text,
+                        "fecha_hasta": fecha_hasta,
                     }
                     _deudas.append(_fila)
 
@@ -154,6 +161,7 @@ class Brevete:
         self.WEBD = ChromeUtils().init_driver(
             headless=False, verbose=False, maximized=True
         )
+        self.WEBD.set_page_load_timeout(20)
 
     def browser(self, **kwargs):
         doc_num = kwargs["doc_num"]
@@ -198,6 +206,8 @@ class Brevete:
                     time.sleep(1.5)
                     self.WEBD.get(reload_url)
                     time.sleep(1.5)
+                    self.WEBD.refresh()
+                    time.sleep(1.5)
 
             # enter data into fields and run
             self.WEBD.find_element(By.ID, "mat-input-1").send_keys(doc_num)
@@ -208,8 +218,6 @@ class Brevete:
                 "/html/body/app-root/div[2]/app-home/div/mat-card[1]/form/div[5]/div[1]/button",
             ).click()
             time.sleep(1)
-
-            # captcha tries counter
 
             # if captcha is not correct, refresh and restart cycle, if no data found, return None
             _alerta = self.WEBD.find_elements(By.ID, "swal2-html-container")
@@ -258,13 +266,14 @@ class Brevete:
         except NoSuchElementException:
             response = []
 
-        # next tab (Puntos) - make sure all is populated before tabbing along (with timeout)
+        # next tab (Puntos) - make sure all is populated before tabbing along (with timeout) and wait a little
         timeout = 0
         while not self.WEBD.find_elements(By.ID, "mat-tab-label-0-0"):
             time.sleep(1)
             timeout += 1
             if timeout > 10:
                 raise TimeoutError
+        time.sleep(3)
 
         action = ActionChains(self.WEBD)
         try:
@@ -281,7 +290,7 @@ class Brevete:
             for key in keys:
                 action.send_keys(key)
                 action.perform()
-                time.sleep(random.randrange(0, 15) // 10)
+                time.sleep(0.5)
             # extract data
             _puntos = self.WEBD.find_element(
                 By.XPATH,
@@ -429,10 +438,12 @@ class Sutran:
         self.WEBD.get(
             "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
         )
+        self.WEBD.set_page_load_timeout(20)
         time.sleep(3)
 
     def browser(self, **kwargs):
         placa = kwargs["placa"]
+        self.WEBD.refresh()
         while True:
             # capture captcha image from frame name
             _iframe = self.WEBD.find_element(By.CSS_SELECTOR, "iframe")
@@ -467,10 +478,8 @@ class Sutran:
             else:
                 self.WEBD.refresh()
                 continue
-            # if no pendings, clear webpage for next iteration and return None
+            # if no pendings, return None
             if "pendientes" in _alerta:
-                self.WEBD.refresh()
-                time.sleep(0.2)
                 return []
             else:
                 break
@@ -492,9 +501,6 @@ class Sutran:
                     ).text
                 }
             )
-        # clear webpage for next search
-        self.WEBD.refresh()
-        time.sleep(0.2)
 
         return response
 
@@ -688,8 +694,6 @@ class Soat:
             "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
         )
         return _img.screenshot_as_png
-        captcha_img = Image.open(io.BytesIO(_img.screenshot_as_png)).resize((465, 105))
-        captcha_img.save("captcha_soat.png")
 
     def browser(self, **kwargs):
         placa = kwargs["placa"]

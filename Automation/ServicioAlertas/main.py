@@ -19,6 +19,12 @@ def start_logger():
 
 def side():
     MEMBERS = members.Members(LOG)
+    ALERTS = alerts.Alerts(LOG, MEMBERS)
+    # get list of records to process for each alert
+    # ALERTS.get_alert_lists()
+    # print(ALERTS.welcome_list)
+    # print(ALERTS.regular_list)
+
     # MEMBERS.add_new_members()
     # MEMBERS.restart_database()
     # return
@@ -34,8 +40,8 @@ def side():
     UPDATES.get_records_to_process()
 
     # Generic Scrapers - AUTO:
-    # UPDATES.gather_with_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
-    # UPDATES.gather_with_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
+    # UPDATES.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
+    UPDATES.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
@@ -56,7 +62,7 @@ def side():
 def main():
 
     # load member database
-    MEMBERS = members.Members()
+    MEMBERS = members.Members(LOG)
 
     if "CHECKNEW" in sys.argv:
         # check online form for new members and add them to database
@@ -69,13 +75,13 @@ def main():
         UPD.get_records_to_process()
 
         # manual scrapers first (serial)
-        if "MAN" in sys.argv:
-            UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
-            UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+        if "MAN" in sys.argv or "ALL" in sys.argv:
+            # UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
+            # UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
             UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
         # auto scrapers (threaded)
-        if "AUTO" in sys.argv:
+        if "AUTO" in sys.argv or "ALL" in sys.argv:
             # Generic Scrapers
             UPD.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
             UPD.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
@@ -86,19 +92,11 @@ def main():
             UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     if "ALERT" in sys.argv:
-        ALERTS = alerts.Alerts()
+        ALERTS = alerts.Alerts(LOG, MEMBERS)
         # get list of records to process for each alert
-        welcome_list, regular_list, warning_list, timestamps = alerts.get_alert_lists()
+        ALERTS.get_alert_lists()
         # compose and send alerts
-        alerts.send_alerts(
-            LOG,
-            MEMBERS,
-            welcome_list,
-            regular_list,
-            warning_list,
-            EMAIL="EMAIL" in sys.argv,
-            timestamps=timestamps,
-        )
+        ALERTS.send_alerts(EMAIL="EMAIL" in sys.argv)
 
 
 if __name__ == "__main__":
@@ -108,8 +106,9 @@ if __name__ == "__main__":
     LOG.info("Start Program.")
 
     # run main program
-    side()
-    # main()
+    # side()
+    main()
 
     # log end of program
     LOG.info("-" * 20 + " End Program " + "-" * 20)
+    quit()
