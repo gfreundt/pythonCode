@@ -71,6 +71,43 @@ class Members:
 
             self.conn.commit()
 
+    def create_30day_list(self):
+        # create table with all members that have anything expired or expiring within 30 days
+        cmd = f"""DROP TABLE IF EXISTS _expira30dias;
+                    CREATE TABLE _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo);
+
+                    INSERT INTO _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo)
+                    SELECT IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo FROM members
+                    JOIN (
+                        SELECT * FROM placas 
+                        JOIN (
+                        SELECT idplaca_FK, FechaHasta, "SOAT" AS TipoAlerta FROM soats WHERE DATE('now', '30 days') >= FechaHasta
+                        UNION
+                        SELECT idplaca_FK, FechaHasta, "REVTEC" FROM revtecs WHERE DATE('now', '30 days') >= FechaHasta
+                        UNION 
+                        SELECT idplaca_FK, "", "SUTRAN" FROM sutrans
+                        UNION 
+                        SELECT idplaca_FK, "", "SATMUL" FROM satmuls)
+                        ON idplaca = IdPlaca_FK)
+                    ON IdMember = IdMember_FK;
+
+                    INSERT INTO _expira30dias (IdMember, CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo)
+                    SELECT IdMember, CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo from members 
+                        JOIN (
+                            SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', '30 days') >= FechaHasta OR DATE('now', '30 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta
+						UNION
+							SELECT IdMember_FK, FechaHasta, "SATIMP" AS TipoAlerta FROM satimpDeudas 
+							JOIN
+							(SELECT * FROM satimpCodigos)
+							ON IdCodigo_FK = IdCodigo
+							WHERE DATE('now', '30 days') >= FechaHasta)
+                    ON IdMember = IdMember_FK"""
+
+        self.cursor.executescript(cmd)
+        # assign list to instance variable
+        self.cursor.execute("SELECT * FROM _expira30dias")
+        self.day30_list = self.cursor.fetchall()
+
     def load_form_members(self):
         # download latest form responses
         G = GoogleUtils()

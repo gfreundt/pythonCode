@@ -108,6 +108,7 @@ class Update:
         self.cursor = members.cursor
         self.conn = members.conn
         self.sql = members.sql
+        self.day30_list = members.day30_list
         self.lock = threading.Lock()
 
     def get_records_to_process(self):
@@ -116,7 +117,67 @@ class Update:
         self.cursor.execute("SELECT * FROM tableInfo")
         self.all_updates = {i[1]: [] for i in self.cursor.fetchall()}
 
-        # 1. add records that have no BIENVENIDA email
+        # 1. add members that haven't received an email in 30+ days
+        # docs
+        cmd = [
+            """SELECT IdMember, DocTipo, DocNum FROM members JOIN (
+	            SELECT IdMember AS x FROM members
+                EXCEPT
+	            SELECT IdMember_FK FROM mensajes
+		            JOIN mensajeContenidos
+		            ON IdMensaje = IdMensaje_FK
+		            WHERE fecha >= datetime('now','localtime', '-1 month')
+			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
+	            )
+                ON members.IdMember = x
+                """
+        ]
+
+        # placas
+        cmd.append(
+            """SELECT IdPlaca, Placa FROM placas JOIN (
+	            SELECT IdMember AS x FROM members 
+                EXCEPT
+	            SELECT IdMember_FK FROM mensajes
+                    JOIN mensajeContenidos
+		            ON IdMensaje = IdMensaje_FK
+		            WHERE fecha >= datetime('now','localtime', '-1 month')
+			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
+	            )
+                ON placas.IdMember_FK = x
+                """
+        )
+
+        # add same records to each scraper according to docs or placas
+        for i in range(2):
+            self.cursor.execute(cmd[i])
+            _result = self.cursor.fetchall()
+            self.cursor.execute(f"SELECT * FROM tableInfo WHERE dataRequired = {i+1}")
+            self.all_updates.update(
+                {i[1]: copy(_result) for i in self.cursor.fetchall()}
+            )
+
+        # TODO: create logic to avoid updating brevete, revtec not expiring within 30 days
+        # filter soat from updating if not blank, expired or expiring within 30 days
+        # _filter = [i[0] for i in self.day30_list if i[5] == "BREVETE"]
+        # self.all_updates["brevetes"] = [
+        #     i for i in self.all_updates["brevetes"] if i[0] in _filter
+        # ]
+
+        # _filter = [i[3] for i in self.day30_list if i[5] == "REVTEC"]
+        # self.all_updates["revtecs"] = [
+        #     i for i in self.all_updates["revtecs"] if i[1] in _filter
+        # ]
+
+        _filter = [i[3] for i in self.day30_list if i[5] == "SOAT"]
+        self.all_updates["soats"] = [
+            i for i in self.all_updates["soats"] if i[1] in _filter
+        ]
+
+        # no need to update sunarp
+        self.all_updates["sunarps"] = []
+
+        # 2. add records that have no BIENVENIDA email
         # docs
         cmd = [
             """SELECT IdMember, DocTipo, DocNum FROM members
@@ -148,47 +209,12 @@ class Update:
             self.cursor.execute(cmd[i])
             _result = self.cursor.fetchall()
             self.cursor.execute(f"SELECT * FROM tableInfo WHERE dataRequired = {i+1}")
-            self.all_updates.update({i[1]: _result for i in self.cursor.fetchall()})
-
-        # 2. add records that will be in REGULAR email
-        # docs
-        cmd = [
-            """SELECT IdMember, DocTipo, DocNum FROM members JOIN (
-	            SELECT IdMember AS x FROM members
-                EXCEPT
-	            SELECT IdMember_FK FROM mensajes
-		            JOIN mensajeContenidos
-		            ON IdMensaje = IdMensaje_FK
-		            WHERE fecha >= date('now','-1 month')
-			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
-	            )
-                ON members.IdMember = x
-                """
-        ]
-
-        # placas
-        cmd.append(
-            """SELECT IdPlaca, Placa FROM placas JOIN (
-	            SELECT IdMember AS x FROM members 
-                EXCEPT
-	            SELECT IdMember_FK FROM mensajes
-                    JOIN mensajeContenidos
-		            ON IdMensaje = IdMensaje_FK
-		            WHERE fecha >= date('now','-1 month')
-			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
-	            )
-                ON placas.IdMember_FK = x
-                """
-        )
-
-        # add same records to each scraper according to docs or placas
-        for i in range(2):
-            self.cursor.execute(cmd[i])
-            _result = self.cursor.fetchall()
-            self.cursor.execute(f"SELECT * FROM tableInfo WHERE dataRequired = {i+1}")
             for table in self.cursor.fetchall():
                 self.all_updates[table[1]] += _result
 
+        return
+
+        # TODO: updates for alerts
         # 3. add records that will be in alert (expiration) and met time from last update (non-expiration)
         # docs
         self.cursor.execute(f"SELECT * FROM tableInfo WHERE DataRequired = 1")
@@ -236,18 +262,13 @@ class Update:
         # eliminate duplicates
         self.all_updates = {i: set(j) for i, j in self.all_updates.items()}
 
-        # self.all_updates["sutrans"] = [(14, "AKE119")]
-        self.all_updates["satmuls"] = [(19, "BJK193")]
-        pprint(self.all_updates)
-
     def log_action(self, scraper, idMember=None, idPlaca=None):
         cmd = self.sql("actions", ["Scraper", "IdMember_FK", "IdPlaca_FK", "Timestamp"])
-        # self.lock.acquire()
         self.cursor.execute(
-            cmd, [scraper, idMember, idPlaca, dt.now().strftime("%Y-%m-%d")]
+            cmd, [scraper, idMember, idPlaca, dt.now().strftime("%Y-%m-%d %H:%M:%S")]
         )
         self.conn.commit()
-        # self.lock.release()
+        print("action recorded")
 
     def get_fields(self, table):
         self.cursor.execute(
@@ -299,8 +320,11 @@ class Update:
                         new_record_dates_fixed = self.fix_date_format(
                             data=response.values(), sep=date_sep
                         )
-                        # if soat data gathered succesfully, get soat image too
-                        img_name = scraper2.browser(placa=plac)
+                        # if soat data gathered succesfully, try to get soat image too
+                        try:
+                            img_name = scraper2.browser(placa=plac)
+                        except:
+                            img_name = ""
                         cmd = self.sql(table, fields)
                         values = (
                             [placa[0]]
@@ -409,6 +433,83 @@ class Update:
                             return
             except KeyboardInterrupt:
                 quit()
+            except:
+                time.sleep(3)
+                WEBD.refresh()
+                break
+
+    def gather_sunarp2(self, scraper, table):
+        # get field list from table, do not consider fist one (ID Autogenerated)
+        fields = self.get_fields(table)
+        # iterate on every placa and write to database
+        for placa in self.all_updates[table]:
+            try:
+                while True:
+                    response = scraper.browser(placa=placa[1])
+                    # wrong captcha or correct catpcha, no image loaded - restart loop with same placa
+                    if response is int and response < 0:
+                        continue
+                    # correct captcha, no data for placa - enter update attempt to database, go to next placa
+                    elif response is int and response == 1:
+                        break
+                    # if there is data in response, enter into database, go to next placa
+                    elif response:
+                        # process image and save to disk, update database with file information
+                        try:
+                            plac = placa[1]
+                            # add image filename and image date to record
+                            _img_filename = f"SUNARP_{plac}.png"
+                            sunarp.process_image(response, _img_filename)
+                            fields = ["IdPlaca_FK", "ImgFilename", "LastUpdate"]
+                            values = [
+                                placa[0],
+                                _img_filename,
+                                dt.now().strftime("%Y-%m-%d"),
+                            ]
+
+                            # add ocr results to record
+                            ocr_result = sunarp.ocr_and_parse(_img_filename)
+                            if ocr_result:
+                                fields += [
+                                    "IdPlaca_FK",
+                                    "PlacaValidate",
+                                    "Serie",
+                                    "VIN",
+                                    "Motor",
+                                    "Color",
+                                    "Marca",
+                                    "Modelo",
+                                    "PlacaVigente",
+                                    "PlacaAnterior",
+                                    "Estado",
+                                    "Anotaciones",
+                                    "Sede",
+                                    "Propietarios",
+                                    "Ano",
+                                ]
+                                values += [placa[0]] + ocr_result
+
+                            # update database
+                            cmd = self.sql(table, fields)
+                            # self.lock.acquire()
+                            # delete all old records from member
+                            self.cursor.execute(
+                                f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{plac}')"
+                            )
+                            # insert gathered record of member
+
+                            self.cursor.execute(cmd, values)
+                            # self.lock.release()
+                            self.log_action(scraper=table, idPlaca=placa[0])
+                            self.conn.commit()
+                            break
+                        except KeyboardInterrupt:
+                            self.LOG.warning(
+                                f"Error processing Placa {placa}. Record skipped."
+                            )
+                            return
+            except KeyboardInterrupt:
+                quit()
             # except:
             #     time.sleep(3)
             #     WEBD.refresh()
@@ -437,17 +538,16 @@ class Update:
                                 + new_record_dates_fixed
                                 + [dt.now().strftime("%Y-%m-%d")]
                             )
-                            # self.lock.acquire()
                             # delete all old records from member
                             self.cursor.execute(
                                 f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{plac}')"
                             )
                             # insert gathered record of member
                             self.cursor.execute(cmd, values)
-                            # self.lock.release()
-                            self.log_action(scraper=table, idPlaca=placa[0])
+                        self.conn.commit()
 
-                    self.conn.commit()  # writes every time - maybe take away later
+                    self.log_action(scraper=table, idPlaca=placa[0])
+
                     break
                 except KeyboardInterrupt:
                     quit()

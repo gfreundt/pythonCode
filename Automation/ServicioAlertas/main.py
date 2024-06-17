@@ -3,6 +3,8 @@ import logging
 import members, updates, alerts
 import scrapers
 
+from pprint import pprint
+
 
 def start_logger():
     # simple log using same file
@@ -19,16 +21,21 @@ def start_logger():
 
 def side():
     MEMBERS = members.Members(LOG)
-    ALERTS = alerts.Alerts(LOG, MEMBERS)
+    MEMBERS.create_30day_list()
+
+    # ALERTS = alerts.Alerts(LOG, MEMBERS)
     # get list of records to process for each alert
     # ALERTS.get_alert_lists()
     # print(ALERTS.welcome_list)
     # print(ALERTS.regular_list)
 
+    UPDATES = updates.Update(LOG, MEMBERS)
+    # UPDATES.get_records_to_process()
+    # pprint(UPDATES.all_updates)
+    # return
     # MEMBERS.add_new_members()
     # MEMBERS.restart_database()
     # return
-    UPDATES = updates.Update(LOG, MEMBERS)
 
     # import sunarp
 
@@ -37,11 +44,11 @@ def side():
     # )
     # return
     # select docs and placas to update
-    UPDATES.get_records_to_process()
+    # UPDATES.get_records_to_process()
 
     # Generic Scrapers - AUTO:
     # UPDATES.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
-    UPDATES.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
+    # UPDATES.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
@@ -51,7 +58,8 @@ def side():
     # Specfic Scrapers - MANUAL:
     # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
     # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-    # UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+    UPDATES.all_updates = {"sunarps": [(6, "AJP209"), (26, "AUK208")]}
+    UPDATES.gather_sunarp2(scraper=scrapers.Sunarp(), table="sunarps")
 
     # Pending
     # UPDATES.gather_jneMultas(scraper=scrapers.jneMultas(), table="jnes")
@@ -61,8 +69,9 @@ def side():
 
 def main():
 
-    # load member database
+    # load member database and recreate 30-day list
     MEMBERS = members.Members(LOG)
+    MEMBERS.create_30day_list()
 
     if "CHECKNEW" in sys.argv:
         # check online form for new members and add them to database
@@ -73,12 +82,13 @@ def main():
         UPD = updates.Update(LOG, MEMBERS)
         # select docs and placas to update
         UPD.get_records_to_process()
+        pprint(UPD.all_updates)
 
         # manual scrapers first (serial)
         if "MAN" in sys.argv or "ALL" in sys.argv:
-            # UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
-            # UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-            UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+            UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
+            UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+            # UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
         # auto scrapers (threaded)
         if "AUTO" in sys.argv or "ALL" in sys.argv:

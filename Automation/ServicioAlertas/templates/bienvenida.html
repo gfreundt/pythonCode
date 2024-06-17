@@ -3,24 +3,16 @@
 
 <body style="font-family: Arial, Helvetica, sans-serif">
     <p>Hola {{nombre_usuario}},</p>
-    <p>Gracias por inscribirte a nuestro sistema de alertas. Tus placas registradas son: {{lista_placas}}.</p>
-    <p>Además de este correo, te mandaremos:</p>
+    <p>Gracias por inscribirte a nuestro sistema de alertas. Has registrado las siguientes placas: <b>{{lista_placas}}</b>.</p>
+    <p>Recibirás un correo mensual con esta información actualizada y las siguientes alertas de vencimiento:.</p>
     <ul>
-        <li>Un correo mensual con esta información actualizada.</li>
-        <li>Avisos de vencimiento:
-        <li>
-            <t>Licencia de Conducir (30 días antes, 15 días antes y el día del vencimiento).
-        </li>
+        <li>Licencia de Conducir (30 días antes, 15 días antes y el día del vencimiento).</li>
         <li>Revisión Técnica (10 días antes, 5 días antes y el día del vencimiento).</li>
         <li>SOAT (10 días antes, 5 días antes y el día del vencimiento).</li>
-        <li>Impuesto Vehicular SAT (un aviso cada 15 días, maximo 3 avisos).</li>
-        <li>Multas impagas:</li>
-        <li>SUTRAN (un aviso cada 15 días, maximo 3 avisos).</li>
-        <li>SAT Lima (un aviso cada 15 dias, maximo 3 avisos) </li>
-        <li>Municipalidad del Callao</li>
-        <li>Otra informacion de interes:</li>
-        <li>Multa Electoral (un aviso)</li>
-        <li>Lineas telefonicas registradas en OSIPTEL</li>
+        <li>Impuesto Vehicular SAT (10 días antes, 5 días antes y el día del vencimiento).</li>
+        <li>Multa en SUTRAN (un único aviso).</li>
+        <li>Multa en SAT Lima (un único aviso).</li>
+        <li>Multa en la Municipalidad del Callao (un único aviso).</li>
         </p>
     </ul>
     <p>En caso no quieras recibir más correos, responde a este correo con "ELIMINAR" en el asunto.</p>
@@ -261,7 +253,7 @@
                     <tr>
                         <td style="text-align: center">{{deuda.ano}}</td>
                         <td style="text-align: center">{{deuda.periodo}}</td>
-                        <td style="text-align: center">{{deuda.documento}}</td>
+                        <td style="text-align: center">{{deuda.doc_num}}</td>
                         <td style="text-align: center">{{deuda.total_a_pagar}}</td>
                     </tr>
                     {% endfor %}
@@ -335,7 +327,122 @@
             <td style="text-align: center; column-width: 140px">Sin multas registradas.</td>
         </tr>
         {%endif%}
-
+    </table>
+    </br>
+    <table style="color: white; background:#618685; max-width:100%; white-space:nowrap">
+        <tr>
+            <td colspan="4" style="color: white; font-weight: bold; background-color: #003b6d; text-align: center">
+                Multas SAT Lima
+            </td>
+        </tr>
+        {%if satmuls%}
+        <tr>
+            <td style="text-align: right; column-width:140px">Placa</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center; column-width:260px">
+                {{satmul.placa}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right; column-width:140px">Licencia</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center; column-width:260px">
+                {{satmul.licencia}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right;column-width:140px">Falta</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center">
+                {{satmul.falta}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Documento</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center">
+                {{satmul.documento}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Expedición</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center">
+                {{satmul.fecha_emision}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Deuda</td>
+            {% for satmul in satmuls %}
+            <td style="text-align: center">
+                S/ {{satmul.deuda}}
+            </td>
+            {% endfor %}
+        </tr>
+        {%else%}
+        <tr>
+            <td style="text-align: center; column-width: 140px">Sin multas registradas.</td>
+        </tr>
+        {%endif%}
+    </table>
+    </br>
+    <table style="color: white; background:#618685; max-width:100%; white-space:nowrap">
+        <tr>
+            <td colspan="4" style="color: white; font-weight: bold; background-color: #003b6d; text-align: center">
+                Multas Municipalidad del Callao
+            </td>
+        </tr>
+        {%if callaomul%}
+        <tr>
+            <td style="text-align: right; column-width:140px">Placa</td>
+            {% for callaomul in callaomuls %}
+            <td style="text-align: center; column-width:260px">
+                {{callaomul.placa}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right;column-width:140px">Documento</td>
+            {% for callaomul in callaomuls %}
+            <td style="text-align: center">
+                {{callaomul.documento}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Tipo</td>
+            {% for callaomul in callaomuls %}
+            <td style="text-align: center">
+                {{callaomul.tipo}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Expedición</td>
+            {% for callaomul in callaomuls %}
+            <td style="text-align: center">
+                {{callaomul.fecha_documento}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Infracción</td>
+            {% for callaomul in callaomuls %}
+            <td style="text-align: center">
+                {{callaomul.infraccion}}
+            </td>
+            {% endfor %}
+        </tr>
+        {%else%}
+        <tr>
+            <td style="text-align: center; column-width: 140px">Sin multas registradas.</td>
+        </tr>
+        {%endif%}
     </table>
     </br>
     <p style="font-size:x-small; color:#c5c9c9">

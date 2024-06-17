@@ -222,7 +222,8 @@ DROP TABLE IF EXISTS mensajes;
 CREATE TABLE mensajes (
 	IdMensaje INTEGER,
 	IdMember_FK INTEGER,
-	Fecha DATE Hash TEXT,
+	Fecha DATE,
+	HashCode TEXT,
 	PRIMARY KEY (IdMensaje AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS mensajeContenidos;
@@ -754,15 +755,6 @@ VALUES (
 		'chgb@mac.com'
 	);
 ---
-INSERT INTO main.mensajeContenidos (IdMensaje_FK, IdTipoMensaje_FK)
-VALUES ('1', '11');
-INSERT INTO main.mensajeContenidos (IdMensaje_FK, IdTipoMensaje_FK)
-VALUES ('2', '12');
-INSERT INTO main.mensajeContenidos (IdMensaje_FK, IdTipoMensaje_FK)
-VALUES ('3', '12');
-INSERT INTO main.mensajeContenidos (IdMensaje_FK, IdTipoMensaje_FK)
-VALUES ('4', '9');
----
 INSERT INTO main.placas (IdPlaca, IdMember_FK, Placa)
 VALUES ('1', '1', 'AMQ073');
 INSERT INTO main.placas (IdPlaca, IdMember_FK, Placa)
@@ -847,6 +839,7 @@ INSERT INTO main.placas (IdPlaca, IdMember_FK, Placa)
 VALUES ('41', '29', '60376D');
 INSERT INTO main.placas (IdPlaca, IdMember_FK, Placa)
 VALUES ('42', '29', 'Z6O593');
+---
 INSERT INTO "main"."tableInfo" (
 		"tableId",
 		"Name",
@@ -857,7 +850,7 @@ INSERT INTO "main"."tableInfo" (
 		"ExpirationUpdate3",
 		"NonExpirationUpdate"
 	)
-VALUES ('3', 'revtecs', '2', '1', '-30', '-15', '0', '');
+VALUES ('1', 'brevetes', '1', '1', '60', '30', '0', '');
 INSERT INTO "main"."tableInfo" (
 		"tableId",
 		"Name",
@@ -868,7 +861,38 @@ INSERT INTO "main"."tableInfo" (
 		"ExpirationUpdate3",
 		"NonExpirationUpdate"
 	)
-VALUES ('4', 'soats', '2', '2', '-10', '0', '', '');
+VALUES (
+		'2',
+		'satimpCodigos',
+		'1',
+		'1',
+		'10',
+		'5',
+		'0',
+		'-90'
+	);
+INSERT INTO "main"."tableInfo" (
+		"tableId",
+		"Name",
+		"DataRequired",
+		"ScrapeType",
+		"ExpirationUpdate1",
+		"ExpirationUpdate2",
+		"ExpirationUpdate3",
+		"NonExpirationUpdate"
+	)
+VALUES ('3', 'revtecs', '2', '1', '30', '15', '0', '');
+INSERT INTO "main"."tableInfo" (
+		"tableId",
+		"Name",
+		"DataRequired",
+		"ScrapeType",
+		"ExpirationUpdate1",
+		"ExpirationUpdate2",
+		"ExpirationUpdate3",
+		"NonExpirationUpdate"
+	)
+VALUES ('4', 'soats', '2', '2', '10', '5', '0', '');
 INSERT INTO "main"."tableInfo" (
 		"tableId",
 		"Name",
@@ -923,40 +947,9 @@ INSERT INTO "main"."tableInfo" (
 		"ExpirationUpdate3",
 		"NonExpirationUpdate"
 	)
-VALUES ('1', 'brevetes', '1', '1', '-60', '-30', '0', '');
-INSERT INTO "main"."tableInfo" (
-		"tableId",
-		"Name",
-		"DataRequired",
-		"ScrapeType",
-		"ExpirationUpdate1",
-		"ExpirationUpdate2",
-		"ExpirationUpdate3",
-		"NonExpirationUpdate"
-	)
-VALUES (
-		'2',
-		'satimpCodigos',
-		'1',
-		'1',
-		'',
-		'',
-		'',
-		'-30'
-	);
-INSERT INTO "main"."tableInfo" (
-		"tableId",
-		"Name",
-		"DataRequired",
-		"ScrapeType",
-		"ExpirationUpdate1",
-		"ExpirationUpdate2",
-		"ExpirationUpdate3",
-		"NonExpirationUpdate"
-	)
 VALUES (
 		'9',
-		'osipteles',
+		'osiptelLineas',
 		'1',
 		'1',
 		'',

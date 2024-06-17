@@ -8,7 +8,6 @@ import time
 from PIL import Image
 import io, urllib
 import os
-import random
 import easyocr
 from gft_utils import PDFUtils, ChromeUtils
 
@@ -16,7 +15,7 @@ from gft_utils import PDFUtils, ChromeUtils
 class Satimp:
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True, incognito=False
+            headless=True, verbose=False, maximized=True, incognito=False
         )
         self.WEBD.set_page_load_timeout(20)
         self.WEBD.get("https://www.sat.gob.pe/WebSitev8/IncioOV2.aspx")
@@ -159,7 +158,7 @@ class Brevete:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.limited_scrape = False
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.set_page_load_timeout(20)
 
@@ -433,7 +432,7 @@ class Revtec:
 class Sutran:
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get(
             "https://www.sutran.gob.pe/consultas/record-de-infracciones/record-de-infracciones/"
@@ -510,7 +509,7 @@ class SoatImage:
     def __init__(self):
         self.pdf = PDFUtils()
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get("https://www.pacifico.com.pe/consulta-soat")
         time.sleep(3)
@@ -596,7 +595,7 @@ class CallaoMulta:
     def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get("https://pagopapeletascallao.pe/")
         time.sleep(3)
@@ -683,7 +682,7 @@ class Soat:
 
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, maximized=True, incognito=True
+            headless=True, maximized=True, incognito=True
         )
         self.WEBD.get("https://www.apeseg.org.pe/consultas-soat/")
 
@@ -785,6 +784,7 @@ class Soat:
 class Sunarp:
 
     def __init__(self) -> None:
+        self.READER = easyocr.Reader(["es"], gpu=False)
         self.WEBD = ChromeUtils().init_driver(
             headless=False, verbose=False, maximized=True, incognito=True
         )
@@ -794,14 +794,6 @@ class Sunarp:
         self.WEBD.get("https://www.sunarp.gob.pe/consulta-vehicular.html")
         time.sleep(1)
 
-    def get_captcha_image(self):
-        self.WEBD.refresh()
-        _img = self.WEBD.find_element(
-            By.ID,
-            "ctl00_MainContent_captcha_Placa",
-        )
-        return _img.screenshot_as_png
-
     def browser(self, **kwargs):
         """returns:
         -2 = captcha wrong (retry)
@@ -810,36 +802,54 @@ class Sunarp:
          image object = captcha ok, placa ok
         """
         placa = kwargs["placa"]
-        captcha_txt = kwargs["captcha_txt"]
+        retry_captcha = False
 
-        # enter PLACA
-        x = self.WEBD.find_element(
-            By.ID,
-            "MainContent_txtNoPlaca",
-        )
-        x.send_keys(placa)
-        time.sleep(1)
+        while True:
+            # get captcha in string format
+            captcha_txt = ""
+            while not captcha_txt:
+                if retry_captcha:
+                    self.WEBD.refresh()
+                    time.sleep(1)
+                # capture captcha image from webpage store in variable
+                _img = self.WEBD.find_element(By.ID, "image").get_attribute("src")
+                _img = Image.open(io.BytesIO(urllib.request.urlopen(_img).read()))
+                captcha_txt = self.process_captcha(_img)
+                retry_captcha = True
 
-        # enter CAPTCHA
-        y = self.WEBD.find_element(By.ID, "MainContent_txtCaptchaValidPlaca")
-        y.send_keys(captcha_txt)
-        time.sleep(0.5)
-        z = self.WEBD.find_element(By.ID, "MainContent_btnSearch")
-        z.click()
-        time.sleep(0.5)
+            # enter data into fields and run
+            self.WEBD.find_element(By.ID, "nroPlaca").send_keys(placa)
+            time.sleep(0.5)
+            self.WEBD.find_element(By.ID, "codigoCaptcha").send_keys(captcha_txt)
+            time.sleep(0.5)
+            self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/app-root/nz-content/div/app-inicio/app-vehicular/nz-layout/nz-content/div/nz-card/div/app-form-datos-consulta/div/form/fieldset/nz-form-item[3]/nz-form-control/div/div/div/button",
+            ).click()
+            time.sleep(1)
 
-        # captcha incorrect
-        h = self.WEBD.find_elements(By.ID, "MainContent_txtCaptchaValidPlaca")
-        if h and "incorrecto" in h[0].text:
-            return -2
-
-        # captcha correct, no placa information, return no information found
-        c = self.WEBD.find_elements(By.ID, "MainContent_lblWarning")
-        if c and "verifique" in c[0].text:
-            return 1
+            # if captcha is not correct, refresh and restart cycle, if no data found, return None
+            _alerta = self.WEBD.find_elements(By.ID, "swal2-html-container")
+            if _alerta and "correctamente" in _alerta[0].text:
+                self.WEBD.find_element(
+                    By.XPATH, "/html/body/div/div/div[6]/button[1]"
+                ).click()
+                continue
+            elif _alerta and "error" in _alerta[0].text:
+                print("no se encontraron")
+                self.WEBD.find_element(
+                    By.XPATH, "/html/body/div/div/div[6]/button[1]"
+                ).click()
+                return []
+            else:
+                pass
+                # break
 
         # search for SUNARP image
-        _card_image = self.WEBD.find_elements(By.ID, "MainContent_imgPlateCar")
+        _card_image = self.WEBD.find_elements(
+            By.XPATH,
+            "/html/body/app-root/nz-content/div/app-inicio/app-vehicular/nz-layout/nz-content/div/nz-card/div/app-form-datos-consulta/div/img",
+        )
 
         # no image found, return unsuccesful
         if not _card_image:
@@ -854,15 +864,67 @@ class Sunarp:
             time.sleep(0.5)
 
             # press boton to start over
-            q = self.WEBD.find_element(By.ID, "MainContent_btnReturn")
+            q = self.WEBD.find_element(
+                By.XPATH,
+                "/html/body/app-root/nz-content/div/app-inicio/app-vehicular/nz-layout/nz-content/div/nz-card/div/app-form-datos-consulta/div/nz-form-item/nz-form-control/div/div/div/button",
+            )
             q.click()
 
             return image_object
 
+    def process_captcha(self, img):
+        # split image into six pieces and run OCR to each
+
+        import numpy as np
+        from statistics import mean
+
+        img.save("eraseFULL.jpg")
+
+        READER = easyocr.Reader(["es"], gpu=False)
+        WHITE = np.asarray((255, 255, 255, 255))
+        BLACK = np.asarray((0, 0, 0, 0))
+
+        img_object = Image.open("eraseFULL.jpg")
+
+        original_img = np.asarray(img_object)
+        original_img = np.asarray(
+            [[WHITE if mean(i) > 165 else BLACK for i in j] for j in original_img],
+            dtype=np.uint8,
+        )
+
+        a = len(original_img)
+        b = len(original_img[1])
+
+        h = np.full((b, a), 0)
+        for x in range(len(original_img)):
+            for y in range(len(original_img[0])):
+                h[y][x] = int(original_img[x][y][0])
+
+        stopx = []
+        delta = -2
+        check_for_next = False
+        for x in range(180):
+            if all([i == 0 for i in h[x]]) is check_for_next:
+                stopx.append(x + delta)
+                check_for_next = not check_for_next
+                delta = delta * -1
+
+        if len(stopx) % 2 == 1:
+            stopx.append(179)
+
+        phrase = ""
+        for k in range(len(stopx) // 2):
+            i = img_object.crop((stopx[2 * k], 0, stopx[2 * k + 1], 60))
+            fn = f"erase{k}.jpg"
+            i.save(fn)
+            c = READER.readtext(fn, text_threshold=0.4)
+            if c:
+                phrase += c[0][1]
+
+        print(phrase.upper())
+
 
 class Satmul:
-
-    # BJK193
 
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
@@ -926,12 +988,15 @@ class Satmul:
                 "descuento",
                 "deuda",
                 "estado",
+                "",
                 "licencia",
                 "doc_tipo",
                 "doc_num",
             ]
             resp = {
-                dict_key: xpath(n, k + 2)[0].text for k, dict_key in enumerate(keys)
+                dict_key: xpath(n, k + 2)[0].text
+                for k, dict_key in enumerate(keys)
+                if k != 10
             }
 
             # search if ticket image exists
