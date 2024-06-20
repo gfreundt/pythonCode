@@ -1,34 +1,30 @@
-import os, sys, json
+import os
 import openpyxl
 import sqlite3
 from copy import deepcopy as copy
 import uuid
-from pygame.locals import *
+
+# from pygame.locals import *
 
 from gft_utils import GoogleUtils
 
 
 class Members:
+    """Used to download new members and add them to local database, manage unsubscribe
+    requests and create 30-day list"""
 
     def __init__(self, LOG) -> None:
         self.LOG = LOG
         self.GOOGLE = GoogleUtils()
-        # select production or test database
-        if not "TEST" in sys.argv:
-            SQLDATABASE = os.path.join(os.getcwd(), "data", "members.sqlite")
-        else:
-            SQLDATABASE = os.path.join(os.getcwd(), "data", "membersTEST.sqlite")
+        self.GMAIL_ACCOUNT = "servicioalertaperu@gmail.com"
 
-        # connect to database
+        # connect to database, enable threading
+        SQLDATABASE = os.path.join(os.getcwd(), "data", "members.sqlite")
         self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
         self.cursor = self.conn.cursor()
-        # self.cursor.row_factory = sqlite3.Row
-
-        # only when building - take way later
-        # self.restart_database()
 
     def add_new_members(self):
-        # download form and structure data to add to database
+        # download online form and add to local database
         form_members = self.load_form_members()
 
         # get DocNum from existing members as index to avoid duplicates
@@ -75,24 +71,37 @@ class Members:
 
             self.conn.commit()
 
-    def unsubscribe(self):
-        fr = "servicioalertaperu@gmail.com"
-        inbox = self.GOOGLE.read_gmail(fr=fr)
-
+    def sub_unsub(self):
+        """Check inbox for unsubscribe/resubscribe requests and change member flag in database."""
+        _inbox = self.GOOGLE.read_gmail(fr=self.GMAIL_ACCOUNT)
+        # create lists of email addresses of requests to unsubscribe or resuscribe from unread emails
         unsub_emails = []
-        for email in inbox:
+        sub_emails = []
+        for email in _inbox:
             for m in email.messages:
+                # register sender to use as key to change flag
                 sender = m.sender.split("<")[1][:-1] if "<" in m.sender else ""
-                sub = m.subject.split(f"<{fr}>")[0] if m.subject else ""
-                body = m.body.split(f"<{fr}>")[0] if m.body else ""
+                # load subject and body text
+                sub = m.subject.split(f"<{self.GMAIL_ACCOUNT}>")[0] if m.subject else ""
+                body = m.body.split(f"<{self.GMAIL_ACCOUNT}>")[0] if m.body else ""
+                # check if request in subject or body, not case-sensitive
                 if "ELIMINAR" in sub.upper() or "ELIMINAR" in body.upper():
                     unsub_emails.append(sender)
+                elif "INGRESAR" in sub.upper() or "INGRESAR" in body.upper():
+                    sub_emails.append(sender)
 
+        # TODO: don't search for specific test, toggle flag if emaul sent
+        # TODO: change flag in database
+        # TODO: change email status to read
+        # TODO: send confirmation email
+        # TODO: resub
         print(unsub_emails)
 
     def create_30day_list(self):
-        # create table with all members that have anything expired or expiring within 30 days
-        cmd = f"""DROP TABLE IF EXISTS _expira30dias;
+        """Creates table with all members with SOAT, REVTEC, SUTRAN, SATMUL, BREVETE or SATIMP
+        expired or expiring within 30 days."""
+
+        _cmd = f""" DROP TABLE IF EXISTS _expira30dias;
                     CREATE TABLE _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo);
 
                     INSERT INTO _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo)
@@ -121,15 +130,14 @@ class Members:
 							ON IdCodigo_FK = IdCodigo
 							WHERE DATE('now', '30 days') >= FechaHasta)
                     ON IdMember = IdMember_FK"""
-
-        self.cursor.executescript(cmd)
+        self.cursor.executescript(_cmd)
         # assign list to instance variable
         self.cursor.execute("SELECT * FROM _expira30dias")
         self.day30_list = self.cursor.fetchall()
 
     def load_form_members(self):
-        # download latest form responses
-
+        """Download online form responses, select new ones only, clean and structure data"""
+        # set Google Drive folder, download entire spreadsheet
         _folder_id = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
         _file = [
             i
@@ -137,8 +145,7 @@ class Members:
             if "members" in i["title"]
         ][0]
         self.GOOGLE.download_from_drive(_file, ".\data\members.xlsx")
-
-        # open latest form responses
+        # open spreadsheet, select correct tab and load into list of dictionaries
         wb = openpyxl.load_workbook(".\data\members.xlsx")
         sheet = wb["Form Responses 2"]
         raw_data = [
@@ -148,8 +155,7 @@ class Members:
             }
             for i in range(1, sheet.max_row)
         ]
-
-        # clean data and join placas in one list
+        # clean data and shape data correctly (join placas in single list)
         for r, row in enumerate(copy(raw_data)):
             placas = []
             for col in row:
@@ -175,16 +181,13 @@ class Members:
         return raw_data
 
     def sql(self, table, fields):
-        qmarks = ",".join(["?" for _ in range(len(fields))])
-        return f"REPLACE INTO {table} ({','.join(fields)}) VALUES ({qmarks})"
-
-    def load_scripts(self):
-        # Placeholder if we start loading more scripts into it
-        SQLSCRIPTS = os.path.join(os.getcwd(), "sql_script1.sql")
-        with open(SQLSCRIPTS, mode="r", encoding="utf-8") as file:
-            self.SCRIPTS = json.load(file)
+        """Create generic SQL statement to insert new records in any table in database."""
+        _qmarks = ",".join(["?" for _ in range(len(fields))])
+        # return example: REPLACE INTO members (IdMember, Email) VALUES (?,?)
+        return f"REPLACE INTO {table} ({','.join(fields)}) VALUES ({_qmarks})"
 
     def restart_database(self):
+        """Erases all data in database. Only for testing purposes. DO NOT USE."""
         SQLSCRIPT1 = os.path.join(os.getcwd(), "static", "sql_script1.sql")
         with open(SQLSCRIPT1, mode="r", encoding="utf-8") as file:
             cmd = file.read()

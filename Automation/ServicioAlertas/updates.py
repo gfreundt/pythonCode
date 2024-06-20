@@ -1,24 +1,44 @@
-import os, io, time
-import openpyxl
+import io
 from copy import deepcopy as copy
 import threading
-from datetime import datetime as dt, timedelta as td
-import uuid
+from datetime import datetime as dt
 import pygame
 from pygame.locals import *
-from selenium.common.exceptions import NoSuchElementException
 
+# local imports
 import scrapers, sunarp
 from gft_utils import pygameUtils
 
-from pprint import pprint
+
+def threader(func):
+    """Decorator function that includes function in thread."""
+
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
+    return wrapper
 
 
 class Gui:
+    """Manages PyGame window that captures manual captcha."""
 
     def __init__(self, zoomto, numchar) -> None:
         self.zoomto = zoomto
         self.numchar = numchar
+        self.numpad = (
+            K_KP0,
+            K_KP1,
+            K_KP2,
+            K_KP3,
+            K_KP4,
+            K_KP5,
+            K_KP6,
+            K_KP7,
+            K_KP8,
+            K_KP9,
+        )
 
     def gui(self, canvas, captcha_img):
         TEXTBOX = pygame.Surface((80, 120))
@@ -52,18 +72,6 @@ class Gui:
 
             # capture keystrokes and add to manual captcha input
             events = pygame.event.get()
-            numpad = (
-                K_KP0,
-                K_KP1,
-                K_KP2,
-                K_KP3,
-                K_KP4,
-                K_KP5,
-                K_KP6,
-                K_KP7,
-                K_KP8,
-                K_KP9,
-            )
             for event in events:
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == 27):
                     quit()
@@ -75,8 +83,8 @@ class Gui:
                         col -= 1
                     elif event.key in (K_SPACE, K_RETURN):
                         continue
-                    elif event.key in numpad:
-                        chars.append(str(numpad.index(event.key)))
+                    elif event.key in self.numpad:
+                        chars.append(str(self.numpad.index(event.key)))
                         col += 1
                     else:
                         try:
@@ -92,15 +100,6 @@ class Gui:
                 return "".join(chars)
 
 
-def threader(func):
-    def wrapper(*args, **kwargs):
-        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-        thread.start()
-        return thread
-
-    return wrapper
-
-
 class Update:
 
     def __init__(self, LOG, members) -> None:
@@ -112,7 +111,6 @@ class Update:
         self.lock = threading.Lock()
 
     def get_records_to_process(self):
-
         # create dictionary with all tables as keys and empty list as value
         self.cursor.execute("SELECT * FROM tableInfo")
         self.all_updates = {i[1]: [] for i in self.cursor.fetchall()}
@@ -263,20 +261,23 @@ class Update:
         self.all_updates = {i: set(j) for i, j in self.all_updates.items()}
 
     def log_action(self, scraper, idMember=None, idPlaca=None):
+        """Registers scraping action in actions table in database."""
         cmd = self.sql("actions", ["Scraper", "IdMember_FK", "IdPlaca_FK", "Timestamp"])
         self.cursor.execute(
             cmd, [scraper, idMember, idPlaca, dt.now().strftime("%Y-%m-%d %H:%M:%S")]
         )
         self.conn.commit()
-        print("action recorded")
 
     def get_fields(self, table):
+        """Returns all the fields in a table, ordered by creation."""
         self.cursor.execute(
             f"SELECT name FROM pragma_table_info('{table}') ORDER BY cid;"
         )
         return [i[0] for i in self.cursor.fetchall()[1:]]
 
-    def fix_date_format(self, data, sep):
+    def fix_date_format(self, data, sep=None):
+        """Takes dd.mm.yyyy date formats with any separator and returns yyyy-mm-dd."""
+        # TODO: check if list is necessary (update.py sends list at any point?)
         if not sep:
             return data
         new_record_dates_fixed = []
@@ -294,10 +295,9 @@ class Update:
         fields = self.get_fields(table)
         # set up scraper for image
         scraper2 = scrapers.SoatImage()
-        # get captcha manually
+        # get captcha manually from user
         canvas = pygameUtils(screen_size=(1050, 130))
         GUI = Gui(zoomto=(465, 105), numchar=6)
-
         # iterate on every placa and write to database
         for placa in self.all_updates["soats"]:
             retry_attempts = 0
@@ -307,16 +307,15 @@ class Update:
                     captcha_img = scraper.get_captcha_img()
                     captcha = GUI.gui(canvas, captcha_img)
                     response = scraper.browser(placa=plac, captcha_txt=captcha)
-
                     # wrong captcha - restart loop with same placa
                     if response == -2:
                         continue
-                    # exceed limit of manual captchas - abort iteration
+                    # scraper exceed limit of manual captchas - abort iteration
                     elif response == -1:
                         return
                     # if there is data in response, enter into database, go to next placa
                     elif response:
-                        # convert dates to SQL format
+                        # convert dates to yyyy-mm-dd format
                         new_record_dates_fixed = self.fix_date_format(
                             data=response.values(), sep=date_sep
                         )
@@ -325,6 +324,7 @@ class Update:
                             img_name = scraper2.browser(placa=plac)
                         except:
                             img_name = ""
+                        # insert data into table
                         cmd = self.sql(table, fields)
                         values = (
                             [placa[0]]
@@ -332,22 +332,20 @@ class Update:
                             + [img_name]
                             + [dt.now().strftime("%Y-%m-%d")]
                         )
-                        # self.lock.acquire()
                         # delete all old records from member
                         self.cursor.execute(
                             f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{plac}')"
                         )
                         # insert gathered record of member
                         self.cursor.execute(cmd, values)
-                        # self.lock.release()
-                        self.conn.commit()  # writes every time - maybe take away later
-
+                        self.conn.commit()
+                    # log action into actios table
                     self.log_action(scraper="soats", idPlaca=placa[0])
-                    break
-
+                    break  # escape while True loop
                 except KeyboardInterrupt:
                     quit()
-                except:
+                except Exception:
+                    # try same place up to 3 times
                     retry_attempts += 1
                     if retry_attempts > 3:
                         self.LOG.warning(
