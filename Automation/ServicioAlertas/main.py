@@ -20,6 +20,8 @@ def start_logger():
 
 
 def side():
+
+    print("************* RUNNING SIDE *************")
     MEMBERS = members.Members(LOG)
     MEMBERS.create_30day_list()
 
@@ -30,6 +32,10 @@ def side():
     # print(ALERTS.regular_list)
 
     UPDATES = updates.Update(LOG, MEMBERS)
+    UPDATES.all_updates = {"satimpCodigos": [(10, "DNI", "08257907")]}
+
+    # UPDATES.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
+
     # UPDATES.get_records_to_process()
     # pprint(UPDATES.all_updates)
     # return
@@ -53,13 +59,13 @@ def side():
     # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
     # Specific Scrapers - AUTO:
-    # UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
+    UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     # Specfic Scrapers - MANUAL:
     # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
     # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-    UPDATES.all_updates = {"sunarps": [(6, "AJP209"), (26, "AUK208")]}
-    UPDATES.gather_sunarp2(scraper=scrapers.Sunarp(), table="sunarps")
+    # UPDATES.all_updates = {"sunarps": [(6, "AJP209"), (26, "AUK208")]}
+    # UPDATES.gather_sunarp2(scraper=scrapers.Sunarp(), table="sunarps")
 
     # Pending
     # UPDATES.gather_jneMultas(scraper=scrapers.jneMultas(), table="jnes")
@@ -72,6 +78,10 @@ def main():
     # load member database and recreate 30-day list
     MEMBERS = members.Members(LOG)
     MEMBERS.create_30day_list()
+
+    if "CHECKUNSUB" in sys.argv:
+        # check online form for new members and add them to database
+        MEMBERS.unsubscribe()
 
     if "CHECKNEW" in sys.argv:
         # check online form for new members and add them to database
@@ -116,8 +126,8 @@ if __name__ == "__main__":
     LOG.info("Start Program.")
 
     # run main program
-    # side()
-    main()
+    side()
+    # main()
 
     # log end of program
     LOG.info("-" * 20 + " End Program " + "-" * 20)

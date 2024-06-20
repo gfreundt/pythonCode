@@ -10,26 +10,29 @@ def process_image(img_object, img_filename):
     WHITE = np.asarray((255, 255, 255, 255))
     BLACK = np.asarray((0, 0, 0, 0))
 
-    # open downloaded image, filter out greys
-    original_img = np.asarray(img_object)
-    original_img = np.asarray(
-        [[WHITE if mean(i) > 165 else BLACK for i in j] for j in original_img],
+    _img_object = np.asarray(img_object)
+    if np.size(_img_object) == 0:
+        return
+
+    # filter out greys for OCR
+    img_for_ocr = np.asarray(
+        [[WHITE if mean(i) > 165 else BLACK for i in j] for j in _img_object],
         dtype=np.uint8,
     )
-    original_img = Image.fromarray(original_img)
+    img_for_ocr = Image.fromarray(img_for_ocr)
 
-    # create new blank image
-    width, height = original_img.size
-    img = Image.new(size=(width + 20, height + 50), mode="RGB", color="white")
-    img.paste(original_img, (20, 14))
+    # create new larger image, copy original and leave space for frame
+    width, height = img_for_ocr.size
+    img = Image.new(size=(width + 20, height + 60), mode="RGB", color="white")
+    img.paste(img_object, (20, 14))
     img1 = ImageDraw.Draw(img)
 
     # draw frame with four rectangles
     for coords in (
         [(0, 0), (width + 10, 14)],
-        [(0, height + 10), (width + 20, height + 50)],
-        [(0, 0), (14, height + 50)],
-        [(width + 6, 0), (width + 20, height + 50)],
+        [(0, height + 20), (width + 20, height + 60)],
+        [(0, 0), (14, height + 60)],
+        [(width + 6, 0), (width + 20, height + 60)],
     ):
 
         img1.rectangle(
@@ -38,13 +41,29 @@ def process_image(img_object, img_filename):
         )
 
     # add text at bottom (center measuring size previously)
+    months = [
+        "Ebero",
+        "Febrero",
+        "Marzp",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Setiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+    ]
     font = ImageFont.truetype(
         os.path.join("D:", "\pythonCode", "Resources", "Fonts", "montserrat.ttf"), 20
     )
-    _text = f"Sunarp ({dt.now().month:02d} / {dt.now().year})"
+    _text = (
+        f"Sistema de Alertas Perú - {months[int(dt.now().month)-1]}, {dt.now().year}"
+    )
     size = img1.textlength(_text, font=font)
     img1.text(
-        xy=((width + 20 - size) // 2, height + 17), text=_text, fill="white", font=font
+        xy=((width + 20 - size) // 2, height + 28), text=_text, fill="white", font=font
     )
 
     # enlarge image and save
@@ -85,6 +104,7 @@ def ocr_and_parse(img_filename):
     output = [i for i in output if len(i) > 1]
 
     # if ocr does not return expected structure, return empty
+    print(output)
     if len(output) < 14:
         return []
 

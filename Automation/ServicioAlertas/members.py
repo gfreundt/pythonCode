@@ -12,6 +12,7 @@ class Members:
 
     def __init__(self, LOG) -> None:
         self.LOG = LOG
+        self.GOOGLE = GoogleUtils()
         # select production or test database
         if not "TEST" in sys.argv:
             SQLDATABASE = os.path.join(os.getcwd(), "data", "members.sqlite")
@@ -47,11 +48,14 @@ class Members:
                         "Celular",
                         "Correo",
                         "CodMember",
+                        "Unsubscribe",
                     ],
                 )
-                values = list(member.values())[:5] + [
-                    "SAP-" + str(uuid.uuid4())[-6:].upper()
-                ]
+                values = (
+                    list(member.values())[:5]
+                    + ["SAP-" + str(uuid.uuid4())[-6:].upper()]
+                    + [0]
+                )
                 self.cursor.execute(cmd, values)
 
                 # get autoindex number to link to placas table
@@ -70,6 +74,21 @@ class Members:
                 )
 
             self.conn.commit()
+
+    def unsubscribe(self):
+        fr = "servicioalertaperu@gmail.com"
+        inbox = self.GOOGLE.read_gmail(fr=fr)
+
+        unsub_emails = []
+        for email in inbox:
+            for m in email.messages:
+                sender = m.sender.split("<")[1][:-1] if "<" in m.sender else ""
+                sub = m.subject.split(f"<{fr}>")[0] if m.subject else ""
+                body = m.body.split(f"<{fr}>")[0] if m.body else ""
+                if "ELIMINAR" in sub.upper() or "ELIMINAR" in body.upper():
+                    unsub_emails.append(sender)
+
+        print(unsub_emails)
 
     def create_30day_list(self):
         # create table with all members that have anything expired or expiring within 30 days
@@ -110,10 +129,14 @@ class Members:
 
     def load_form_members(self):
         # download latest form responses
-        G = GoogleUtils()
+
         _folder_id = "1Az6eM7Fr9MUqNhj-JtvOa6WOhYBg5Qbs"
-        _file = [i for i in G.get_drive_files(_folder_id) if "members" in i["title"]][0]
-        G.download_from_drive(_file, ".\data\members.xlsx")
+        _file = [
+            i
+            for i in self.GOOGLE.get_drive_files(_folder_id)
+            if "members" in i["title"]
+        ][0]
+        self.GOOGLE.download_from_drive(_file, ".\data\members.xlsx")
 
         # open latest form responses
         wb = openpyxl.load_workbook(".\data\members.xlsx")

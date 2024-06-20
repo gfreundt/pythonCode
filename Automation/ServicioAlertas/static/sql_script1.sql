@@ -45,6 +45,7 @@ CREATE TABLE members (
 	DocNum TEXT NOT NULL,
 	Celular TEXT,
 	Correo TEXT NOT NULL,
+	Unsubscribe INTEGER,
 	PRIMARY KEY(IdMember AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS jneMultas;

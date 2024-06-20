@@ -9,6 +9,8 @@ from PIL import Image
 import io, urllib
 import os
 import easyocr
+import numpy as np
+from statistics import mean
 from gft_utils import PDFUtils, ChromeUtils
 
 
@@ -149,6 +151,8 @@ class Satimp:
         x.click()
 
         time.sleep(0.5)
+
+        print(response)
 
         return response
 
@@ -500,6 +504,8 @@ class Sutran:
                     ).text
                 }
             )
+        _mt = self.WEBD.find_element(By.ID, "lblTotalDeuda").text[3:]
+        response.update({"monto_total": float(_mt)})
 
         return response
 
@@ -842,8 +848,7 @@ class Sunarp:
                 ).click()
                 return []
             else:
-                pass
-                # break
+                break
 
         # search for SUNARP image
         _card_image = self.WEBD.find_elements(
@@ -875,16 +880,13 @@ class Sunarp:
     def process_captcha(self, img):
         # split image into six pieces and run OCR to each
 
-        import numpy as np
-        from statistics import mean
-
-        img.save("eraseFULL.jpg")
+        img.save("sunarp_temp.jpg")
 
         READER = easyocr.Reader(["es"], gpu=False)
         WHITE = np.asarray((255, 255, 255, 255))
         BLACK = np.asarray((0, 0, 0, 0))
 
-        img_object = Image.open("eraseFULL.jpg")
+        img_object = Image.open("sunarp_temp.jpg")
 
         original_img = np.asarray(img_object)
         original_img = np.asarray(
@@ -921,7 +923,7 @@ class Sunarp:
             if c:
                 phrase += c[0][1]
 
-        print(phrase.upper())
+        return phrase.upper() if len(phrase) == 6 else ""
 
 
 class Satmul:
