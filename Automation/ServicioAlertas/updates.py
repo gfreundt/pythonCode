@@ -2,8 +2,10 @@ import io
 from copy import deepcopy as copy
 import threading
 from datetime import datetime as dt
+import time
 import pygame
 from pygame.locals import *
+from tqdm import tqdm
 
 # local imports
 import scrapers, sunarp
@@ -167,13 +169,22 @@ class Update:
         #     i for i in self.all_updates["revtecs"] if i[1] in _filter
         # ]
 
-        _filter = [i[3] for i in self.day30_list if i[5] == "SOAT"]
+        _filter = [i[1] for i in self.day30_list if i[3] == "SOAT"]
         self.all_updates["soats"] = [
             i for i in self.all_updates["soats"] if i[1] in _filter
         ]
 
-        # no need to update sunarp
-        self.all_updates["sunarps"] = []
+        # select all sunarps that do not have a record yet
+        self.cursor.execute(
+            "SELECT IdPlaca, Placa FROM placas WHERE idPlaca NOT IN (SELECT IdPlaca_FK FROM sunarps)"
+        )
+        self.all_updates["sunarps"] = self.cursor.fetchall()
+
+        # select all record del conductor
+        self.cursor.execute(
+            "SELECT IdMember, DocTipo, DocNum FROM members WHERE IdMember NOT IN (SELECT IdMember_FK FROM recordConductores)"
+        )
+        self.all_updates["records"] = self.cursor.fetchall()
 
         # 2. add records that have no BIENVENIDA email
         # docs
@@ -357,90 +368,11 @@ class Update:
                         continue
 
     def gather_sunarp(self, scraper, table):
-        canvas = pygameUtils(screen_size=(1070, 140))
-        GUI = Gui(zoomto=(500, 120), numchar=6)
-
-        # iterate on every placa and write to database
-        for placa in self.all_updates["sunarps"]:
-            try:
-                while True:
-                    captcha_img = scraper.get_captcha_image()
-                    captcha = GUI.gui(canvas, captcha_img)
-                    response = scraper.browser(placa=placa[1], captcha_txt=captcha)
-                    # wrong captcha or correct catpcha, no image loaded - restart loop with same placa
-                    if response is int and response < 0:
-                        continue
-                    # correct captcha, no data for placa - enter update attempt to database, go to next placa
-                    elif response is int and response == 1:
-                        break
-                    # if there is data in response, enter into database, go to next placa
-                    elif response:
-                        # process image and save to disk, update database with file information
-                        try:
-                            plac = placa[1]
-                            # add image filename and image date to record
-                            _img_filename = f"SUNARP_{plac}.png"
-                            sunarp.process_image(response, _img_filename)
-                            fields = ["IdPlaca_FK", "ImgFilename", "LastUpdate"]
-                            values = [
-                                placa[0],
-                                _img_filename,
-                                dt.now().strftime("%Y-%m-%d"),
-                            ]
-
-                            # add ocr results to record
-                            ocr_result = sunarp.ocr_and_parse(_img_filename)
-                            if ocr_result:
-                                fields += [
-                                    "IdPlaca_FK",
-                                    "PlacaValidate",
-                                    "Serie",
-                                    "VIN",
-                                    "Motor",
-                                    "Color",
-                                    "Marca",
-                                    "Modelo",
-                                    "PlacaVigente",
-                                    "PlacaAnterior",
-                                    "Estado",
-                                    "Anotaciones",
-                                    "Sede",
-                                    "Propietarios",
-                                    "Ano",
-                                ]
-                                values += [placa[0]] + ocr_result
-
-                            # update database
-                            cmd = self.sql(table, fields)
-                            # self.lock.acquire()
-                            # delete all old records from member
-                            self.cursor.execute(
-                                f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{plac}')"
-                            )
-                            # insert gathered record of member
-
-                            self.cursor.execute(cmd, values)
-                            # self.lock.release()
-                            self.log_action(scraper=table, idPlaca=placa[0])
-                            self.conn.commit()
-                            break
-                        except KeyboardInterrupt:
-                            self.LOG.warning(
-                                f"Error processing Placa {placa}. Record skipped."
-                            )
-                            return
-            except KeyboardInterrupt:
-                quit()
-            # except:
-            #     time.sleep(3)
-            #     WEBD.refresh()
-            #     break
-
-    def gather_sunarp2(self, scraper, table):
         # get field list from table, do not consider fist one (ID Autogenerated)
         fields = self.get_fields(table)
         # iterate on every placa and write to database
         for placa in self.all_updates[table]:
+            retry_attempts = 0
             try:
                 while True:
                     response = scraper.browser(placa=placa[1])
@@ -454,9 +386,8 @@ class Update:
                     elif response:
                         # process image and save to disk, update database with file information
                         try:
-                            plac = placa[1]
                             # add image filename and image date to record
-                            _img_filename = f"SUNARP_{plac}.png"
+                            _img_filename = f"SUNARP_{placa[1]}.png"
                             sunarp.process_image(response, _img_filename)
                             fields = ["IdPlaca_FK", "ImgFilename", "LastUpdate"]
                             values = [
@@ -464,54 +395,55 @@ class Update:
                                 _img_filename,
                                 dt.now().strftime("%Y-%m-%d"),
                             ]
-
                             # add ocr results to record
-                            ocr_result = sunarp.ocr_and_parse(_img_filename)
-                            if ocr_result:
-                                fields += [
-                                    "IdPlaca_FK",
-                                    "PlacaValidate",
-                                    "Serie",
-                                    "VIN",
-                                    "Motor",
-                                    "Color",
-                                    "Marca",
-                                    "Modelo",
-                                    "PlacaVigente",
-                                    "PlacaAnterior",
-                                    "Estado",
-                                    "Anotaciones",
-                                    "Sede",
-                                    "Propietarios",
-                                    "Ano",
-                                ]
-                                values += [placa[0]] + ocr_result
+                            # ocr_result = sunarp.ocr_and_parse(_img_filename)
+                            # if ocr_result:
+                            #     fields += [
+                            #         "IdPlaca_FK",
+                            #         "PlacaValidate",
+                            #         "Serie",
+                            #         "VIN",
+                            #         "Motor",
+                            #         "Color",
+                            #         "Marca",
+                            #         "Modelo",
+                            #         "PlacaVigente",
+                            #         "PlacaAnterior",
+                            #         "Estado",
+                            #         "Anotaciones",
+                            #         "Sede",
+                            #         "Propietarios",
+                            #         "Ano",
+                            #     ]
+                            #     values += [placa[0]] + ocr_result
 
-                            # update database
-                            cmd = self.sql(table, fields)
-                            # self.lock.acquire()
-                            # delete all old records from member
+                            # delete all old records from placa
                             self.cursor.execute(
-                                f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{plac}')"
+                                f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{placa[1]}')"
                             )
-                            # insert gathered record of member
-
+                            # insert gathered record of placa
+                            cmd = self.sql(table, fields)
                             self.cursor.execute(cmd, values)
-                            # self.lock.release()
                             self.log_action(scraper=table, idPlaca=placa[0])
                             self.conn.commit()
                             break
                         except KeyboardInterrupt:
                             self.LOG.warning(
-                                f"Error processing Placa {placa}. Record skipped."
+                                f"Error processing Placa {placa[1]}. Record skipped."
                             )
                             return
             except KeyboardInterrupt:
                 quit()
-            # except:
-            #     time.sleep(3)
-            #     WEBD.refresh()
-            #     break
+            except:
+                retry_attempts += 1
+                if retry_attempts > 3:
+                    self.LOG.warning(
+                        f"< {table.upper()} > Could not process {placa}. Skipping Record."
+                    )
+                    break
+                else:
+                    self.LOG.warning(f"< {table.upper()} > Retrying {placa}.")
+                    continue
 
     def gather_satmul(self, scraper, table, date_sep):
         # get field list from table, do not consider fist one (ID Autogenerated)
@@ -560,6 +492,23 @@ class Update:
                         self.LOG.warning(f"< {table.upper()} > Retrying {placa}.")
                         continue
 
+    def gather_record(self, scraper):
+        table = "recordConductores"
+        fields = ["IdMember_FK", "ImgFilename", "LastUpdate"]
+        for doc in self.all_updates["records"]:
+            _img_filename = scraper.browser(doc_num=doc[2])
+            if _img_filename:
+                values = [doc[0], _img_filename, dt.now().strftime("%Y-%m-%d")]
+                # delete all old records from member
+                self.cursor.execute(
+                    f"DELETE FROM {table} WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc[1]}' AND DocNum = '{doc[2]}')"
+                )
+                # update database
+                cmd = self.sql(table, fields)
+                self.cursor.execute(cmd, values)
+                self.log_action(scraper=table, idMember=doc[0])
+                self.conn.commit()
+
     @threader
     def gather_osiptel(self):
         # TODO
@@ -574,7 +523,7 @@ class Update:
         fields2 = self.get_fields(table2)
 
         # iterate on all records that require updating and get scraper results
-        for k, rec in enumerate(self.all_updates[table1]):
+        for k, rec in tqdm(enumerate(self.all_updates[table1])):
             retry_attempts = 0
             while True:
                 try:
@@ -624,7 +573,75 @@ class Update:
                     else:
                         self.LOG.warning(f"< {table1.upper()} > Retrying {rec}.")
 
-            print(f"{table1}: {(k+1)/len(self.all_updates[table1])*100:.1f}%")
+    @threader
+    def gather_brevete(self, scraper, table, date_sep=None):
+        # get field list from table, do not consider fist one (ID Autogenerated)
+        fields1 = self.get_fields(table)
+        fields2 = self.get_fields("mtcPapeletas")
+
+        # iterate on all records that require updating and get scraper results
+        for rec in tqdm(self.all_updates[table]):
+            retry_attempts = 0
+            while True:
+                try:
+                    doc_tipo, doc_num = rec[1], rec[2]
+                    new_record = scraper.browser(doc_tipo=doc_tipo, doc_num=doc_num)
+                    if new_record:
+                        if type(new_record) is not list:
+                            new_record = [new_record]
+                        # loop on all responses given by scraper
+                        for record in new_record:
+                            # adjust date format for SQL (YYYY-MM-DD)
+                            new_record_dates_fixed = self.fix_date_format(
+                                data=record.values(), sep=date_sep
+                            )
+                            cmd = self.sql(table, fields1)
+                            values = (
+                                [rec[0]]
+                                + new_record_dates_fixed[:-1]
+                                + [dt.now().strftime("%Y-%m-%d")]
+                            )
+                            # delete all old records from member
+                            self.cursor.execute(
+                                f"DELETE FROM {table} WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc_tipo}' AND DocNum = '{doc_num}')"
+                            )
+                            # insert gathered record of member
+                            self.cursor.execute(cmd, values)
+                            self.conn.commit()
+
+                    for papeleta in new_record_dates_fixed[-1]:
+                        # adjust date format for SQL (YYYY-MM-DD)
+                        papeleta_dates_fixed = self.fix_date_format(
+                            data=papeleta.values(), sep=date_sep
+                        )
+                        cmd = self.sql("mtcPapeletas", fields2)
+                        values = (
+                            [rec[0]]
+                            + papeleta_dates_fixed
+                            + [dt.now().strftime("%Y-%m-%d")]
+                        )
+                        # delete all old records from member
+                        self.cursor.execute(
+                            f"DELETE FROM mtcPapeletas WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc_tipo}' AND DocNum = '{doc_num}')"
+                        )
+                        # insert gathered record of member
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()
+
+                    # register action and skip to next record
+                    self.log_action(scraper=table, idMember=rec[0])
+                    break
+                except KeyboardInterrupt:
+                    quit()
+                except:
+                    retry_attempts += 1
+                    if retry_attempts > 3:
+                        self.LOG.warning(
+                            f"< {table.upper()} > Could not process {rec}. Skipping Record."
+                        )
+                        break
+                    else:
+                        self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
 
     @threader
     def gather_docs(self, scraper, table, date_sep=None):
@@ -635,7 +652,7 @@ class Update:
         fields = [i[0] for i in self.cursor.fetchall()[1:]]
 
         # iterate on all records that require updating and get scraper results
-        for k, rec in enumerate(self.all_updates[table]):
+        for rec in tqdm(self.all_updates[table]):
             retry_attempts = 0
             while True:
                 try:
@@ -656,7 +673,6 @@ class Update:
                                 + new_record_dates_fixed
                                 + [dt.now().strftime("%Y-%m-%d")]
                             )
-                            # self.lock.acquire()
                             # delete all old records from member
                             self.cursor.execute(
                                 f"DELETE FROM {table} WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc_tipo}' AND DocNum = '{doc_num}')"
@@ -664,7 +680,6 @@ class Update:
                             # insert gathered record of member
                             self.cursor.execute(cmd, values)
                             self.conn.commit()
-                            # self.lock.release()
                     # register action and skip to next record
                     self.log_action(scraper=table, idMember=rec[0])
                     break
@@ -680,8 +695,6 @@ class Update:
                     else:
                         self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
 
-            print(f"{table}: {(k+1)/len(self.all_updates[table])*100:.1f}%")
-
     @threader
     def gather_placa(self, scraper, table, date_sep=None):
 
@@ -692,7 +705,7 @@ class Update:
         fields = [i[0] for i in self.cursor.fetchall()[1:]]
 
         # iterate on all records that require updating and get scraper results
-        for k, rec in enumerate(self.all_updates[table]):
+        for k, rec in tqdm(enumerate(self.all_updates[table])):
             retry_attempts = 0
             while True:
                 try:
@@ -736,5 +749,3 @@ class Update:
                         break
                     else:
                         self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
-
-            print(f"{table}: {(k+1)/len(self.all_updates[table])*100:.1f}%")

@@ -32,7 +32,7 @@ def side():
     # print(ALERTS.regular_list)
 
     UPDATES = updates.Update(LOG, MEMBERS)
-    UPDATES.all_updates = {"satimpCodigos": [(10, "DNI", "08257907")]}
+    # UPDATES.all_updates = {"brevetes": [(12, "DNI", "07760153")]}
 
     # UPDATES.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
 
@@ -50,27 +50,32 @@ def side():
     # )
     # return
     # select docs and placas to update
-    # UPDATES.get_records_to_process()
+    UPDATES.get_records_to_process()
 
     # Generic Scrapers - AUTO:
-    # UPDATES.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
+
     # UPDATES.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
     # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
 
     # Specific Scrapers - AUTO:
-    UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
+    # UPDATES.gather_brevete(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
+    # UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     # Specfic Scrapers - MANUAL:
     # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
     # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-    # UPDATES.all_updates = {"sunarps": [(6, "AJP209"), (26, "AUK208")]}
-    # UPDATES.gather_sunarp2(scraper=scrapers.Sunarp(), table="sunarps")
+    # UPDATES.all_updates = {"sunarps": [(25, "LIA118")]}
+    # print(UPDATES.all_updates)
+
+    # UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
 
     # Pending
     # UPDATES.gather_jneMultas(scraper=scrapers.jneMultas(), table="jnes")
     # UPDATES.gather_osiptel(scraper=scrapers.osiptelLineas(), table="osipteles")
     # Siniestralidad SBS
+
+    UPDATES.gather_record(scraper=scrapers.RecordConductorImage())
 
 
 def main():
@@ -93,19 +98,22 @@ def main():
     if "UPDATE" in sys.argv:
         UPD = updates.Update(LOG, MEMBERS)
         UPD.get_records_to_process()
+        print(UPD.all_updates)
         # manual scrapers first (not threaded)
         if "MAN" in sys.argv or "ALL" in sys.argv:
             UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
             UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-            # UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
         # automatic scrapers  second (threads)
         if "AUTO" in sys.argv or "ALL" in sys.argv:
             # generic Scrapers
-            UPD.gather_docs(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
             UPD.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
             UPD.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
-            UPD.gather_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
+            # UPD.gather_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
             # specific Scrapers
+            UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+            UPD.gather_brevete(
+                scraper=scrapers.Brevete(), table="brevetes", date_sep="/"
+            )
             UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
 
     # define records that require alerts, craft updates from templates and send email
@@ -121,7 +129,9 @@ if __name__ == "__main__":
     LOG = start_logger()
     LOG.info("-" * 15 + "Start Program" + "-" * 15)
     # start main program
-    side()
-    # main()
+    if "SIDE" in sys.argv:
+        side()
+    else:
+        main()
     # log end of program and quit
     LOG.info("^" * 16 + " End Program " + "^" * 16)

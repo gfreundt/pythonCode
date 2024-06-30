@@ -102,10 +102,10 @@ class Members:
         expired or expiring within 30 days."""
 
         _cmd = f""" DROP TABLE IF EXISTS _expira30dias;
-                    CREATE TABLE _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo);
+                    CREATE TABLE _expira30dias (IdMember, Placa, FechaHasta, TipoAlerta);
 
-                    INSERT INTO _expira30dias (IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo)
-                    SELECT IdMember, CodMember, NombreCompleto, Placa, FechaHasta, TipoAlerta, Correo FROM members
+                    INSERT INTO _expira30dias (IdMember,  Placa, FechaHasta, TipoAlerta)
+                    SELECT IdMember, Placa, FechaHasta, TipoAlerta FROM members
                     JOIN (
                         SELECT * FROM placas 
                         JOIN (
@@ -119,8 +119,8 @@ class Members:
                         ON idplaca = IdPlaca_FK)
                     ON IdMember = IdMember_FK;
 
-                    INSERT INTO _expira30dias (IdMember, CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo)
-                    SELECT IdMember, CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo from members 
+                    INSERT INTO _expira30dias (IdMember, FechaHasta, TipoAlerta)
+                    SELECT IdMember, FechaHasta, TipoAlerta from members 
                         JOIN (
                             SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', '30 days') >= FechaHasta OR DATE('now', '30 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta
 						UNION
@@ -128,7 +128,9 @@ class Members:
 							JOIN
 							(SELECT * FROM satimpCodigos)
 							ON IdCodigo_FK = IdCodigo
-							WHERE DATE('now', '30 days') >= FechaHasta)
+							WHERE DATE('now', '30 days') >= FechaHasta
+                        UNION
+                            SELECT IdMember_FK, "", "MTCPAPELETA" FROM mtcPapeletas)
                     ON IdMember = IdMember_FK"""
         self.cursor.executescript(_cmd)
         # assign list to instance variable

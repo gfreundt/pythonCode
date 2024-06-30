@@ -7,7 +7,7 @@ from datetime import datetime as dt, timedelta as td
 import time
 from PIL import Image
 import io, urllib
-import os
+import os, re
 import easyocr
 import numpy as np
 from statistics import mean
@@ -162,7 +162,7 @@ class Brevete:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.limited_scrape = False
         self.WEBD = ChromeUtils().init_driver(
-            headless=True, verbose=False, maximized=True
+            headless=False, verbose=False, maximized=False
         )
         self.WEBD.set_page_load_timeout(20)
 
@@ -267,7 +267,7 @@ class Brevete:
                     }
                 )
         except NoSuchElementException:
-            response = []
+            response = {}
 
         # next tab (Puntos) - make sure all is populated before tabbing along (with timeout) and wait a little
         timeout = 0
@@ -295,6 +295,7 @@ class Brevete:
                 action.perform()
                 time.sleep(0.5)
             # extract data
+
             _puntos = self.WEBD.find_element(
                 By.XPATH,
                 "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[2]/div/div/mat-card/mat-card-content/div/app-visor-sclp/mat-card/mat-card-content/div/div[2]/label",
@@ -325,25 +326,50 @@ class Brevete:
             action.send_keys(Keys.ENTER)
             action.perform()
             time.sleep(0.5)
-            _pimpagas = self.WEBD.find_element(
+
+            _pimpagas = self.WEBD.find_elements(
                 By.XPATH,
                 "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[4]/div/div/mat-card/mat-card-content/div/app-visor-papeletas/div/shared-table/div/div",
-            ).text
-            if "se encontraron" in _pimpagas:
-                _pimpagas = None
-            else:
-                self.LOG.info(
-                    f"BREVETE > Registo ejemplo de papeletas impagas: {doc_num}."
+            )
+            if _pimpagas and "se encontraron" in _pimpagas[0].text:
+                _pimpagas = []
+            elif not _pimpagas:
+                d = self.WEBD.find_element(
+                    By.XPATH,
+                    "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[4]/div/div/mat-card/mat-card-content/div/app-visor-papeletas/div/shared-table/div/mat-table/mat-row[1]/mat-cell[1]/span",
                 )
-            response.update({"papeletas_impagas": _pimpagas})
-        except:
-            # clear webpage for next iteration and small wait
-            time.sleep(1)
-            self.WEBD.back()
-            time.sleep(0.2)
-            self.WEBD.refresh()
-            return response
+                d.click()
+                time.sleep(1)
 
+                _v = [
+                    i.text.split("\n")
+                    for i in self.WEBD.find_elements(
+                        By.XPATH,
+                        "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[4]/div/div/mat-card/mat-card-content/div/app-visor-papeletas/div/shared-table/div/mat-table/mat-row",
+                    )
+                ]
+                _pimpagas = [
+                    {
+                        "entidad": _v[0][1],
+                        "papeleta": _v[0][2],
+                        "fecha": _v[0][3],
+                        "fecha_firme": _v[1][1].strip(),
+                        "falta": _v[1][3].strip(),
+                        "estado_deuda": _v[1][5].strip(),
+                    }
+                ]
+
+            response.update({"papeletas_impagas": _pimpagas})
+        except KeyboardInterrupt:
+            pass
+            # # clear webpage for next iteration and small wait
+            # time.sleep(1)
+            # self.WEBD.back()
+            # time.sleep(0.2)
+            # self.WEBD.refresh()
+            # return response
+
+        print(response)
         return response
 
 
@@ -597,6 +623,183 @@ class SoatImage:
                 return ""
 
 
+class RecordConductorImage:
+
+    def __init__(self):
+        self.READER = easyocr.Reader(["es"], gpu=False)
+        self.pdf = PDFUtils()
+        self.WEBD = ChromeUtils().init_driver(
+            headless=False, verbose=False, maximized=True
+        )
+        self.WEBD.get("https://recordconductor.mtc.gob.pe/")
+        time.sleep(2)
+
+    def get_captcha(self):
+
+        def invert(img):
+            a = len(img)
+            b = len(img[1])
+            h = np.full((b, a), 0)
+            for x in range(len(img)):
+                for y in range(len(img[0])):
+                    h[y][x] = int(img[x][y][0])
+            return h
+
+        def valid(text):
+            if len(text) != 6:
+                return False
+            text1 = "".join(re.findall("[a-zA-Z0-9]", text))
+            return text == text1
+
+        def process(depth, f):
+            img = np.asarray(f)
+            copyimg = np.copy(a=img)
+            for i, x in enumerate(img):
+                for j, y in enumerate(x):
+                    if max(y) > 150:
+                        copyimg[i][j] = [0, 0, 0]
+                    else:
+                        copyimg[i][j] = [255, 255, 255]
+            h = invert(copyimg)
+            h = h.tolist()
+            for x in range(len(h)):
+                if h[x].count(255) < depth:
+                    h[x] = [0] * len(copyimg)
+            h = np.asarray(h).tolist()
+            a = len(h) - 1
+            b = len(h[0]) - 1
+            k = [[h[i][j] for i in range(a)] for j in range(b)]
+            return np.asarray(k, dtype=np.uint8)
+
+        text = None
+        max_cert = 0
+        for depth in range(2, 7):
+            f = Image.open(os.path.join(os.curdir, "images", "RCItemp.png"))
+            img = process(depth=depth, f=f)
+            c = self.READER.readtext(img, text_threshold=0.4)
+            if c and valid(c[0][1]) and c[0][2] > max_cert:
+                max_cert = c[0][2]
+                text = c[0][1]
+                text = text.replace("a", "g")
+                text = text.replace("9", "g")
+                text = text.replace("l", "1")
+        return text
+
+    def browser(self, **kwargs):
+        doc_num = kwargs["doc_num"]
+        retry_captcha = False
+
+        # outer loop: in case captcha is not accepted by webpage, try with a new one
+        while True:
+            captcha_txt = ""
+            # inner loop: in case OCR cannot figure out captcha, retry new captcha
+            while not captcha_txt:
+                if retry_captcha:
+                    self.WEBD.refresh()
+                    time.sleep(2)
+                # capture captcha image from webpage and store in variable
+                try:
+                    with open(
+                        os.path.join(os.curdir, "images", "RCItemp.png"), "wb"
+                    ) as file:
+                        file.write(
+                            self.WEBD.find_element(
+                                By.ID, "idxcaptcha"
+                            ).screenshot_as_png
+                        )
+                    # _captcha_img_url = self.WEBD.find_element(
+                    #     By.ID, "idxcaptcha"
+                    # ).get_attribute("src")
+                    # _img = Image.open(
+                    #     io.BytesIO(urllib.request.urlopen(_captcha_img_url).read())
+                    # )
+                    # convert image to text using OCR
+                    captcha_txt = self.get_captcha()
+                    retry_captcha = True
+
+                except ValueError:
+                    # captcha image did not load, reset webpage
+                    self.WEBD.refresh()
+                    time.sleep(1.5)
+
+            # enter data into fields and run
+            self.WEBD.find_element(By.ID, "txtNroDocumento").send_keys(doc_num)
+            self.WEBD.find_element(By.ID, "idCaptcha").send_keys(captcha_txt)
+            time.sleep(3)
+            self.WEBD.find_element(By.ID, "BtnBuscar").click()
+            time.sleep(1)
+
+            # if captcha is not correct, refresh and restart cycle, if no data found, return blank
+            _alerta = self.WEBD.find_elements(By.ID, "idxAlertmensaje")
+            if _alerta and "ingresado" in _alerta[0].text:
+                # click on "Cerrar" to close pop-up
+                self.WEBD.find_element(
+                    By.XPATH, "/html/body/div[5]/div/div/div[2]/button"
+                ).click()
+                # clear webpage for next iteration and small wait
+                time.sleep(1)
+                self.WEBD.refresh()
+                continue
+            elif _alerta and "PERSONA" in _alerta[0].text:
+                # click on "Ok" to close pop-up
+                self.WEBD.find_element(
+                    By.XPATH, "/html/body/div[5]/div/div/div[2]/button"
+                ).click()
+                time.sleep(1)
+                return ""
+            else:
+                break
+
+        b = self.WEBD.find_elements(By.ID, "btnprint")
+        try:
+            b[0].click()
+        except:
+            return ""
+
+        _file_name = "RECORD DE CONDUCTOR.pdf"
+        # erase file from destination directory before downloading new one
+        if os.path.exists(_file_name):
+            os.remove(_file_name)
+
+        # wait max time while file is downloaded
+        count = 0
+        while (
+            not os.path.isfile(
+                os.path.join(r"C:\Users", "Gabriel", "Downloads", _file_name)
+            )
+            and count < 10
+        ):
+            time.sleep(1)
+            count += 1
+
+        # take downloaded PDF, process image and save in data folder
+        try:
+            from_path = os.path.join(r"C:\Users", "Gabriel", "Downloads", _file_name)
+            to_path = os.path.join(
+                r"D:\pythonCode",
+                "Automation",
+                "ServicioAlertas",
+                "data",
+                "images",
+                f"RECORD_{doc_num.upper()}.png",
+            )
+
+            img = self.pdf.pdf_to_png(from_path, scale=1.3)
+
+            # delete image with same name (previous version) from destination folder if it exists
+            if os.path.exists(to_path):
+                os.remove(to_path)
+            img.save(to_path)
+
+            # delete original downloaded file (saves space and avoids "(1)" appended on filename in future)
+            os.remove(from_path)
+
+            return str(os.path.basename(to_path))
+
+        except KeyboardInterrupt:
+            return ""
+
+
 class CallaoMulta:
     def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
@@ -821,6 +1024,7 @@ class Sunarp:
                 _img = self.WEBD.find_element(By.ID, "image").get_attribute("src")
                 _img = Image.open(io.BytesIO(urllib.request.urlopen(_img).read()))
                 captcha_txt = self.process_captcha(_img)
+
                 retry_captcha = True
 
             # enter data into fields and run
@@ -922,6 +1126,10 @@ class Sunarp:
             c = READER.readtext(fn, text_threshold=0.4)
             if c:
                 phrase += c[0][1]
+
+        # ocr text correction
+        print(phrase)
+        phrase.replace("€", "C")
 
         return phrase.upper() if len(phrase) == 6 else ""
 

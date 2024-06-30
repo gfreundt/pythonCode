@@ -54,6 +54,14 @@
             <td style="text-align: right">Local de Emisión</td>
             <td style="text-align: center">{{brevete.local}}</td>
         </tr>
+        <tr>
+            <td style="text-align: right">Puntos en Licencia</td>
+            <td style="text-align: center">{{brevete.puntos}}</td>
+        </tr>
+        <tr>
+            <td style="text-align: right">N° Récord del Conductor</td>
+            <td style="text-align: center">{{brevete.record}}</td>
+        </tr>
         {%else%}
         <tr>
             <td style="text-align: center; column-width: 140px">Sin registro de Licencia de Conducir</td>
@@ -119,7 +127,7 @@
         </tr>
         {%else%}
         <tr>
-            <td style="text-align: center; column-width: 140px">Sin registro de Revisiones Tecnicas</td>
+            <td style="text-align: center; column-width: 140px">Sin registro de Revisiones Técnicas</td>
         </tr>
         {%endif%}
 
@@ -249,7 +257,7 @@
                 </table>
             </td>
             {%else%}
-            <td style="text-align: center; column-width: 140px;vertical-align: top;font-weight: bold;">Sin deudas
+            <td style="text-align: center; column-width: 140px;vertical-align: top;">Sin deudas
                 registradas.</td>
             {%endif%}
             {%endfor%}
@@ -383,53 +391,61 @@
     <table style="color: white; background:#618685; max-width:100%; white-space:nowrap">
         <tr>
             <td colspan="4" style="color: white; font-weight: bold; background-color: #003b6d; text-align: center">
-                Multas Municipalidad del Callao
+                Papeletas Registradas en el MTC
             </td>
         </tr>
-        {%if callaomul%}
+        {%if papeletas%}
         <tr>
-            <td style="text-align: right; column-width:140px">Placa</td>
-            {% for callaomul in callaomuls %}
+            <td style="text-align: right; column-width:140px">Entidad</td>
+            {% for papeleta in papeletas %}
             <td style="text-align: center; column-width:260px">
-                {{callaomul.placa}}
+                {{papeleta.entidad}}
             </td>
             {% endfor %}
         </tr>
         <tr>
-            <td style="text-align: right;column-width:140px">Documento</td>
-            {% for callaomul in callaomuls %}
+            <td style="text-align: right;column-width:140px">Número</td>
+            {% for papeleta in papeletas %}
             <td style="text-align: center">
-                {{callaomul.documento}}
+                {{papeleta.numero}}
             </td>
             {% endfor %}
         </tr>
         <tr>
-            <td style="text-align: right">Tipo</td>
-            {% for callaomul in callaomuls %}
+            <td style="text-align: right">Fecha</td>
+            {% for papeleta in papeletas %}
             <td style="text-align: center">
-                {{callaomul.tipo}}
+                {{papeleta.fecha}}
             </td>
             {% endfor %}
         </tr>
         <tr>
-            <td style="text-align: right">Expedición</td>
-            {% for callaomul in callaomuls %}
+            <td style="text-align: right">Fecha Firme</td>
+            {% for papeleta in papeletas %}
             <td style="text-align: center">
-                {{callaomul.fecha_documento}}
+                {{papeleta.fecha_firme}}
             </td>
             {% endfor %}
         </tr>
         <tr>
-            <td style="text-align: right">Infracción</td>
-            {% for callaomul in callaomuls %}
+            <td style="text-align: right">Falta</td>
+            {% for papeleta in papeletas %}
             <td style="text-align: center">
-                {{callaomul.infraccion}}
+                {{papeleta.falta}}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td style="text-align: right">Estado de Deuda</td>
+            {% for papeleta in papeletas %}
+            <td style="text-align: center">
+                {{papeleta.estado_deuda}}
             </td>
             {% endfor %}
         </tr>
         {%else%}
         <tr>
-            <td style="text-align: center; column-width: 140px">Sin multas registradas.</td>
+            <td colspan="4" style="text-align: center">Sin papeletas registradas.</td>
         </tr>
         {%endif%}
     </table>
