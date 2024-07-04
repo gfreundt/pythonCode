@@ -108,9 +108,9 @@ class Members:
                     JOIN (
                         SELECT * FROM placas 
                         JOIN (
-                        SELECT idplaca_FK, FechaHasta, "SOAT" AS TipoAlerta FROM soats WHERE DATE('now', '30 days') >= FechaHasta
+                        SELECT idplaca_FK, FechaHasta, "SOAT" AS TipoAlerta FROM soats WHERE DATE('now', 'localtime', '30 days') >= FechaHasta
                         UNION
-                        SELECT idplaca_FK, FechaHasta, "REVTEC" FROM revtecs WHERE DATE('now', '30 days') >= FechaHasta
+                        SELECT idplaca_FK, FechaHasta, "REVTEC" FROM revtecs WHERE DATE('now', 'localtime', '30 days') >= FechaHasta
                         UNION 
                         SELECT idplaca_FK, "", "SUTRAN" FROM sutrans
                         UNION 
@@ -121,19 +121,19 @@ class Members:
                     INSERT INTO _expira30dias (IdMember, FechaHasta, TipoAlerta)
                     SELECT IdMember, FechaHasta, TipoAlerta from members 
                         JOIN (
-                            SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', '30 days') >= FechaHasta OR DATE('now', '30 days')= FechaHasta OR DATE('now', '0 days')= FechaHasta
+                            SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', 'localtime', '30 days') >= FechaHasta OR DATE('now', 'localtime', '30 days')= FechaHasta OR DATE('now', 'localtime', '0 days')= FechaHasta
 						UNION
 							SELECT IdMember_FK, FechaHasta, "SATIMP" AS TipoAlerta FROM satimpDeudas 
 							JOIN
 							(SELECT * FROM satimpCodigos)
 							ON IdCodigo_FK = IdCodigo
-							WHERE DATE('now', '30 days') >= FechaHasta
+							WHERE DATE('now', 'localtime', '30 days') >= FechaHasta
                         UNION
                             SELECT IdMember_FK, "", "MTCPAPELETA" FROM mtcPapeletas)
                     ON IdMember = IdMember_FK;
                     
                     UPDATE _expira30dias SET Vencido = 0;
-                    UPDATE _expira30dias SET Vencido = 1 WHERE FechaHasta <= DATE('now');
+                    UPDATE _expira30dias SET Vencido = 1 WHERE FechaHasta < DATE('now', 'localtime');
                     """
         self.cursor.executescript(_cmd)
         # assign list to instance variable
