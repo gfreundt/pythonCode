@@ -6,7 +6,6 @@
     <p>Este es tu correo mensual del Servicio de Alertas Perú. Placas registradas: <b>{{lista_placas}}</b>.</p>
     <p>En caso no quieras recibir más correos, responde a este correo con "ELIMINAR" en el asunto.</p>
     <p>Gracias por confiar en nosotros.</p>
-    </br>
     <h2>Alertas</h2>
     <ul>
         {% for alerta in alertas %}
@@ -17,7 +16,12 @@
         {% endif %}
         {% endfor %}
     </ul>
-    </br>
+    <h2>Documentos Adjuntos</h2>
+    <ul>
+        {% for adjunto in adjuntos %}
+            <li style="color: black">{{adjunto}}</li>
+        {% endfor %}
+    </ul>
     <h2>Detalles</h2>
     <table style="color: white; background:#618685; white-space:nowrap">
         <tr>

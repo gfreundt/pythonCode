@@ -4,6 +4,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from datetime import datetime as dt, timedelta as td
+import logging
 import time
 from PIL import Image
 import io, urllib
@@ -12,6 +13,9 @@ import easyocr
 import numpy as np
 from statistics import mean
 from gft_utils import PDFUtils, ChromeUtils
+
+# remove easyocr warnings
+logging.getLogger("easyocr").setLevel(logging.ERROR)
 
 
 class Satimp:
@@ -151,8 +155,6 @@ class Satimp:
         x.click()
 
         time.sleep(0.5)
-
-        print(response)
 
         return response
 
@@ -369,7 +371,6 @@ class Brevete:
             # self.WEBD.refresh()
             # return response
 
-        print(response)
         return response
 
 
@@ -541,7 +542,7 @@ class SoatImage:
     def __init__(self):
         self.pdf = PDFUtils()
         self.WEBD = ChromeUtils().init_driver(
-            headless=True, verbose=False, maximized=True
+            headless=False, verbose=False, maximized=True
         )
         self.WEBD.get("https://www.pacifico.com.pe/consulta-soat")
         time.sleep(3)
@@ -568,7 +569,7 @@ class SoatImage:
             while not z and count < 10:
                 z = self.WEBD.find_elements(
                     By.XPATH,
-                    "/html/body/div[1]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/button",
+                    "/html/body/div[1]/div[1]/div/div[1]/div/div/div[2]/div/div[4]/button",
                 )
                 time.sleep(1)
                 count += 1
@@ -579,22 +580,29 @@ class SoatImage:
             except:
                 return ""
 
-            _file_name = f"SOAT-{placa.upper()}-{dt.strftime(dt.now(),'%Y%m%d')}.pdf"
-            # wait up to 15 seconds while file is downloaded
+            # wait up to 20 seconds while file is downloaded
             count = 0
             while (
-                not os.path.isfile(
-                    os.path.join(r"C:\Users", "Gabriel", "Downloads", _file_name)
+                not any(
+                    [
+                        True if f"SOAT-{placa.upper()}" == i[:11] else False
+                        for i in os.listdir(
+                            os.path.join(r"C:\Users", "Gabriel", "Downloads")
+                        )
+                    ]
                 )
-                and count < 10
+                and count < 20
             ):
                 time.sleep(1)
                 count += 1
 
             # take downloaded PDF, process image and save in data folder
             try:
+                from_dir = os.listdir(os.path.join(r"C:\Users", "Gabriel", "Downloads"))
+                _file_name = [i for i in from_dir if f"SOAT-{placa.upper()}" == i[:11]]
+
                 from_path = os.path.join(
-                    r"C:\Users", "Gabriel", "Downloads", _file_name
+                    r"C:\Users", "Gabriel", "Downloads", _file_name[0]
                 )
                 to_path = os.path.join(
                     r"D:\pythonCode",
@@ -1005,7 +1013,6 @@ class Sunarp:
 
     def browser(self, **kwargs):
         """returns:
-        -2 = captcha wrong (retry)
         -1 = captcha ok, image did not load (retry)
          1 = captcha ok, placa does not exist
          image object = captcha ok, placa ok
@@ -1046,11 +1053,10 @@ class Sunarp:
                 ).click()
                 continue
             elif _alerta and "error" in _alerta[0].text:
-                print("no se encontraron")
                 self.WEBD.find_element(
                     By.XPATH, "/html/body/div/div/div[6]/button[1]"
                 ).click()
-                return []
+                return 1, None
             else:
                 break
 
@@ -1064,13 +1070,13 @@ class Sunarp:
         if not _card_image:
             self.WEBD.refresh()
             time.sleep(0.5)
-            return -1
+            return -1, None
 
         # grab image and save in file, return succesful
         else:
             # load card image into memory
             image_object = Image.open(io.BytesIO(_card_image[0].screenshot_as_png))
-            time.sleep(0.5)
+            time.sleep(1)
 
             # press boton to start over
             q = self.WEBD.find_element(
@@ -1079,7 +1085,7 @@ class Sunarp:
             )
             q.click()
 
-            return image_object
+            return 0, image_object
 
     def process_captcha(self, img):
         # split image into six pieces and run OCR to each
@@ -1128,7 +1134,6 @@ class Sunarp:
                 phrase += c[0][1]
 
         # ocr text correction
-        print(phrase)
         phrase.replace("€", "C")
 
         return phrase.upper() if len(phrase) == 6 else ""

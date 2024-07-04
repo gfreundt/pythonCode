@@ -3,10 +3,8 @@ import openpyxl
 import sqlite3
 from copy import deepcopy as copy
 import uuid
-
-# from pygame.locals import *
-
 from gft_utils import GoogleUtils
+from pprint import pprint
 
 
 class Members:
@@ -42,13 +40,14 @@ class Members:
                         "DocTipo",
                         "DocNum",
                         "Celular",
+                        "WhatsApp",
                         "Correo",
                         "CodMember",
                         "Unsubscribe",
                     ],
                 )
                 values = (
-                    list(member.values())[:5]
+                    list(member.values())[:6]
                     + ["SAP-" + str(uuid.uuid4())[-6:].upper()]
                     + [0]
                 )
@@ -90,7 +89,7 @@ class Members:
                 elif "INGRESAR" in sub.upper() or "INGRESAR" in body.upper():
                     sub_emails.append(sender)
 
-        # TODO: don't search for specific test, toggle flag if emaul sent
+        # TODO: don't search for specific test, toggle flag if email sent
         # TODO: change flag in database
         # TODO: change email status to read
         # TODO: send confirmation email
@@ -102,7 +101,7 @@ class Members:
         expired or expiring within 30 days."""
 
         _cmd = f""" DROP TABLE IF EXISTS _expira30dias;
-                    CREATE TABLE _expira30dias (IdMember, Placa, FechaHasta, TipoAlerta);
+                    CREATE TABLE _expira30dias (IdMember, Placa, FechaHasta, TipoAlerta, Vencido);
 
                     INSERT INTO _expira30dias (IdMember,  Placa, FechaHasta, TipoAlerta)
                     SELECT IdMember, Placa, FechaHasta, TipoAlerta FROM members
@@ -131,7 +130,11 @@ class Members:
 							WHERE DATE('now', '30 days') >= FechaHasta
                         UNION
                             SELECT IdMember_FK, "", "MTCPAPELETA" FROM mtcPapeletas)
-                    ON IdMember = IdMember_FK"""
+                    ON IdMember = IdMember_FK;
+                    
+                    UPDATE _expira30dias SET Vencido = 0;
+                    UPDATE _expira30dias SET Vencido = 1 WHERE FechaHasta <= DATE('now');
+                    """
         self.cursor.executescript(_cmd)
         # assign list to instance variable
         self.cursor.execute("SELECT * FROM _expira30dias")
@@ -157,7 +160,9 @@ class Members:
             }
             for i in range(1, sheet.max_row)
         ]
+
         # clean data and shape data correctly (join placas in single list)
+        _wa = list(raw_data[0].keys())[8]
         for r, row in enumerate(copy(raw_data)):
             placas = []
             for col in row:
@@ -169,6 +174,8 @@ class Members:
                     raw_data[r][col] = raw_data[r][col].title()
                 if "Correo" in col:
                     raw_data[r]["Correo"] = raw_data[r].pop(col)
+                if "WhatsApp" in col:
+                    raw_data[r][_wa] = 1 if raw_data[r][_wa] == "Sí" else 0
                 if "Placa" in col:
                     if raw_data[r][col]:
                         placas.append(

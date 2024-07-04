@@ -4,20 +4,19 @@
 <body style="font-family: Arial, Helvetica, sans-serif">
     <p>Hola {{nombre_usuario}},</p>
     <p>Gracias por inscribirte a nuestro sistema de alertas. Has registrado las siguientes placas: <b>{{lista_placas}}</b>.</p>
-    <p>Recibirás un correo mensual con esta información actualizada y las siguientes alertas de vencimiento:.</p>
+    <p>Recibirás un correo mensual con esta información actualizada y las siguientes alertas:</p>
     <ul>
-        <li>Licencia de Conducir (30 días antes, 15 días antes y el día del vencimiento).</li>
-        <li>Revisión Técnica (10 días antes, 5 días antes y el día del vencimiento).</li>
-        <li>SOAT (10 días antes, 5 días antes y el día del vencimiento).</li>
-        <li>Impuesto Vehicular SAT (10 días antes, 5 días antes y el día del vencimiento).</li>
-        <li>Multa en SUTRAN (un único aviso).</li>
-        <li>Multa en SAT Lima (un único aviso).</li>
-        <li>Multa en la Municipalidad del Callao (un único aviso).</li>
+        <li>Vencimiento de Licencia de Conducir.</li>
+        <li>Vencimiento de Revisión Técnica.</li>
+        <li>Vencimiento del SOAT.</li>
+        <li>Vencimiento del Impuesto Vehicular SAT.</li>
+        <li>Nueva multa en SUTRAN.</li>
+        <li>Nueva multa en SAT Lima.</li>
+        <li>Nueva multa en la Página del MTC.</li>
         </p>
     </ul>
     <p>En caso no quieras recibir más correos, responde a este correo con "ELIMINAR" en el asunto.</p>
-    <p>Bienvenido al Servicio de Alertas Peru!</p>
-    </br>
+    <p>Bienvenido al Servicio de Alertas Perú!</p>
     <h2>Alertas</h2>
     <ul>
         {% for alerta in alertas %}
@@ -28,7 +27,12 @@
         {% endif %}
         {% endfor %}
     </ul>
-    </br>
+    <h2>Documentos Adjuntos</h2>
+    <ul>
+        {% for adjunto in adjuntos %}
+            <li style="color: black">{{adjunto}}</li>
+        {% endfor %}
+    </ul>
     <h2>Detalles</h2>
     <table style="color: white; background:#618685; white-space:nowrap">
         <tr>
@@ -390,62 +394,70 @@
         </tr>
         {%endif%}
     </table>
-    </br>
-    <table style="color: white; background:#618685; max-width:100%; white-space:nowrap">
-        <tr>
-            <td colspan="4" style="color: white; font-weight: bold; background-color: #003b6d; text-align: center">
-                Multas Municipalidad del Callao
-            </td>
-        </tr>
-        {%if callaomul%}
-        <tr>
-            <td style="text-align: right; column-width:140px">Placa</td>
-            {% for callaomul in callaomuls %}
-            <td style="text-align: center; column-width:260px">
-                {{callaomul.placa}}
-            </td>
-            {% endfor %}
-        </tr>
-        <tr>
-            <td style="text-align: right;column-width:140px">Documento</td>
-            {% for callaomul in callaomuls %}
-            <td style="text-align: center">
-                {{callaomul.documento}}
-            </td>
-            {% endfor %}
-        </tr>
-        <tr>
-            <td style="text-align: right">Tipo</td>
-            {% for callaomul in callaomuls %}
-            <td style="text-align: center">
-                {{callaomul.tipo}}
-            </td>
-            {% endfor %}
-        </tr>
-        <tr>
-            <td style="text-align: right">Expedición</td>
-            {% for callaomul in callaomuls %}
-            <td style="text-align: center">
-                {{callaomul.fecha_documento}}
-            </td>
-            {% endfor %}
-        </tr>
-        <tr>
-            <td style="text-align: right">Infracción</td>
-            {% for callaomul in callaomuls %}
-            <td style="text-align: center">
-                {{callaomul.infraccion}}
-            </td>
-            {% endfor %}
-        </tr>
-        {%else%}
-        <tr>
-            <td style="text-align: center; column-width: 140px">Sin multas registradas.</td>
-        </tr>
-        {%endif%}
-    </table>
-    </br>
-    <p style="font-size:x-small; color:#c5c9c9">
-        {{codigo_correo}}
-    </p>
+</br>
+<table style="color: white; background:#618685; max-width:100%; white-space:nowrap">
+    <tr>
+        <td colspan="4" style="color: white; font-weight: bold; background-color: #003b6d; text-align: center">
+            Papeletas Registradas en el MTC
+        </td>
+    </tr>
+    {%if papeletas%}
+    <tr>
+        <td style="text-align: right; column-width:140px">Entidad</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center; column-width:260px">
+            {{papeleta.entidad}}
+        </td>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td style="text-align: right;column-width:140px">Número</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center">
+            {{papeleta.numero}}
+        </td>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td style="text-align: right">Fecha</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center">
+            {{papeleta.fecha}}
+        </td>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td style="text-align: right">Fecha Firme</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center">
+            {{papeleta.fecha_firme}}
+        </td>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td style="text-align: right">Falta</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center">
+            {{papeleta.falta}}
+        </td>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td style="text-align: right">Estado de Deuda</td>
+        {% for papeleta in papeletas %}
+        <td style="text-align: center">
+            {{papeleta.estado_deuda}}
+        </td>
+        {% endfor %}
+    </tr>
+    {%else%}
+    <tr>
+        <td colspan="4" style="text-align: center">Sin papeletas registradas.</td>
+    </tr>
+    {%endif%}
+</table>
+</br>
+<p style="font-size:x-small; color:#c5c9c9">
+    {{codigo_correo}}
+</p>
 </body>

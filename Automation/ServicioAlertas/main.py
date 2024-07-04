@@ -1,8 +1,9 @@
 import sys, os
 import logging
+from pprint import pprint
 
 # local imports
-import members, updates, alerts, scrapers
+import members, updates, messages, alerts, scrapers, maintenance
 
 
 def start_logger():
@@ -24,6 +25,9 @@ def side():
     print("************* RUNNING SIDE *************")
     MEMBERS = members.Members(LOG)
     MEMBERS.create_30day_list()
+    MAINT = maintenance.Maintenance(LOG, MEMBERS)
+    MAINT.soat_images()
+    return
 
     # ALERTS = alerts.Alerts(LOG, MEMBERS)
     # get list of records to process for each alert
@@ -64,7 +68,7 @@ def side():
 
     # Specfic Scrapers - MANUAL:
     # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
-    # UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+    UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
     # UPDATES.all_updates = {"sunarps": [(25, "LIA118")]}
     # print(UPDATES.all_updates)
 
@@ -80,7 +84,7 @@ def side():
 
 def main():
     """Program entry point. Executes actions depending on arguments ran at prompt.
-    Valid arguments: CHECKSUB, CHECKNEW, UPDATE, MAN, AUTO, ALL, ALERT, EMAIL"""
+    Valid arguments: CHECKSUB, CHECKNEW, UPDATE, MAN, AUTO, ALL, ALERT, EMAIL, MAINT"""
 
     # load member database and renew 30-day list
     MEMBERS = members.Members(LOG)
@@ -98,7 +102,7 @@ def main():
     if "UPDATE" in sys.argv:
         UPD = updates.Update(LOG, MEMBERS)
         UPD.get_records_to_process()
-        print(UPD.all_updates)
+        pprint(UPD.all_updates)
         # manual scrapers first (not threaded)
         if "MAN" in sys.argv or "ALL" in sys.argv:
             UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
@@ -115,13 +119,28 @@ def main():
                 scraper=scrapers.Brevete(), table="brevetes", date_sep="/"
             )
             UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
+            UPD.gather_record(scraper=scrapers.RecordConductorImage())
 
-    # define records that require alerts, craft updates from templates and send email
-    if "ALERT" in sys.argv:
-        ALERTS = alerts.Alerts(LOG, MEMBERS)
-        ALERTS.get_alert_lists()
+    # define records that require messages, craft updates from templates and send email
+    if "MSG" in sys.argv:
+        MSG = messages.Messages(LOG, MEMBERS)
+        MSG.get_msg_lists()
         # compose and send alerts (if EMAIL switch on)
-        ALERTS.send_alerts(EMAIL="EMAIL" in sys.argv)
+        MSG.send_msgs(EMAIL="EMAIL" in sys.argv)
+
+    # define records that require alerts, craft message and send sms
+    if "ALERT" in sys.argv:
+        ALERT = alerts.Alerts(LOG, MEMBERS)
+        ALERT.get_alert_list()
+        # compose and send alerts (if SMS switch on)
+        ALERT.send_alerts(SMS="SMS" in sys.argv)
+
+    # perform basic maintenance
+    if "MAINT" in sys.argv:
+        MAINT = maintenance.Maintenance(LOG, MEMBERS)
+        MAINT.housekeeping()
+        MAINT.soat_images()
+        MAINT.sunarp_images()
 
 
 if __name__ == "__main__":
