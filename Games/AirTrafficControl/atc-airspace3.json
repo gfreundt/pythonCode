@@ -1,0 +1,150 @@
+{
+    "altitudes": {
+        "groundLevel": 83,
+        "handOff": 4500,
+        "goAround": 4000
+    },
+    "VOR": [
+        {
+            "name": "SOPIT",
+            "symbol": "STAR",
+            "x": 172,
+            "y": 11
+        },
+        {
+            "name": "BUZAD",
+            "symbol": "STAR",
+            "x": 727,
+            "y": 40
+        },
+        {
+            "name": "HEN",
+            "symbol": "CIRCLES",
+            "x": 484,
+            "y": 336
+        },
+        {
+            "name": "BNN",
+            "symbol": "CIRCLES",
+            "x": 729,
+            "y": 391
+        },
+        {
+            "name": "DONNA",
+            "symbol": "STAR",
+            "x": 534,
+            "y": 433
+        },
+        {
+            "name": "NIGIT",
+            "symbol": "STAR",
+            "x": 95,
+            "y": 1057
+        },
+        {
+            "name": "EPM",
+            "symbol": "CIRCLES",
+            "x": 909,
+            "y": 5104961
+        },
+        {
+            "name": "OCK",
+            "symbol": "CIRCLES",
+            "x": 835,
+            "y": 1076
+        },
+        {
+            "name": "TOMMO",
+            "symbol": "CIRCLES",
+            "x": 919,
+            "y": 1075
+        },
+        {
+            "name": "DORKI",
+            "symbol": "STAR",
+            "x": 1018,
+            "y": 1121
+        },
+        {
+            "name": "BIG",
+            "symbol": "CIRCLES",
+            "x": 1320,
+            "y": 1030
+        },
+        {
+            "name": "HILLY",
+            "symbol": "STAR",
+            "x": 1532,
+            "y": 1023
+        },
+        {
+            "name": "MID",
+            "symbol": "CIRCLES",
+            "x": 653,
+            "y": 1483
+        }
+    ],
+    "runways": [
+        {
+            "number": 1,
+            "headL": {
+                "x": 777,
+                "y": 779,
+                "tag": {
+                    "text": "9L",
+                    "xy": [
+                        750,
+                        769
+                    ]
+                },
+                "heading": 90
+            },
+            "headR": {
+                "x": 853,
+                "y": 779,
+                "tag": {
+                    "text": "27R",
+                    "xy": [
+                        870,
+                        769
+                    ]
+                },
+                "heading": 270
+            },
+            "width": 2
+        },
+        {
+            "number": 2,
+            "headL": {
+                "x": 777,
+                "y": 809,
+                "tag": {
+                    "text": "9R",
+                    "xy": [
+                        750,
+                        799
+                    ]
+                },
+                "heading": 270
+            },
+            "headR": {
+                "x": 853,
+                "y": 809,
+                "tag": {
+                    "text": "27L",
+                    "xy": [
+                        870,
+                        799
+                    ]
+                },
+                "heading": 90
+            },
+            "width": 2
+        }
+    ],
+    "callsigns": [
+        "BA",
+        "AA",
+        "DL"
+    ]
+}
