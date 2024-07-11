@@ -2,7 +2,8 @@
     "altitudes": {
         "groundLevel": 608,
         "handOff": 5500,
-        "goAround": 4000
+        "goAround": 4000,
+        "postTakeoff": 2108
     },
     "VOR": [
         {

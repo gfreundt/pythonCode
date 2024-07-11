@@ -38,7 +38,16 @@ class UserInput:
                 self.DISP.pop_up(action="HELP", pause=1)
             if fkey == "F2":
                 # TODO: move tag to different positions instead of off/on
-                self.ENV.tagActive = False if self.ENV.tagActive == True else True
+                if (
+                    self.ENV.tagDeltaX < 0
+                    and self.ENV.tagDeltaY < 0
+                    or self.ENV.tagDeltaX > 0
+                    and self.ENV.tagDeltaY > 0
+                ):
+                    self.ENV.tagDeltaX *= -1
+                else:
+                    self.ENV.tagDeltaY *= -1
+                # self.ENV.tagActive = False if self.ENV.tagActive == True else True
                 # pop_up(action="TOGGLE", pause=1)
             if fkey == "F3":
                 self.ENV.guidelineActive = (
@@ -93,11 +102,11 @@ class UserInput:
                 # full takeoff
                 if not plane.onRadar or (plane.onRadar and plane.speed == 0):
                     plane.taxiTime = random.randint(8, 15)
-                    # plane.onRadar = True
                     plane.speedTo = (
                         plane.speedCruise if not plane.speedTo else plane.speedTo
                     )
                     plane.isTakeoff = True
+                    plane.isPostTakeoff = True
                     plane.altitudeTo = max(
                         plane.altitudeTo,
                         self.ATC.airspaceInfo["altitudes"]["groundLevel"] + 500,
@@ -194,7 +203,7 @@ class UserInput:
                 if selected_runway:
                     # landing condition: must be at or below approach altitude
                     altitude_check = plane.altitude <= plane.altitudeApproach
-                    # landing condition: must be heading within certain degress from runqay headinng
+                    # landing condition: must be heading within certain degress from runway headinng
                     plane.runwayHeading = selected_runway[0][1]
 
                     delta_heading = abs(plane.heading - plane.runwayHeading)

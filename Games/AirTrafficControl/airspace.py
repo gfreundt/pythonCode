@@ -277,30 +277,31 @@ class Airspace:
                     plane.headingTo = self.calc_heading(
                         plane.x, plane.y, plane.goToFixed[0], plane.goToFixed[1]
                     )
-                # heading change
-                clockwise = (plane.headingTo - plane.heading + 360) % 360
-                anticlockwise = (plane.heading - plane.headingTo + 360) % 360
-                if (
-                    not plane.turnDirection and clockwise < anticlockwise
-                ) or plane.turnDirection == "R":  # clockwise turn
-                    plane.heading = (
-                        plane.heading + plane.turnRate * plane.turnExpedite + 360
-                    ) % 360
-                    left_right = ">"
-                elif (
-                    not plane.turnDirection and anticlockwise <= clockwise
-                ) or plane.turnDirection == "L":  # anticlockwise turn
-                    plane.heading = (
-                        plane.heading - plane.turnRate * plane.turnExpedite + 360
-                    ) % 360
-                    left_right = "<"
-                if (
-                    min(clockwise, anticlockwise) <= plane.turnRate
-                ):  # end of turn (reached desired heading)
-                    plane.heading = plane.headingTo
-                    plane.turnDirection = None
-                    left_right = "="
-                    plane.turnExpedite = 1
+                # heading change (only if post-take off completed)
+                if not plane.isPostTakeoff:
+                    clockwise = (plane.headingTo - plane.heading + 360) % 360
+                    anticlockwise = (plane.heading - plane.headingTo + 360) % 360
+                    if (
+                        not plane.turnDirection and clockwise < anticlockwise
+                    ) or plane.turnDirection == "R":  # clockwise turn
+                        plane.heading = (
+                            plane.heading + plane.turnRate * plane.turnExpedite + 360
+                        ) % 360
+                        left_right = ">"
+                    elif (
+                        not plane.turnDirection and anticlockwise <= clockwise
+                    ) or plane.turnDirection == "L":  # anticlockwise turn
+                        plane.heading = (
+                            plane.heading - plane.turnRate * plane.turnExpedite + 360
+                        ) % 360
+                        left_right = "<"
+                    if (
+                        min(clockwise, anticlockwise) <= plane.turnRate
+                    ):  # end of turn (reached desired heading)
+                        plane.heading = plane.headingTo
+                        plane.turnDirection = None
+                        left_right = "="
+                        plane.turnExpedite = 1
 
             # check for ordered to head/takeoff and taxi time to get there
             if plane.taxiTime > 0:
@@ -312,7 +313,15 @@ class Airspace:
             if plane.isTakeoff and plane.speed >= plane.speedTakeoff:
                 plane.isTakeoff = False
                 plane.isGround = False
-                plane.inventoryColor = self.ENV.GREEN
+                if not plane.isPriority:
+                    plane.inventoryColor = self.ENV.GREEN
+
+            # check for end of post-takeoff conditions
+            if (
+                plane.isPostTakeoff
+                and plane.altitude >= self.airspaceInfo["altitudes"]["postTakeoff"]
+            ):
+                plane.isPostTakeoff = False
 
             # check if plane on ILS intercept course hits ILS glide scope and begin landing
             if plane.ILSIntercept and int(
@@ -416,8 +425,14 @@ class Airspace:
                 plane.tagColor,
                 self.ENV.BG,
             )
-            plane.tagPosition0 = (plane.x + 20, plane.y + 20)
-            plane.tagPosition1 = (plane.x + 20, plane.y + 33)
+            plane.tagPosition0 = (
+                plane.x + self.ENV.tagDeltaX,
+                plane.y + self.ENV.tagDeltaY,
+            )
+            plane.tagPosition1 = (
+                plane.x + self.ENV.tagDeltaX,
+                plane.y + self.ENV.tagDeltaY + 13,
+            )
             plane.tagClickArea = pygame.Rect(
                 plane.tagPosition0[0], plane.tagPosition0[1], 42, 26
             )
@@ -511,6 +526,21 @@ class Airspace:
                     bgcolor=self.ENV.RED,
                     audio="",
                 )
+
+            # check for game winning conditions
+            if self.ENV.GAME_MODE == 1 and self.ENV.simTime >= self.ENV.GAME_MODE_GOAL:
+                self.ENV.GAME_OVER = True
+            if (
+                self.ENV.GAME_MODE == 2
+                and (self.ENV.score["departures"] + self.ENV.score["arrivals"])
+                >= self.ENV.GAME_MODE_GOAL
+            ):
+                self.ENV.GAME_OVER = True
+            if (
+                self.ENV.GAME_MODE == 3
+                and self.ENV.score["total"] >= self.ENV.GAME_MODE_GOAL
+            ):
+                self.ENV.GAME_OVER = True
 
         # process timer
         self.ENV.simTime += dt.now() - self.ENV.simTimeSplit

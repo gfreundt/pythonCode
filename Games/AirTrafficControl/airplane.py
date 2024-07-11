@@ -50,6 +50,7 @@ class Airplane(pygame.sprite.Sprite):
         self.onRadar = True if self.isInbound else False
         self.isTakeoff = False
         self.isPriority = False
+        self.isPostTakeoff = False
         self.runwayDeparture = kw["runwayDeparture"]
         self.taxiTime = 0
         self.turnExpedite = 1

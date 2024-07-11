@@ -83,6 +83,15 @@ class Environment:
         self.DELAY_NEXT_PLANE = td(seconds=10)
         self.PENALTY_LIFETIME = td(minutes=15)
         self.PRESET_DEPART_ALTITUDE_TARGET = 20000
+        # 0 = infinite, 1 = set time, 2 = set # aircraft, 3 = set points
+        self.GAME_MODE = 0
+        if self.GAME_MODE == 1:
+            self.GAME_MODE_GOAL = td(seconds=20)  # used with Game Mode 1
+        elif self.GAME_MODE == 2:
+            self.GAME_MODE_GOAL = 2  # used with Game Mode 2
+        elif self.GAME_MODE == 3:
+            self.GAME_MODE_GOAL = 3  # used with Game Mode 3
+        self.GAME_OVER = False
 
         self.ERRORS = [
             "*VOID*",
@@ -124,6 +133,8 @@ class Environment:
 
         # general display variables
         self.tagActive = True
+        self.tagDeltaX = 20
+        self.tagDeltaY = 20
         self.guidelineActive = False
 
         # check for default overrides at command line
@@ -133,3 +144,5 @@ class Environment:
             self.ARRIVALS_RATIO = 100
         if "-M" in args:
             self.MAX_AIRPLANES = int(args[args.index("-M") + 1])
+        if "-S" in args:
+            self.GAME_MODE = int(args[args.index("-S") + 1])

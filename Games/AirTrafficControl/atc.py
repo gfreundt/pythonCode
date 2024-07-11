@@ -160,12 +160,18 @@ def init_load_console():
     ]
 
 
+def game_over():
+    print("Game Over")
+
+
 def main():
     ATC.init_load_airspace()
     init_load_console()
     clock = pygame.time.Clock()
     delay = ENV.FPS // ENV.SPEED
     while True:
+        if ENV.GAME_OVER:
+            break
         clock.tick(ENV.FPS)
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -182,6 +188,7 @@ def main():
             ATC.next_frame()
             ATC.next_plane()
             delay = ENV.FPS // ENV.SPEED
+    game_over()
 
 
 ENV = environment.Environment(sys.argv)
