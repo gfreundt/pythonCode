@@ -1,103 +1,431 @@
-{
-    "altitudes": {
-        "groundLevel": 608,
-        "handOff": 5500,
-        "goAround": 4000,
-        "postTakeoff": 2108
+[
+    {
+        "name": "Standard",
+        "data": {
+            "altitudes": {
+                "groundLevel": 608,
+                "handOff": 5500,
+                "goAround": 4000,
+                "postTakeoff": 2108
+            },
+            "VOR": [
+                {
+                    "name": "GFE",
+                    "symbol": "TRIANGLE",
+                    "x": 205,
+                    "y": 103
+                },
+                {
+                    "name": "LFT",
+                    "symbol": "CIRCLES",
+                    "x": 88,
+                    "y": 33
+                },
+                {
+                    "name": "XCY",
+                    "symbol": "STAR",
+                    "x": 99,
+                    "y": 300
+                },
+                {
+                    "name": "RYO",
+                    "symbol": "CIRCLES",
+                    "x": 499,
+                    "y": 600
+                },
+                {
+                    "name": "BIX",
+                    "symbol": "STAR",
+                    "x": 1023,
+                    "y": 808
+                }
+            ],
+            "runways": [
+                {
+                    "number": 1,
+                    "headL": {
+                        "x": 569,
+                        "y": 433,
+                        "tag": {
+                            "text": "10",
+                            "xy": [
+                                550,
+                                425
+                            ]
+                        },
+                        "heading": 95.19
+                    },
+                    "headR": {
+                        "x": 624,
+                        "y": 438,
+                        "tag": {
+                            "text": "28",
+                            "xy": [
+                                628,
+                                435
+                            ]
+                        },
+                        "heading": 275.19
+                    },
+                    "width": 2
+                },
+                {
+                    "number": 2,
+                    "headL": {
+                        "x": 552,
+                        "y": 443,
+                        "tag": {
+                            "text": "15",
+                            "xy": [
+                                534,
+                                434
+                            ]
+                        },
+                        "heading": 145.95
+                    },
+                    "headR": {
+                        "x": 577,
+                        "y": 480,
+                        "tag": {
+                            "text": "33",
+                            "xy": [
+                                575,
+                                483
+                            ]
+                        },
+                        "heading": 325.95
+                    },
+                    "width": 3
+                }
+            ],
+            "callsigns": [
+                "SW",
+                "AA",
+                "DL"
+            ]
+        }
     },
-    "VOR": [
-        {
-            "name": "GFE",
-            "symbol": "TRIANGLE",
-            "x": 205,
-            "y": 103
-        },
-        {
-            "name": "LFT",
-            "symbol": "CIRCLES",
-            "x": 88,
-            "y": 33
-        },
-        {
-            "name": "XCY",
-            "symbol": "STAR",
-            "x": 99,
-            "y": 300
-        },
-        {
-            "name": "RYO",
-            "symbol": "CIRCLES",
-            "x": 499,
-            "y": 600
-        },
-        {
-            "name": "BIX",
-            "symbol": "STAR",
-            "x": 1023,
-            "y": 808
+    {
+        "name": "Complex",
+        "data": {
+            "altitudes": {
+                "groundLevel": 83,
+                "handOff": 4500,
+                "goAround": 4000
+            },
+            "VOR": [
+                {
+                    "name": "SOPIT",
+                    "symbol": "STAR",
+                    "x": 172,
+                    "y": 11
+                },
+                {
+                    "name": "BUZAD",
+                    "symbol": "STAR",
+                    "x": 727,
+                    "y": 40
+                },
+                {
+                    "name": "HEN",
+                    "symbol": "CIRCLES",
+                    "x": 484,
+                    "y": 336
+                },
+                {
+                    "name": "BNN",
+                    "symbol": "CIRCLES",
+                    "x": 729,
+                    "y": 391
+                },
+                {
+                    "name": "DONNA",
+                    "symbol": "STAR",
+                    "x": 534,
+                    "y": 433
+                },
+                {
+                    "name": "NIGIT",
+                    "symbol": "STAR",
+                    "x": 95,
+                    "y": 1057
+                },
+                {
+                    "name": "EPM",
+                    "symbol": "CIRCLES",
+                    "x": 909,
+                    "y": 5104961
+                },
+                {
+                    "name": "OCK",
+                    "symbol": "CIRCLES",
+                    "x": 835,
+                    "y": 1076
+                },
+                {
+                    "name": "TOMMO",
+                    "symbol": "CIRCLES",
+                    "x": 919,
+                    "y": 1075
+                },
+                {
+                    "name": "DORKI",
+                    "symbol": "STAR",
+                    "x": 1018,
+                    "y": 1121
+                },
+                {
+                    "name": "BIG",
+                    "symbol": "CIRCLES",
+                    "x": 1320,
+                    "y": 1030
+                },
+                {
+                    "name": "HILLY",
+                    "symbol": "STAR",
+                    "x": 1532,
+                    "y": 1023
+                },
+                {
+                    "name": "MID",
+                    "symbol": "CIRCLES",
+                    "x": 653,
+                    "y": 1483
+                }
+            ],
+            "runways": [
+                {
+                    "number": 1,
+                    "headL": {
+                        "x": 777,
+                        "y": 779,
+                        "tag": {
+                            "text": "9L",
+                            "xy": [
+                                750,
+                                769
+                            ]
+                        },
+                        "heading": 90
+                    },
+                    "headR": {
+                        "x": 853,
+                        "y": 779,
+                        "tag": {
+                            "text": "27R",
+                            "xy": [
+                                870,
+                                769
+                            ]
+                        },
+                        "heading": 270
+                    },
+                    "width": 2
+                },
+                {
+                    "number": 2,
+                    "headL": {
+                        "x": 777,
+                        "y": 809,
+                        "tag": {
+                            "text": "9R",
+                            "xy": [
+                                750,
+                                799
+                            ]
+                        },
+                        "heading": 270
+                    },
+                    "headR": {
+                        "x": 853,
+                        "y": 809,
+                        "tag": {
+                            "text": "27L",
+                            "xy": [
+                                870,
+                                799
+                            ]
+                        },
+                        "heading": 90
+                    },
+                    "width": 2
+                }
+            ],
+            "callsigns": [
+                "BA",
+                "AA",
+                "DL"
+            ]
         }
-    ],
-    "runways": [
-        {
-            "number": 1,
-            "headL": {
-                "x": 569,
-                "y": 433,
-                "tag": {
-                    "text": "10",
-                    "xy": [
-                        550,
-                        425
-                    ]
-                },
-                "heading": 95.19
+    },
+    {
+        "name": "Tentative",
+        "data": {
+            "altitudes": {
+                "groundLevel": 34,
+                "handOff": 2500
             },
-            "headR": {
-                "x": 624,
-                "y": 438,
-                "tag": {
-                    "text": "28",
-                    "xy": [
-                        628,
-                        435
-                    ]
+            "VOR": [
+                {
+                    "name": "PAPAR",
+                    "symbol": "STAR",
+                    "x": 698,
+                    "y": 20
                 },
-                "heading": 275.19
-            },
-            "width": 2
-        },
-        {
-            "number": 2,
-            "headL": {
-                "x": 552,
-                "y": 443,
-                "tag": {
-                    "text": "15",
-                    "xy": [
-                        534,
-                        434
-                    ]
+                {
+                    "name": "MAXMO",
+                    "symbol": "STAR",
+                    "x": 1654,
+                    "y": 22
                 },
-                "heading": 145.95
-            },
-            "headR": {
-                "x": 577,
-                "y": 480,
-                "tag": {
-                    "text": "33",
-                    "xy": [
-                        575,
-                        483
-                    ]
+                {
+                    "name": "PUVAL",
+                    "symbol": "STAR",
+                    "x": 1862,
+                    "y": 37
                 },
-                "heading": 325.95
-            },
-            "width": 3
+                {
+                    "name": "ORLIK",
+                    "symbol": "STAR",
+                    "x": 294,
+                    "y": 167
+                },
+                {
+                    "name": "TOSBO",
+                    "symbol": "STAR",
+                    "x": 789,
+                    "y": 324
+                },
+                {
+                    "name": "RAGSO",
+                    "symbol": "STAR",
+                    "x": 1718,
+                    "y": 377
+                },
+                {
+                    "name": "RANBI",
+                    "symbol": "STAR",
+                    "x": 17,
+                    "y": 692
+                },
+                {
+                    "name": "SHJ",
+                    "symbol": "CIRCLES",
+                    "x": 1482,
+                    "y": 622
+                },
+                {
+                    "name": "LADVI",
+                    "symbol": "STAR",
+                    "x": 1436,
+                    "y": 716
+                },
+                {
+                    "name": "LALDO",
+                    "symbol": "STAR",
+                    "x": 2232,
+                    "y": 717
+                },
+                {
+                    "name": "BUBOK",
+                    "symbol": "STAR",
+                    "x": 1682,
+                    "y": 875
+                },
+                {
+                    "name": "MOGAV",
+                    "symbol": "STAR",
+                    "x": 902,
+                    "y": 1063
+                },
+                {
+                    "name": "BUBIN",
+                    "symbol": "STAR",
+                    "x": 2229,
+                    "y": 1218
+                },
+                {
+                    "name": "MIADA",
+                    "symbol": "STAR",
+                    "x": 570,
+                    "y": 1501
+                },
+                {
+                    "name": "GIDIS",
+                    "symbol": "STAR",
+                    "x": 2231,
+                    "y": 1503
+                },
+                {
+                    "name": "TEST",
+                    "symbol": "CIRCLES",
+                    "x": 2050,
+                    "y": 1350
+                }
+            ],
+            "runways": [
+                {
+                    "number": 1,
+                    "headL": {
+                        "x": 1124,
+                        "y": 750,
+                        "tag": {
+                            "text": "12L",
+                            "xy": [
+                                1075,
+                                740
+                            ],
+                            "heading": 95.19
+                        }
+                    },
+                    "headR": {
+                        "x": 1220,
+                        "y": 806,
+                        "tag": {
+                            "text": "30R",
+                            "xy": [
+                                1270,
+                                810
+                            ],
+                            "heading": 275.19
+                        }
+                    },
+                    "width": 3
+                },
+                {
+                    "number": 2,
+                    "headL": {
+                        "x": 1126,
+                        "y": 765,
+                        "tag": {
+                            "text": "12R",
+                            "xy": [
+                                1276,
+                                715
+                            ],
+                            "heading": 145.95
+                        }
+                    },
+                    "headR": {
+                        "x": 1223,
+                        "y": 820,
+                        "tag": {
+                            "text": "30L",
+                            "xy": [
+                                1273,
+                                825
+                            ],
+                            "heading": 325.95
+                        }
+                    },
+                    "width": 3
+                }
+            ],
+            "callsigns": [
+                "SW",
+                "AA",
+                "DL"
+            ]
         }
-    ],
-    "callsigns": [
-        "SW",
-        "AA",
-        "DL"
-    ]
-}
+    }
+]

@@ -37,16 +37,9 @@ class UserInput:
             if fkey == "F1":
                 self.DISP.pop_up(action="HELP", pause=1)
             if fkey == "F2":
-                # TODO: move tag to different positions instead of off/on
-                if (
-                    self.ENV.tagDeltaX < 0
-                    and self.ENV.tagDeltaY < 0
-                    or self.ENV.tagDeltaX > 0
-                    and self.ENV.tagDeltaY > 0
-                ):
-                    self.ENV.tagDeltaX *= -1
-                else:
-                    self.ENV.tagDeltaY *= -1
+                self.ENV.tagDeltaSelected += 1
+                if self.ENV.tagDeltaSelected == len(self.ENV.tagDeltaOptions):
+                    self.ENV.tagDeltaSelected = 0
                 # self.ENV.tagActive = False if self.ENV.tagActive == True else True
                 # pop_up(action="TOGGLE", pause=1)
             if fkey == "F3":
@@ -69,13 +62,11 @@ class UserInput:
         if not self.ATC.commandText or not self.ATC.activeAirplanes:
             return
 
-        # parse: clean extra spaces
-        while "  " in self.ATC.commandText:
-            self.ATC.commandText = self.ATC.commandText.replace("  ", " ")
-        # TODO: parse: add necessary spaces after valid command
+        # parse command text to
+        flt, cmd = self.parse_command()
+        if not flt:
+            error = 1
 
-        # extract flight number
-        flt, *cmd = self.ATC.commandText.split(" ")
         # check if flight number exists
         plane = [i for i in self.ATC.activeAirplanes if i.callSign == flt]
         if plane:
@@ -110,6 +101,7 @@ class UserInput:
                     plane.altitudeTo = max(
                         plane.altitudeTo,
                         self.ATC.airspaceInfo["altitudes"]["groundLevel"] + 500,
+                        self.ATC.airspaceInfo["altitudes"]["postTakeoff"],
                     )
                     text = f"{plane.callSign} Cleared for Takeoff"
                 else:
@@ -188,7 +180,7 @@ class UserInput:
                 else:
                     error = 2
 
-            elif cmd[0] == "L" and cmd[1].isdigit():
+            elif cmd[0] == "L":  # and cmd[1].isdigit():
                 _runways = []
                 for i in ("headL", "headR"):
                     for s in self.ATC.airspaceInfo["runways"]:
@@ -220,7 +212,8 @@ class UserInput:
                         plane.goToFixedName = f"Runway {cmd[1]} "
                         # new altitude target is runway head altitude
                         text = f"{plane.callSign} Cleared to Intercept ILS for Runway {cmd[1]}"
-                        plane.inventoryColor = self.ENV.LIGHT_BLUE
+                        if not plane.isPriority:
+                            plane.inventoryColor = self.ENV.LIGHT_BLUE
                     else:
                         error = 2
                 else:
@@ -244,3 +237,22 @@ class UserInput:
         )
         plane.altitudeExpedite = 2
         return bgcolor_text, text
+
+    def parse_command(self):
+
+        if len(self.ATC.commandText) < 8:
+            return None, None
+
+        # extract flight number
+        flt, cmd = self.ATC.commandText[:6], self.ATC.commandText[6:].strip()
+
+        # add necessary spacing
+        for letter in "CASLTH":
+            if cmd[0] == letter:
+                cmd = f"{letter} {cmd[1:]}"
+
+        # remove extra spaces
+        while "  " in cmd:
+            cmd = cmd.replace("  ", " ")
+
+        return flt, cmd.strip().split(" ")

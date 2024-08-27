@@ -1,5 +1,4 @@
 import os
-import json
 import math
 import random
 import pygame
@@ -12,15 +11,14 @@ from gtts import gTTS
 class Airspace:
     def __init__(self, ENV) -> None:
         self.ENV = ENV
-        # load plane tech spec data from json file
         self.activeAirplanes = []
         self.lastCallSign = ""
         self.init_pygame()
 
     def init_pygame(self):
         # pygame init
-        os.environ["SDL_VIDEO_WINDOW_POS"] = "1, 1"
-        self.displaySurface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "0, 0"
+        self.displaySurface = pygame.display.set_mode((2560, 1440))
         self.RADAR_WIDTH = int(self.ENV.DISPLAY_WIDTH * 0.75)
         self.RADAR_HEIGHT = self.ENV.DISPLAY_HEIGHT
         self.CONTROLS_WIDTH = int(self.ENV.DISPLAY_WIDTH * 0.25)
@@ -29,12 +27,9 @@ class Airspace:
         self.INPUT_HEIGHT = int(self.ENV.DISPLAY_HEIGHT * 0.05)
         self.CONSOLE_HEIGHT = int(self.ENV.DISPLAY_HEIGHT * 0.2)
         self.WEATHER_HEIGHT = int(self.ENV.DISPLAY_HEIGHT * 0.2)
-
         pygame.display.set_caption("ATC Simulator")
 
     def init_load_airspace(self):
-        with open("atc-airspace.json", mode="r") as json_file:
-            self.airspaceInfo = json.loads(json_file.read())
         # create VOR shape entities
         triangle = pygame.Surface((10, 10))
         triangle.fill(self.ENV.BG)
@@ -206,7 +201,8 @@ class Airspace:
         # check end-game collision
         if self.ENV.collision:
             print("Collision!!")
-            quit()
+            self.ENV.game_over = True
+            return
 
         # process messages
         if self.messageText and dt.now() - self.messageText[0][1] > td(
@@ -337,7 +333,8 @@ class Airspace:
                 # new altitude is runway head altitude
                 plane.altitudeTo = self.airspaceInfo["altitudes"]["groundLevel"]
                 # update inventory color
-                plane.inventoryColor = self.ENV.BLUE
+                if not plane.isPriority:
+                    plane.inventoryColor = self.ENV.BLUE
 
             # recalculate descent rate if plane is landing
             if plane.isLanding and not plane.isGround:
@@ -378,7 +375,8 @@ class Airspace:
                         plane.goToFixed = False
                         plane.directionTo = plane.heading
                         plane.isLanding = False
-                        plane.inventoryColor = self.ENV.GREEN
+                        if not plane.isPriority:
+                            plane.inventoryColor = self.ENV.GREEN
                         if plane.willMissApproach:
                             self.new_message(
                                 text=f"Pilot Aborted Landing. Go Around.",
@@ -426,12 +424,12 @@ class Airspace:
                 self.ENV.BG,
             )
             plane.tagPosition0 = (
-                plane.x + self.ENV.tagDeltaX,
-                plane.y + self.ENV.tagDeltaY,
+                plane.x + self.ENV.tagDeltaOptions[self.ENV.tagDeltaSelected][0],
+                plane.y + self.ENV.tagDeltaOptions[self.ENV.tagDeltaSelected][1],
             )
             plane.tagPosition1 = (
-                plane.x + self.ENV.tagDeltaX,
-                plane.y + self.ENV.tagDeltaY + 13,
+                plane.x + self.ENV.tagDeltaOptions[self.ENV.tagDeltaSelected][0],
+                plane.y + self.ENV.tagDeltaOptions[self.ENV.tagDeltaSelected][1] + 13,
             )
             plane.tagClickArea = pygame.Rect(
                 plane.tagPosition0[0], plane.tagPosition0[1], 42, 26
@@ -484,10 +482,10 @@ class Airspace:
                     self.activeAirplanes.remove(plane)
                     # update arrivals and average arrival time
                     self.ENV.score["arrivals"] += 1
-                    # self.ENV.score["arrivalsT"] = (
-                    #     self.ENV.score["arrivalsT"] * self.ENV.score["arrivals"]
-                    #     + plane.timeActive
-                    # ) / self.ENV.score["arrivals"] + 1
+                    self.ENV.arrivalsTotTime += plane.timeActive
+                    self.ENV.score["arrivalsAvgTime"] = (
+                        self.ENV.arrivalsTotTime / self.ENV.score["arrivals"]
+                    )
 
                     self.new_message(
                         text=f"{plane.callSign} contact ground control at 132.5. Welcome. [+1 POINTS]",
@@ -503,10 +501,10 @@ class Airspace:
                 self.activeAirplanes.remove(plane)
                 # update departures and average departure time
                 self.ENV.score["departures"] += 1
-                # self.ENV.score["departuresT"] = (
-                #     self.ENV.score["departuresT"] * self.ENV.score["departures"]
-                #     + plane.timeActive
-                # ) / self.ENV.score["departures"] + 1
+                self.ENV.departuresTotTime += plane.timeActive
+                self.ENV.score["departuresAvgTime"] = (
+                    self.ENV.departuresTotTime / self.ENV.score["departures"]
+                )
                 self.new_message(
                     text=f"{plane.callSign} contact air control at 183.4. Goodbye. [+1 POINTS]",
                     bgcolor=self.ENV.GREEN,
@@ -528,19 +526,22 @@ class Airspace:
                 )
 
             # check for game winning conditions
-            if self.ENV.GAME_MODE == 1 and self.ENV.simTime >= self.ENV.GAME_MODE_GOAL:
-                self.ENV.GAME_OVER = True
+
+            if self.ENV.game_mode == 1 and self.ENV.simTime >= td(
+                minutes=self.ENV.game_mode_goal
+            ):
+                self.ENV.game_over = True
             if (
-                self.ENV.GAME_MODE == 2
+                self.ENV.game_mode == 2
                 and (self.ENV.score["departures"] + self.ENV.score["arrivals"])
-                >= self.ENV.GAME_MODE_GOAL
+                >= self.ENV.game_mode_goal
             ):
-                self.ENV.GAME_OVER = True
+                self.ENV.game_over = True
             if (
-                self.ENV.GAME_MODE == 3
-                and self.ENV.score["total"] >= self.ENV.GAME_MODE_GOAL
+                self.ENV.game_mode == 3
+                and self.ENV.score["total"] >= self.ENV.game_mode_goal
             ):
-                self.ENV.GAME_OVER = True
+                self.ENV.game_over = True
 
         # process timer
         self.ENV.simTime += dt.now() - self.ENV.simTimeSplit

@@ -109,7 +109,7 @@ class Display:
             x0=5,
             y0=20,
         )
-        # load Weather main surface
+        # load Airpsace Data main surface
         _text = [
             (f"GMT: {dt.strftime(dt.now(),'%H:%M:%S')}", self.ENV.BG_CONTROLS),
             (
@@ -124,6 +124,10 @@ class Display:
             ),
             (
                 f"Handoff Altitude: {self.ATC.airspaceInfo['altitudes']['handOff']} feet.",
+                self.ENV.BG_CONTROLS,
+            ),
+            (
+                f"Game Objective: {self.ENV.game_modes[self.ENV.game_mode].title()} - Category {self.ENV.game_mode_goal}",
                 self.ENV.BG_CONTROLS,
             ),
         ]

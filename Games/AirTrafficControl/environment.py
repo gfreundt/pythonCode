@@ -4,6 +4,7 @@ from datetime import datetime as dt, timedelta as td
 import random
 import pygame
 from pygame.locals import *
+import sqlite3
 
 
 class Environment:
@@ -70,8 +71,21 @@ class Environment:
         }
 
         self.MAX_AIRPLANES = 10
+
+        SQLDATABASE = os.path.join(os.getcwd(), "highscores.db")
+        self.conn = sqlite3.connect(SQLDATABASE)
+        self.cursor = self.conn.cursor()
+
+        self.cursor.execute("select DISTINCT Mode from Levels")
+        self.game_modes = [i[0] for i in self.cursor.fetchall()]
+
+        self.player_name = "Gabriel"  # Temporary
+
         with open("atc-airplanes.json", mode="r") as json_file:
             self.airplaneData = json.loads(json_file.read())
+        with open("atc-airspace.json", mode="r") as json_file:
+            self.airspaceData = json.loads(json_file.read())
+
         self.MESSAGE_DISPLAY_TIME = 20  # seconds
         self.ILS_ANGLE = 60  # degrees
         self.ILS_HEADING = 60  # degrees
@@ -83,15 +97,7 @@ class Environment:
         self.DELAY_NEXT_PLANE = td(seconds=10)
         self.PENALTY_LIFETIME = td(minutes=15)
         self.PRESET_DEPART_ALTITUDE_TARGET = 20000
-        # 0 = infinite, 1 = set time, 2 = set # aircraft, 3 = set points
-        self.GAME_MODE = 0
-        if self.GAME_MODE == 1:
-            self.GAME_MODE_GOAL = td(seconds=20)  # used with Game Mode 1
-        elif self.GAME_MODE == 2:
-            self.GAME_MODE_GOAL = 2  # used with Game Mode 2
-        elif self.GAME_MODE == 3:
-            self.GAME_MODE_GOAL = 3  # used with Game Mode 3
-        self.GAME_OVER = False
+        self.game_over = False
 
         self.ERRORS = [
             "*VOID*",
@@ -120,12 +126,14 @@ class Environment:
             "warnings": 0.0,
             "goArounds": 0,
             "total": 0,
-            "departuresT": td(seconds=0),
-            "arrivalsT": td(seconds=0),
+            "departuresAvgTime": td(seconds=0),
+            "arrivalsAvgTime": td(seconds=0),
         }
         self.simTime = dt.now() - dt.now()
         self.simTimeSplit = dt.now()
         self.lastPlaneInit = self.simTime
+        self.departuresTotTime = td(seconds=0)
+        self.arrivalsTotTime = td(seconds=0)
 
         # random wind speed and direction
         self.windSpeed = random.randint(0, 30)
@@ -133,8 +141,8 @@ class Environment:
 
         # general display variables
         self.tagActive = True
-        self.tagDeltaX = 20
-        self.tagDeltaY = 20
+        self.tagDeltaOptions = [(15, 15), (-45, 15), (-45, -40), (15, -40)]
+        self.tagDeltaSelected = 0
         self.guidelineActive = False
 
         # check for default overrides at command line

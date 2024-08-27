@@ -1,0 +1,40 @@
+++ not pause when toggle options F2
+++ fix slow start	
+++ DIFFERENT COLORS FOR INBOUD/OUTBOUND ON COLOR TRAILS
+++ square of aircraft in rader is filled with black
+++ chance of airplane aborted landing on its own
+++ manuever afeter some distance when take off
+++ fix plane turns red and change of status not red anymore
+++ better parsing of commands
+++ tag posiitons change wuth F key
+++ intro menu to select airspace and level
+++ ACCEPT LETTER FOR RUNWAY NAME ON "L" CMD
+
+
+
+CMD preset altitude and destination when take off
+average time
+high scores
+more maps
+documentation
+info on F keys on main screen
+
+
+** must land from one direction
+
+
+
+
+
+
+
+
+
+some airplanes land and instead of leaving continue and do not accept instructions
+
+
+# TODO: pop-up changes height depending on content
+
+# TODO: multi-command line
+# TODO: priority departure
+

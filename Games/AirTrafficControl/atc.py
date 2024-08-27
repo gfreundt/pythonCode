@@ -1,5 +1,6 @@
 import math
 import sys
+from datetime import timedelta as td, datetime as dt
 import pygame
 from pygame.locals import *
 from gtts import gTTS
@@ -11,12 +12,60 @@ pygame.init()
 
 
 # TODO: help
-# TODO: intro menu to select airspace and level
 # TODO: pop-up changes height depending on content
 # TODO: penalty for too much time aircraft life
 
 # TODO: multi-command line
 # TODO: priority departure
+
+
+def game_options():
+
+    # select airspace
+    for k, a in enumerate(ENV.airspaceData):
+        print(f"{k}. {a['name']}")
+    airspace = int(input("Select Airspace: "))
+    ATC.airspaceInfo = ENV.airspaceData[airspace]["data"]
+    ATC.airspaceName = ENV.airspaceData[airspace]["name"]
+
+    # select game mode
+    for k, a in enumerate(ENV.game_modes):
+        print(f"{k}. {a}")
+    mode = int(input("Select Game Mode: "))
+    ENV.game_mode = mode
+
+    # select parameter for game mode
+    ENV.cursor.execute(
+        f"SELECT DISTINCT Objective FROM Levels WHERE Mode = '{ENV.game_modes[mode]}'"
+    )
+    game_objetives = [i[0] for i in ENV.cursor.fetchall()]
+    for k, a in enumerate(game_objetives):
+        print(f"{k}. {a}")
+    ENV.GAME_MODE_PARAMETER = int(input("Select Parameter: "))
+    ENV.game_mode_goal = game_objetives[ENV.GAME_MODE_PARAMETER]
+
+    if ENV.game_mode < 3:
+        show_highscores()
+
+
+def show_highscores():
+    txt = f"HighScores for Mode {ENV.game_modes[ENV.game_mode].title()} - Category {ENV.game_mode_goal}"
+    print("\n" + txt)
+    print("-" * len(txt))
+    ENV.cursor.execute(
+        f"SELECT * FROM Levels WHERE Mode = '{ENV.game_modes[ENV.game_mode]}' AND Objective = {ENV.game_mode_goal} AND Airspace = '{ATC.airspaceName}' ORDER BY Score DESC"
+    )
+    hs = ENV.cursor.fetchall()
+    for k, i in enumerate(hs, start=1):
+        print(f"#. Player           Score            Date         Airfield")
+        print(f"{k}. {i[2]:<20} {i[3]:<5} {i[4]} {i[5]}")
+
+
+def update_highscore():
+    ENV.cursor.execute(
+        f"INSERT INTO Levels VALUES ('{ENV.game_modes[ENV.game_mode]}','{ENV.game_mode}','{ENV.player_name}',{ENV.score['total']}, '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}', '{ATC.airspaceName}')"
+    )
+    ENV.conn.commit()
 
 
 def init_load_console():
@@ -162,15 +211,17 @@ def init_load_console():
 
 def game_over():
     print("Game Over")
+    update_highscore()
 
 
 def main():
+    game_options()
     ATC.init_load_airspace()
     init_load_console()
     clock = pygame.time.Clock()
     delay = ENV.FPS // ENV.SPEED
     while True:
-        if ENV.GAME_OVER:
+        if ENV.game_over:
             break
         clock.tick(ENV.FPS)
         for event in pygame.event.get():
