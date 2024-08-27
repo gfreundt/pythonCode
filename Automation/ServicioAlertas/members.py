@@ -11,8 +11,9 @@ class Members:
     """Used to download new members and add them to local database, manage unsubscribe
     requests and create 30-day list"""
 
-    def __init__(self, LOG) -> None:
+    def __init__(self, LOG, MONITOR):
         self.LOG = LOG
+        self.MONITOR = MONITOR
         self.GOOGLE = GoogleUtils()
         self.GMAIL_ACCOUNT = "servicioalertaperu@gmail.com"
 
@@ -22,6 +23,9 @@ class Members:
         self.cursor = self.conn.cursor()
 
     def add_new_members(self):
+        # log start of process
+        self.LOG.info("Checking for New Members.")
+
         # download online form and add to local database
         form_members = self.load_form_members()
 
@@ -30,9 +34,11 @@ class Members:
         existing_members_docs = [i[0] for i in self.cursor.fetchall()]
 
         # iterate on all members from online form and only add new ones (new DocNum)
+        counter = 0
         for member in form_members:
             # add basic information to members table
             if str(member["Número de Documento"]) not in existing_members_docs:
+                counter += 1
                 cmd = self.sql(
                     "members",
                     [
@@ -57,22 +63,30 @@ class Members:
                 cmd = f"SELECT * FROM members WHERE DocNum = '{values[2]}'"
                 self.cursor.execute(cmd)
                 idmember = self.cursor.fetchone()[0]
+                self.LOG.info(
+                    f"Appended new record: {idmember} - {member['Número de Documento']}"
+                )
 
                 # add placas to placas table
                 for placa in member["Placas"]:
                     cmd = self.sql("placas", ["IdMember_FK", "Placa"])
                     values = [idmember] + [placa]
                     self.cursor.execute(cmd, values)
-
-                self.LOG.info(
-                    f"Appended new record: {idmember} - {member['Número de Documento']}"
-                )
+                    self.LOG.info(f"Added placa: {placa} for MemberID {idmember}")
 
             self.conn.commit()
 
+        self.MONITOR.add_widget(str(counter), type=2)
+
     def sub_unsub(self):
-        """Check inbox for unsubscribe/resubscribe requests and change member flag in database."""
-        _inbox = self.GOOGLE.read_gmail(fr=self.GMAIL_ACCOUNT)
+        """Check inbox for unsubscribe/resubscribe requests and switch table in database."""
+
+        # log start of process
+        self.LOG.info("Checking for Sub/Unsub requests.")
+
+        _inbox = self.GOOGLE.read_gmail(
+            fr=self.GMAIL_ACCOUNT, only_unread=True, mark_read=False
+        )
         # create lists of email addresses of requests to unsubscribe or resuscribe from unread emails
         unsub_emails = []
         sub_emails = []
@@ -86,15 +100,28 @@ class Members:
                 # check if request in subject or body, not case-sensitive
                 if "ELIMINAR" in sub.upper() or "ELIMINAR" in body.upper():
                     unsub_emails.append(sender)
+                    email.markAsRead()
                 elif "INGRESAR" in sub.upper() or "INGRESAR" in body.upper():
                     sub_emails.append(sender)
+                    email.markAsRead()
 
-        # TODO: don't search for specific test, toggle flag if email sent
-        # TODO: change flag in database
-        # TODO: change email status to read
+        # move from active members to past members
+        for unsub in unsub_emails:
+            cmd = f"INSERT INTO pastMembers SELECT * FROM members WHERE Correo='{unsub}'; DELETE FROM members WHERE Correo='{unsub}'"
+            self.cursor.executescript(cmd)
+            self.LOG.info(
+                f"Removed members with email {unsub} from active member list."
+            )
+        # move from past members to active members
+        for sub in sub_emails:
+            cmd = f"INSERT INTO members SELECT * FROM pastMembers WHERE Correo='{unsub}'; DELETE FROM pastMembers WHERE Correo='{unsub}'"
+            self.cursor.executescript(cmd)
+            self.LOG.info(
+                f"Reinstated members with email {unsub} into active member list."
+            )
+        self.conn.commit()
+
         # TODO: send confirmation email
-        # TODO: resub
-        print(unsub_emails)
 
     def create_30day_list(self):
         """Creates table with all members with SOAT, REVTEC, SUTRAN, SATMUL, BREVETE or SATIMP
@@ -139,6 +166,20 @@ class Members:
         # assign list to instance variable
         self.cursor.execute("SELECT * FROM _expira30dias")
         self.day30_list = self.cursor.fetchall()
+        self.LOG.info("Updated 30-day list.")
+
+        _cmd = """  drop table if exists _newSunarpRequired;
+                    CREATE TABLE _newSunarpRequired (IdMember_FK);
+                    INSERT INTO _newSunarpRequired (IdMember_FK)
+                    select IdMember from members where IdMember not in (
+                    select DISTINCT IdMember_FK from mensajes 
+                    JOIN
+                    (select IdMensaje_FK from mensajeContenidos where IdTipoMensaje_FK = 16)
+                    on
+                    IdMensaje = IdMensaje_FK
+                    where DATE('now','localtime','-1 year')<DATE(Fecha))"""
+        self.cursor.executescript(_cmd)
+        self.LOG.info("Updated New SUNARP required.")
 
     def load_form_members(self):
         """Download online form responses, select new ones only, clean and structure data"""

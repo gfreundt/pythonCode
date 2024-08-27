@@ -1,6 +1,7 @@
 from gft_utils import WhatsAppUtils
 from datetime import datetime as dt, timedelta as td
 from pprint import pprint
+import os
 
 
 def date_check(fecha, delta):
@@ -34,8 +35,9 @@ def date_friendly(fecha, delta=False):
 
 class Alerts:
 
-    def __init__(self, LOG, members) -> None:
+    def __init__(self, LOG, members, MONITOR) -> None:
         self.LOG = LOG
+        self.MONITOR = MONITOR
         self.cursor = members.cursor
         self.conn = members.conn
         self.sql = members.sql
@@ -44,11 +46,11 @@ class Alerts:
 
     def get_alert_list(self):
         # generate list (only expiration records that meet date criteria)
-        cmd = f"""  DROP TABLE IF EXISTS _smsEnviar;
-                    CREATE TABLE _smsEnviar (CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo);
+        cmd = f"""  DROP TABLE IF EXISTS _alertaEnviar;
+                    CREATE TABLE _alertaEnviar (CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo, IdMember_FK, IdPlaca_FK);
 
-                    INSERT INTO _smsEnviar (CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo)
-                    SELECT CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo FROM members
+                    INSERT INTO _alertaEnviar (CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo, IdPlaca_FK)
+                    SELECT CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo, IdPlaca FROM members
                     JOIN (
                         SELECT * FROM placas 
                         JOIN (
@@ -58,8 +60,8 @@ class Alerts:
                         ON idplaca = IdPlaca_FK)
                     ON IdMember = IdMember_FK;
 
-                    INSERT INTO _smsEnviar (CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo)
-                    SELECT CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo from members 
+                    INSERT INTO _alertaEnviar (CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo, IdMember_FK)
+                    SELECT CodMember, NombreCompleto, FechaHasta, TipoAlerta, Correo, IdMember from members 
                         JOIN (
                             SELECT IdMember_FK, FechaHasta, "BREVETE" AS TipoAlerta FROM brevetes WHERE DATE('now', 'localtime', '30 days') = FechaHasta OR DATE('now', 'localtime', '0 days')= FechaHasta
 						UNION
@@ -71,40 +73,32 @@ class Alerts:
                     ON IdMember = IdMember_FK;"""
 
         self.cursor.executescript(cmd)
-        self.cursor.execute("SELECT * FROM _smsEnviar")
+        self.cursor.execute("SELECT * FROM _alertaEnviar")
         self.alert_list = self.cursor.fetchall()
 
-        # self.alert_list = [
-        #     (
-        #         "SAP-3AD4C0",
-        #         "Gabriel Freundt-Thurne Sturmann",
-        #         "989034311",
-        #         "AMQ073",
-        #         "2024-07-01",
-        #         "REVTEC",
-        #         "gfreundt@gmail.com",
-        #     ),
-        #     (
-        #         "SAP-3AD4C0",
-        #         "Gabriel Freundt-Thurne Sturmann",
-        #         "989034311",
-        #         "AMQ073",
-        #         "2024-07-01",
-        #         "SOAT",
-        #         "gfreundt@gmail.com",
-        #     ),
-        # ]
-
-        pprint(self.alert_list)
-
     def send_alerts(self, SMS=False):
+
+        self.MONITOR.add_widget(len(self.alert_list), type=2)
+
+        # erase txt from previous iterations
+        for existing in os.listdir(os.path.join(os.curdir, "templates")):
+            if "sms" in existing:
+                os.remove(os.path.join(os.curdir, "templates", existing))
+
         # loop all members in alert list, compose message
-        for member in self.alert_list:
+        for k, member in enumerate(self.alert_list):
             content = self.compose_alert(member)
+            # write locally for debugging
+            with open(
+                os.path.join(os.curdir, "templates", f"sms{k:03d}.txt"),
+                "w",
+                encoding="utf-8",
+            ) as file:
+                file.write(content)
             if SMS:
                 self.WAPP.send_wapp(celnum=member[2], alert_txt=content)
 
-        self.LOG.warning("Emails not sent. SWITCH OFF.")
+        self.LOG.warning("SMS not sent. SWITCH OFF.")
 
     def compose_alert(self, member):
         _base_msg = "El Sistema de Alertas Perú te informa:\n"

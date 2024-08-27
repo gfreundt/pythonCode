@@ -4,18 +4,27 @@ from datetime import datetime as dt
 
 class Maintenance:
 
-    def __init__(self, LOG, members) -> None:
+    def __init__(self, LOG, members, MONITOR) -> None:
         self.LOG = LOG
+        self.MONITOR = MONITOR
         self.cursor = members.cursor
         self.conn = members.conn
         self.sql = members.sql
 
     def housekeeping(self):
-        pass
-        # TODO: check if $review is populated
+        # put duplicate placas into review table
+        self.cursor.execute(
+            "SELECT *, COUNT(*) c FROM placas GROUP BY Placa HAVING c > 1"
+        )
+        for dup in self.cursor.fetchall():
+            self.cursor.execute(
+                f"INSERT OR IGNORE INTO '$review' (IdMember_FK, IdPlaca_FK, Reason) VALUES ({dup[0]}, {dup[1]}, 'DUPLICATE PLACA')"
+            )
+
+        self.conn.commit()
+
         # TODO: erase temp files,
         # TODO: logfile maintenance
-        # TODO: duplicate placas
 
     def soat_images(self):
 
@@ -35,7 +44,6 @@ class Maintenance:
                 img_name = ""
 
             cmd = f"UPDATE soats SET ImgFilename = '{img_name}' WHERE IdPlaca_FK = {record[0]}"
-
             self.cursor.execute(cmd)
             self.conn.commit()
 

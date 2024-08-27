@@ -1,9 +1,11 @@
-import sys, os
+import sys, os, time
+import threading
 import logging
-from pprint import pprint
 
+# ensure pygame does not print welcome message
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 # local imports
-import members, updates, messages, alerts, scrapers, maintenance
+import members, updates, messages, alerts, scrapers, maintenance, monitor
 
 
 def start_logger():
@@ -20,130 +22,130 @@ def start_logger():
     return _log
 
 
+def start_monitor():
+    """Start monitor in independent thread."""
+    thread = threading.Thread(target=MONITOR.start_monitor)
+    thread.start()
+
+
 def side():
     # function used for testing
     print("************* RUNNING SIDE *************")
-    MEMBERS = members.Members(LOG)
+    MEMBERS = members.Members(LOG, MONITOR)
+    MEMBERS.create_30day_list()
+    UPD = updates.Update(LOG, MEMBERS, MONITOR)
+    UPD.all_updates = {"soats": [(1, "DNI", "08257907")]}
+    # UPD.get_records_to_process()
+    print(UPD.all_updates)
+    UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+    return
+
+    MONITOR.add_widget("SOATS...", type=1)
+    UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+    return
+
     MEMBERS.create_30day_list()
     MAINT = maintenance.Maintenance(LOG, MEMBERS)
     MAINT.soat_images()
     return
 
-    # ALERTS = alerts.Alerts(LOG, MEMBERS)
-    # get list of records to process for each alert
-    # ALERTS.get_alert_lists()
-    # print(ALERTS.welcome_list)
-    # print(ALERTS.regular_list)
-
-    UPDATES = updates.Update(LOG, MEMBERS)
-    # UPDATES.all_updates = {"brevetes": [(12, "DNI", "07760153")]}
-
-    # UPDATES.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
-
-    # UPDATES.get_records_to_process()
-    # pprint(UPDATES.all_updates)
-    # return
-    # MEMBERS.add_new_members()
-    # MEMBERS.restart_database()
-    # return
-
-    # import sunarp
-
-    # c = sunarp.ocr_and_parse(
-    #     "D:\pythonCode\Automation\ServicioAlertas\data\images\SUNARP_BEX012.png"
-    # )
-    # return
-    # select docs and placas to update
-    UPDATES.get_records_to_process()
-
-    # Generic Scrapers - AUTO:
-
-    # UPDATES.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
-    # UPDATES.gather_with_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
-    # UPDATES.gather_with_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
-
-    # Specific Scrapers - AUTO:
-    # UPDATES.gather_brevete(scraper=scrapers.Brevete(), table="brevetes", date_sep="/")
-    # UPDATES.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
-
-    # Specfic Scrapers - MANUAL:
-    # UPDATES.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
-    UPDATES.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-    # UPDATES.all_updates = {"sunarps": [(25, "LIA118")]}
-    # print(UPDATES.all_updates)
-
-    # UPDATES.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
-
-    # Pending
-    # UPDATES.gather_jneMultas(scraper=scrapers.jneMultas(), table="jnes")
-    # UPDATES.gather_osiptel(scraper=scrapers.osiptelLineas(), table="osipteles")
-    # Siniestralidad SBS
-
-    UPDATES.gather_record(scraper=scrapers.RecordConductorImage())
-
 
 def main():
     """Program entry point. Executes actions depending on arguments ran at prompt.
-    Valid arguments: CHECKSUB, CHECKNEW, UPDATE, MAN, AUTO, ALL, ALERT, EMAIL, MAINT"""
+    Valid arguments: FULL, MEMBER, UPDATE, MAN, AUTO, ALL, ALERT, EMAIL, MAINT"""
 
-    # load member database and renew 30-day list
-    MEMBERS = members.Members(LOG)
+    # load member database
+    MEMBERS = members.Members(LOG, MONITOR)
     MEMBERS.create_30day_list()
+    ALERT = alerts.Alerts(LOG, MEMBERS, MONITOR)
 
     # check email account for unsubscribe or resubscribe requests
-    if "CHECKSUB" in sys.argv:
+    if "MEMBER" in sys.argv or "FULL" in sys.argv:
+        MONITOR.add_widget("Checking New Members...", type=0)
         MEMBERS.sub_unsub()
-
-    # check online form for new members and add them to database
-    if "CHECKNEW" in sys.argv:
         MEMBERS.add_new_members()
 
     # define records that require updating and perform updates (scraping)
-    if "UPDATE" in sys.argv:
-        UPD = updates.Update(LOG, MEMBERS)
+    if "UPDATE" in sys.argv or "FULL" in sys.argv:
+        UPD = updates.Update(LOG, MEMBERS, MONITOR)
+        # required to update alert list to include in update list
+        ALERT.get_alert_list()
+        MONITOR.add_widget("Getting Records to Process...", type=0)
         UPD.get_records_to_process()
-        pprint(UPD.all_updates)
-        # manual scrapers first (not threaded)
-        if "MAN" in sys.argv or "ALL" in sys.argv:
-            UPD.gather_satmul(scraper=scrapers.Satmul(), table="satmuls", date_sep="/")
-            UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
-        # automatic scrapers  second (threads)
-        if "AUTO" in sys.argv or "ALL" in sys.argv:
+
+        # automatic scrapers
+        if "AUTO" in sys.argv or "ALL" in sys.argv or "FULL" in sys.argv:
             # generic Scrapers
-            UPD.gather_placa(scraper=scrapers.Revtec(), table="revtecs", date_sep="/")
-            UPD.gather_placa(scraper=scrapers.Sutran(), table="sutrans", date_sep="/")
-            # UPD.gather_placa(scraper=scrapers.CallaoMulta(), table="callaoMultas")
+            if UPD.all_updates["revtecs"]:
+                MONITOR.add_widget("Revision Tecnica...", type=1)
+                UPD.gather_placa(
+                    scraper=scrapers.Revtec(), table="revtecs", date_sep="/"
+                )
+            if UPD.all_updates["sutrans"]:
+                MONITOR.add_widget("SUTRAN...", type=1)
+                UPD.gather_placa(
+                    scraper=scrapers.Sutran(), table="sutrans", date_sep="/"
+                )
             # specific Scrapers
-            UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
-            UPD.gather_brevete(
-                scraper=scrapers.Brevete(), table="brevetes", date_sep="/"
-            )
-            UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
-            UPD.gather_record(scraper=scrapers.RecordConductorImage())
+            if UPD.all_updates["sunarps"]:
+                MONITOR.add_widget("SUNARP...", type=1)
+                UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
+            if UPD.all_updates["brevetes"]:
+                MONITOR.add_widget("Brevete...", type=1)
+
+                UPD.gather_brevete(
+                    scraper=scrapers.Brevete(), table="brevetes", date_sep="/"
+                )
+            if UPD.all_updates["satimpCodigos"]:
+                MONITOR.add_widget("Impuestos SAT...", type=1)
+                UPD.gather_satimp(scraper=scrapers.Satimp(), table="satimpCodigos")
+            if UPD.all_updates["records"]:
+                MONITOR.add_widget("Record del Conductor...", type=1)
+                UPD.gather_record(scraper=scrapers.RecordConductorImage())
+            if UPD.all_updates["sunats"]:
+                MONITOR.add_widget("Consulta RUC de SUNAT...", type=1)
+                UPD.gather_sunat(scraper=scrapers.Sunat(), table="sunats")
+
+        # manual scrapers
+        if "MAN" in sys.argv or "ALL" in sys.argv or "FULL" in sys.argv:
+            MONITOR.add_widget("Updating records...", type=0)
+            if UPD.all_updates["satmuls"]:
+                MONITOR.add_widget("Multas SAT...", type=1)
+                UPD.gather_satmul(
+                    scraper=scrapers.Satmul(), table="satmuls", date_sep="/"
+                )
+            if UPD.all_updates["soats"]:
+                MONITOR.add_widget("SOATS...", type=1)
+                UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
 
     # define records that require messages, craft updates from templates and send email
-    if "MSG" in sys.argv:
-        MSG = messages.Messages(LOG, MEMBERS)
+    if "MSG" in sys.argv or "FULL" in sys.argv:
+        MONITOR.add_widget("Creating messages...")
+        # update 30 day list before selecting which records require messages
+        MEMBERS.create_30day_list()
+        MSG = messages.Messages(LOG, MEMBERS, MONITOR)
         MSG.get_msg_lists()
         # compose and send alerts (if EMAIL switch on)
-        MSG.send_msgs(EMAIL="EMAIL" in sys.argv)
+        MSG.send_msgs(EMAIL=not ("NOEMAIL" in sys.argv))
 
     # define records that require alerts, craft message and send sms
-    if "ALERT" in sys.argv:
-        ALERT = alerts.Alerts(LOG, MEMBERS)
+    if "ALERT" in sys.argv or "FULL" in sys.argv:
+        MONITOR.add_widget("Creating alerts...")
         ALERT.get_alert_list()
         # compose and send alerts (if SMS switch on)
-        ALERT.send_alerts(SMS="SMS" in sys.argv)
+        ALERT.send_alerts(SMS=not ("SMS" in sys.argv))
 
     # perform basic maintenance
-    if "MAINT" in sys.argv:
-        MAINT = maintenance.Maintenance(LOG, MEMBERS)
+    if "MAINT" in sys.argv or "FULL" in sys.argv:
+        MAINT = maintenance.Maintenance(LOG, MEMBERS, MONITOR)
         MAINT.housekeeping()
         MAINT.soat_images()
         MAINT.sunarp_images()
 
 
 if __name__ == "__main__":
+    MONITOR = monitor.Monitor()
+    start_monitor()
     # activate logger and log start of program
     LOG = start_logger()
     LOG.info("-" * 15 + "Start Program" + "-" * 15)
@@ -152,5 +154,8 @@ if __name__ == "__main__":
         side()
     else:
         main()
+    MONITOR.add_widget("^" * 16 + " End Program " + "^" * 16)
+    time.sleep(10)
+    MONITOR.end_monitor()
     # log end of program and quit
     LOG.info("^" * 16 + " End Program " + "^" * 16)

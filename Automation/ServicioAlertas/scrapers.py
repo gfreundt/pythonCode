@@ -12,6 +12,7 @@ import os, re
 import easyocr
 import numpy as np
 from statistics import mean
+import contextlib
 from gft_utils import PDFUtils, ChromeUtils
 
 # remove easyocr warnings
@@ -164,7 +165,7 @@ class Brevete:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.limited_scrape = False
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=False
+            headless=True, verbose=False, maximized=False
         )
         self.WEBD.set_page_load_timeout(20)
 
@@ -378,7 +379,7 @@ class Revtec:
     def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get(
             "https://portal.mtc.gob.pe/reportedgtt/form/frmconsultaplacaitv.aspx"
@@ -422,7 +423,6 @@ class Revtec:
             if "no es correcto" in _alerta:
                 continue
             elif "encontraron resultados" in _alerta:
-                print("no se encontraron")
                 # clear webpage for next iteration and return None
                 self.WEBD.refresh()
                 time.sleep(0.5)
@@ -451,6 +451,10 @@ class Revtec:
                     ).text
                 }
             )
+
+        if response["resultado"] == "DESAPROBADO":
+            response["fecha_hasta"] = response["fecha_desde"]
+            response["vigencia"] = "VENCIDO"
 
         # clear webpage for next response
         time.sleep(1)
@@ -533,7 +537,6 @@ class Sutran:
             )
         _mt = self.WEBD.find_element(By.ID, "lblTotalDeuda").text[3:]
         response.update({"monto_total": float(_mt)})
-
         return response
 
 
@@ -542,10 +545,17 @@ class SoatImage:
     def __init__(self):
         self.pdf = PDFUtils()
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True, incognito=False
         )
         self.WEBD.get("https://www.pacifico.com.pe/consulta-soat")
         time.sleep(3)
+        # check for and accept Cookies message
+        c = self.WEBD.find_elements(
+            By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
+        )
+        if c:
+            c[0].click()
+        time.sleep(1)
 
     def browser(self, **kwargs):
         while True:
@@ -637,7 +647,7 @@ class RecordConductorImage:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.pdf = PDFUtils()
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True
+            headless=True, verbose=False, maximized=True
         )
         self.WEBD.get("https://recordconductor.mtc.gob.pe/")
         time.sleep(2)
@@ -899,7 +909,7 @@ class Soat:
 
     def __init__(self) -> None:
         self.WEBD = ChromeUtils().init_driver(
-            headless=True, maximized=True, incognito=True
+            headless=True, maximized=True, verbose=False, incognito=True
         )
         self.WEBD.get("https://www.apeseg.org.pe/consultas-soat/")
 
@@ -1003,7 +1013,7 @@ class Sunarp:
     def __init__(self) -> None:
         self.READER = easyocr.Reader(["es"], gpu=False)
         self.WEBD = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True, incognito=True
+            headless=True, verbose=False, maximized=True, incognito=True
         )
         # open first URL, wait and open second URL (avoids limiting requests)
         self.WEBD.get("https://www.gob.pe/sunarp")
@@ -1127,7 +1137,7 @@ class Sunarp:
         phrase = ""
         for k in range(len(stopx) // 2):
             i = img_object.crop((stopx[2 * k], 0, stopx[2 * k + 1], 60))
-            fn = f"erase{k}.jpg"
+            fn = os.path.join(os.curdir, "images", f"temp{k}.jpg")
             i.save(fn)
             c = READER.readtext(fn, text_threshold=0.4)
             if c:
@@ -1255,3 +1265,53 @@ class Satmul:
         return_button.click()
 
         return responses
+
+
+class Sunat:
+    def __init__(self) -> None:
+        self.READER = easyocr.Reader(["es"], gpu=False)
+        self.WEBD = ChromeUtils().init_driver(
+            headless=True, verbose=False, maximized=True
+        )
+        self.WEBD.get(
+            "https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp"
+        )
+        time.sleep(2)
+
+    def browser(self, **kwargs):
+        doc_tipo = kwargs["doc_tipo"]
+        doc_num = kwargs["doc_num"]
+
+        # TODO: carnet extranjeria
+        self.WEBD.find_element(By.ID, "btnPorDocumento").click()
+        time.sleep(2)
+        self.WEBD.find_element(By.ID, "txtNumeroDocumento").send_keys(doc_num)
+        self.WEBD.find_element(By.ID, "btnAceptar").click()
+        time.sleep(3)
+        self.WEBD.find_element(
+            By.XPATH, "/html/body/div/div[2]/div/div[3]/div[2]/a/span"
+        ).click()
+        time.sleep(2)
+        c = self.WEBD.find_elements(By.XPATH, "/html/body/div/div[2]/div/div[2]/div[2]")
+        if c and "NO REGISTRA" in c[0].text:
+            return []
+
+        response = []
+        for i in range(1, 9):
+            d = self.WEBD.find_elements(
+                By.XPATH, f"/html/body/div/div[2]/div/div[3]/div[2]/div[{i}]/div/div[2]"
+            )
+            if d:
+                response.append(d[0].text)
+        e = self.WEBD.find_elements(
+            By.XPATH, "/html/body/div/div[2]/div/div[3]/div[2]/div[5]/div/div[4]/p"
+        )
+        if e:
+            response.append(e[0].text)
+        self.WEBD.find_element(
+            By.XPATH, "/html/body/div/div[2]/div/div[2]/button"
+        ).click()
+
+        self.WEBD
+        if len(response) == 9:
+            return response

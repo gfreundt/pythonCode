@@ -1,15 +1,17 @@
 import io
-from copy import deepcopy as copy
 import threading
 from datetime import datetime as dt
-import time
 import pygame
 from pygame.locals import *
-from tqdm import tqdm
+import speech_recognition
+from tkinter import Tk, Label
+from PIL import Image, ImageTk
 
 # local imports
-import scrapers, sunarp
-from gft_utils import pygameUtils
+import sunarp, soat_image
+
+# import scrapers
+# from gft_utils import pygameUtils
 
 
 def threader(func):
@@ -29,6 +31,7 @@ class Gui:
     def __init__(self, zoomto, numchar) -> None:
         self.zoomto = zoomto
         self.numchar = numchar
+        self.speech = speech_recognition.Recognizer()
         self.numpad = (
             K_KP0,
             K_KP1,
@@ -41,6 +44,42 @@ class Gui:
             K_KP8,
             K_KP9,
         )
+        self.speech_driver_errors = 0
+
+    def get_speech(self):
+        while True:
+            try:
+                with speech_recognition.Microphone() as mic:
+                    self.speech.adjust_for_ambient_noise(mic, duration=0.2)
+                    _audio = self.speech.listen(mic)
+                    text = self.speech.recognize_google(_audio)
+                    text = text.lower().replace(" ", "")
+
+                    print(f"Output: {text}")
+                    if len(text) == 6:
+                        return text
+            except:
+                if self.speech_driver_errors < 5:
+                    self.speech = speech_recognition.Recognizer()
+                    self.speech_driver_errors += 1
+                else:
+                    return None
+
+    def show_captcha(self):
+        window = Tk()
+        window.geometry("1085x245")
+        window.config(background="black")
+        img = Image.open(io.BytesIO(self.captcha_img)).resize((1085, 245))
+        _img = ImageTk.PhotoImage(master=window, image=img)
+        label = Label(master=window, image=_img)
+        label.grid(row=0, column=0)
+        window.mainloop()
+
+    def gui2(self, captcha_img):
+        self.captcha_img = captcha_img
+        t1 = threading.Thread(target=self.show_captcha, daemon=True)
+        t1.start()
+        return self.get_speech()
 
     def gui(self, canvas, captcha_img):
         TEXTBOX = pygame.Surface((80, 120))
@@ -49,6 +88,8 @@ class Gui:
         image = pygame.transform.scale(image, self.zoomto)
         canvas.MAIN_SURFACE.fill(canvas.COLORS["BLACK"])
         canvas.MAIN_SURFACE.blit(image, UPPER_LEFT)
+
+        # return self.get_speech()
 
         chars, col = [], 0
         while True:
@@ -104,85 +145,102 @@ class Gui:
 
 class Update:
 
-    def __init__(self, LOG, members) -> None:
+    def __init__(self, LOG, members, monitor) -> None:
         self.LOG = LOG
+        self.MONITOR = monitor
         self.cursor = members.cursor
         self.conn = members.conn
         self.sql = members.sql
         self.day30_list = members.day30_list
-        self.lock = threading.Lock()
 
     def get_records_to_process(self):
+
         # create dictionary with all tables as keys and empty list as value
         self.cursor.execute("SELECT * FROM '@tableInfo'")
         self.all_updates = {i[1]: [] for i in self.cursor.fetchall()}
 
-        # 1. add members that haven't received an email in 30+ days
-        # docs
-        cmd = [
-            """SELECT IdMember, DocTipo, DocNum FROM members JOIN (
-	            SELECT IdMember AS x FROM members
-                EXCEPT
-	            SELECT IdMember_FK FROM mensajes
+        # 1. adds records that require a message and are within the scope of vencimiento
+
+        # creates temporary tables with all members/placas that haven't received an email in 30+ days
+        cmd = """ DROP TABLE IF EXISTS _regmsg_members;
+                    CREATE TABLE _regmsg_members (IdMember_FK);
+                    INSERT INTO _regmsg_members (IdMember_FK) SELECT IdMember FROM members JOIN (
+	                SELECT IdMember AS x FROM members
+                    EXCEPT
+	                SELECT IdMember_FK FROM mensajes
 		            JOIN mensajeContenidos
 		            ON IdMensaje = IdMensaje_FK
 		            WHERE fecha >= datetime('now','localtime', '-1 month')
 			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
 	            )
-                ON members.IdMember = x
-                """
-        ]
+                    ON members.IdMember = x;
+				
+                  DROP TABLE IF EXISTS _regmsg_placas;
+                  CREATE TABLE _regmsg_placas (IdPlaca_FK);			
+                  INSERT INTO _regmsg_placas (IdPlaca_FK) SELECT IdPlaca FROM placas 
+                    JOIN (_regmsg_members)
+                    ON placas.IdMember_FK = _regmsg_members.IdMember_FK"""
+        self.cursor.executescript(cmd)
 
-        # placas
-        cmd.append(
-            """SELECT IdPlaca, Placa FROM placas JOIN (
-	            SELECT IdMember AS x FROM members 
-                EXCEPT
-	            SELECT IdMember_FK FROM mensajes
-                    JOIN mensajeContenidos
-		            ON IdMensaje = IdMensaje_FK
-		            WHERE fecha >= datetime('now','localtime', '-1 month')
-			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
-	            )
-                ON placas.IdMember_FK = x
-                """
+        # brevetes
+        cmd = """ SELECT IdMember, DocTipo, DocNum FROM members JOIN (
+                    SELECT IdMember_FK FROM brevetes WHERE IdMember_FK IN (
+                        SELECT * FROM _regmsg_members) 
+                        AND FechaHasta <= datetime('now','localtime', '+45 days'))
+                    ON IdMember = IdMember_FK"""
+        self.cursor.execute(cmd)
+        self.all_updates["brevetes"] = self.cursor.fetchall()
+
+        # soats, revtecs
+        for table in ("soats", "revtecs"):
+            cmd = f"""SELECT IdPlaca, Placa FROM placas JOIN (
+                        SELECT IdPlaca_FK FROM {table} WHERE IdPlaca_FK IN (
+                            SELECT * FROM _regmsg_placas)
+                            AND FechaHasta <= datetime('now','localtime', '+45 days'))
+                        ON IdPlaca = IdPlaca_FK"""
+            self.cursor.execute(cmd)
+            self.all_updates[table] = self.cursor.fetchall()
+
+        # satimps
+        cmd = """ SELECT IdMember, DocTipo, DocNum FROM members JOIN (
+                        SELECT IdMember_FK FROM satimpCodigos
+                        JOIN satimpDeudas
+                        ON satimpCodigos.IdCodigo = satimpDeudas.IdCodigo_FK 
+                    WHERE IdMember_FK IN (
+                        SELECT * FROM _regmsg_members)
+                        AND FechaHasta <= datetime('now','localtime', '+45 days'))
+                    ON IdMember = IdMember_FK"""
+        self.cursor.execute(cmd)
+        self.all_updates["satimpCodigos"] = self.cursor.fetchall()
+
+        # satmuls, sutrans
+        self.cursor.execute(
+            "SELECT IdPlaca, Placa FROM placas JOIN _regmsg_placas ON IdPlaca = IdPlaca_FK "
+        )
+        self.all_updates["satmuls"] = self.all_updates["sutrans"] = (
+            self.cursor.fetchall()
         )
 
-        # add same records to each scraper according to docs or placas
-        for i in range(2):
-            self.cursor.execute(cmd[i])
-            _result = self.cursor.fetchall()
-            self.cursor.execute(
-                f"SELECT * FROM '@tableInfo' WHERE dataRequired = {i+1}"
-            )
-            self.all_updates.update(
-                {i[1]: copy(_result) for i in self.cursor.fetchall()}
-            )
-
-        # TODO: create logic to avoid updating brevete, revtec not expiring within 30 days
-        # filter soat from updating if not blank, expired or expiring within 30 days
-        # _filter = [i[0] for i in self.day30_list if i[5] == "BREVETE"]
-        # self.all_updates["brevetes"] = [
-        #     i for i in self.all_updates["brevetes"] if i[0] in _filter
-        # ]
-
-        # _filter = [i[3] for i in self.day30_list if i[5] == "REVTEC"]
-        # self.all_updates["revtecs"] = [
-        #     i for i in self.all_updates["revtecs"] if i[1] in _filter
-        # ]
-
-        _filter = [i[1] for i in self.day30_list if i[3] == "SOAT"]
-        self.all_updates["soats"] = [
-            i for i in self.all_updates["soats"] if i[1] in _filter
-        ]
-
-        # select all sunarps that do not have a record yet
+        # records
         self.cursor.execute(
-            "SELECT IdPlaca, Placa FROM placas WHERE idPlaca NOT IN (SELECT IdPlaca_FK FROM sunarps)"
+            "SELECT IdMember, DocTipo, DocNum FROM members JOIN _regmsg_members ON IdMember = IdMember_FK"
+        )
+        self.all_updates["records"] = self.cursor.fetchall()
+
+        # sunarps
+        self.cursor.execute(
+            "SELECT IdPlaca, Placa FROM placas JOIN (SELECT * FROM sunarps WHERE LastUpdate <= datetime('now','localtime', '-1 year')) ON IdPlaca = IdPlaca_FK"
         )
         self.all_updates["sunarps"] = self.cursor.fetchall()
 
-        # 2. add records that have no BIENVENIDA email
+        # sunats
+        self.cursor.execute(
+            "SELECT DocTipo, DocNum FROM members JOIN (SELECT * FROM sunats WHERE LastUpdate <= datetime('now','localtime', '-1 year')) ON IdMember = IdMember_FK"
+        )
+        self.all_updates["sunarps"] = self.cursor.fetchall()
+
+        # 2. adds records that have no BIENVENIDA email
+
         # docs
         cmd = [
             """SELECT IdMember, DocTipo, DocNum FROM members
@@ -219,55 +277,33 @@ class Update:
             for table in self.cursor.fetchall():
                 self.all_updates[table[1]] += _result
 
+        # 3. add records that will be in alert list, to be updated before alert
+        # TODO: add sunarps, sunats (1 year)
+
+        # brevetes, satimps
+        for table in [("brevetes", "BREVETE"), ("satimpCodigos", "SATIMP")]:
+            cmd = f"""select members.IdMember, DocTipo, DocNum from members 
+                       JOIN (select * from _alertaEnviar WHERE TipoAlerta = '{table[1]}')
+                       ON IdMember = IdMember_FK"""
+            self.cursor.execute(cmd)
+            self.all_updates[table[0]] += self.cursor.fetchall()
+
+        # soats, revtecs
+        for table in [("soats", "SOAT"), ("revtecs", "REVTEC")]:
+            cmd = f"""select placas.IdPlaca, placas.Placa from placas 
+                       JOIN (select * from _alertaEnviar WHERE TipoAlerta = '{table[1]}')
+                       ON IdPlaca = IdPlaca_FK"""
+            self.cursor.execute(cmd)
+            self.all_updates[table[0]] += self.cursor.fetchall()
+
         # eliminate duplicates
         self.all_updates = {i: set(j) for i, j in self.all_updates.items()}
 
-        return
+        # log action
+        self.LOG.info(f"Will update: {self.all_updates}")
 
-        # TODO: updates for alerts
-        # 3. add records that will be in alert (expiration) and met time from last update (non-expiration)
-        # docs
-        self.cursor.execute(f"SELECT * FROM tableInfo WHERE DataRequired = 1")
-        tables = self.cursor.fetchall()
-        for table in tables:
-            # non-expiration update
-            if table[7]:
-                cmd = f""" SELECT IdMember, DocTipo, DocNum FROM members JOIN (
-                           SELECT IdMember AS x FROM members EXCEPT
-                           SELECT IdMember_FK FROM actions WHERE Scraper = "{table[1]}" AND DATE('now', '{table[7]} days') <= Timestamp)
-						   ON members.IdMember = x"""
-            # expiration updates
-            else:
-                txt = ""
-                for expiration in table[4:7]:
-                    txt += f"OR DATE('now', '{expiration} days') = FechaHasta "
-                cmd = f"""SELECT IdMember, DocTipo, DocNum FROM members JOIN 
-                (SELECT IdMember_FK FROM {table[1]} WHERE FALSE {txt}) ON IdMember = IdMember_FK"""
-
-            self.cursor.execute(cmd)
-            self.all_updates[table[1]] += [i for i in self.cursor.fetchall()]
-
-        # placas
-        self.cursor.execute(f"SELECT * FROM tableInfo WHERE DataRequired = 2")
-        tables = self.cursor.fetchall()
-        for table in tables:
-            # non-expiration update
-            if table[7]:
-                cmd = f"""SELECT IdPlaca, Placa FROM placas JOIN (
-                            SELECT IdPlaca AS x FROM placas EXCEPT
-                            SELECT IdPlaca_FK FROM actions WHERE Scraper = "{table[1]}" AND DATE('now', '{table[7]} days') <= Timestamp
-                            ) ON placas.IdPlaca = x"""
-
-            # expiration updates
-            else:
-                txt = ""
-                for expiration in table[4:7]:
-                    txt += f"OR DATE('now', '{expiration} days') = FechaHasta "
-                cmd = f"""SELECT IdPlaca, Placa FROM placas JOIN
-                (SELECT IdPlaca_FK FROM {table[1]} WHERE FALSE {txt}) ON IdPlaca = IdPlaca_FK"""
-
-            self.cursor.execute(cmd)
-            self.all_updates[table[1]] += [i for i in self.cursor.fetchall()]
+        for k, v in self.all_updates.items():
+            self.MONITOR.add_widget(f"{k}...{len(v)}", type=1)
 
     def log_action(self, scraper, idMember=None, idPlaca=None):
         """Registers scraping action in actions table in database."""
@@ -303,9 +339,11 @@ class Update:
         # get field list from table, do not consider fist one (ID Autogenerated)
         fields = self.get_fields(table)
         # set up scraper for image
-        scraper2 = scrapers.SoatImage()
+        # scraper2 = scrapers.SoatImage()
+        soat_image_generator = soat_image.SoatImage(self.LOG, self.cursor)
+
         # get captcha manually from user
-        canvas = pygameUtils(screen_size=(1050, 130))
+        # canvas = pygameUtils(screen_size=(1050, 130))
         GUI = Gui(zoomto=(465, 105), numchar=6)
         # iterate on every placa and write to database
         for placa in self.all_updates["soats"]:
@@ -314,7 +352,8 @@ class Update:
                 try:
                     plac = placa[1]
                     captcha_img = scraper.get_captcha_img()
-                    captcha = GUI.gui(canvas, captcha_img)
+                    # captcha = GUI.gui(canvas, captcha_img)
+                    captcha = GUI.gui2(captcha_img)
                     response = scraper.browser(placa=plac, captcha_txt=captcha)
                     # wrong captcha - restart loop with same placa
                     if response == -2:
@@ -330,7 +369,9 @@ class Update:
                         )
                         # if soat data gathered succesfully, try to get soat image too
                         try:
-                            img_name = scraper2.browser(placa=plac)
+                            # img_name = scraper2.browser(placa=plac)
+                            # generate image using Placa_FK
+                            img_name = soat_image_generator.generate(id=placa[0])
                         except:
                             img_name = ""
                         # insert data into table
@@ -348,6 +389,7 @@ class Update:
                         # insert gathered record of member
                         self.cursor.execute(cmd, values)
                         self.conn.commit()
+                    self.MONITOR.add_widget(plac, type=3)
                     # log action into actios table
                     self.log_action(scraper="soats", idPlaca=placa[0])
                     break  # escape while True loop
@@ -368,9 +410,9 @@ class Update:
     @threader
     def gather_sunarp(self, scraper, table):
         # get field list from table, do not consider fist one (ID Autogenerated)
-        fields = self.get_fields(table)
+        fields = self.get_fields("sunarps")
         # iterate on every placa and write to database
-        for placa in self.all_updates[table]:
+        for placa in self.all_updates["sunarps"]:
             retry_attempts = 0
             try:
                 while True:
@@ -507,8 +549,9 @@ class Update:
                 self.log_action(scraper=table, idMember=doc[0])
                 self.conn.commit()
 
-    @threader
+    # @threader
     def gather_osiptel(self):
+
         # TODO
         return
 
@@ -521,7 +564,7 @@ class Update:
         fields2 = self.get_fields(table2)
 
         # iterate on all records that require updating and get scraper results
-        for k, rec in tqdm(enumerate(self.all_updates[table1])):
+        for rec in self.all_updates[table1]:
             retry_attempts = 0
             while True:
                 try:
@@ -578,7 +621,7 @@ class Update:
         fields2 = self.get_fields("mtcPapeletas")
 
         # iterate on all records that require updating and get scraper results
-        for rec in tqdm(self.all_updates[table]):
+        for rec in self.all_updates[table]:
             retry_attempts = 0
             while True:
                 try:
@@ -642,6 +685,55 @@ class Update:
                         self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
 
     @threader
+    def gather_sunat(self, scraper, table, date_sep="-"):
+        # get field list from table, do not consider fist one (ID Autogenerated)
+        self.cursor.execute(
+            f"SELECT name FROM pragma_table_info('{table}') ORDER BY cid;"
+        )
+        fields = [i[0] for i in self.cursor.fetchall()[1:]]
+
+        # iterate on all records that require updating and get scraper results
+        for rec in self.all_updates[table]:
+            retry_attempts = 0
+            while True:
+                try:
+                    doc_tipo, doc_num = rec[1], rec[2]
+                    new_record = scraper.browser(doc_tipo=doc_tipo, doc_num=doc_num)
+                    if new_record:
+                        # adjust date format for SQL (YYYY-MM-DD)
+                        new_record_dates_fixed = self.fix_date_format(
+                            data=new_record, sep=date_sep
+                        )
+                        print(new_record_dates_fixed)
+                        cmd = self.sql(table, fields)
+                        values = (
+                            [rec[0]]
+                            + new_record_dates_fixed
+                            + [dt.now().strftime("%Y-%m-%d")]
+                        )
+                        # delete all old records from member
+                        self.cursor.execute(
+                            f"DELETE FROM {table} WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc_tipo}' AND DocNum = '{doc_num}')"
+                        )
+                        # insert gathered record of member
+                        self.cursor.execute(cmd, values)
+                        self.conn.commit()
+                    # register action and skip to next record
+                    self.log_action(scraper=table, idMember=rec[0])
+                    break
+                except KeyboardInterrupt:
+                    quit()
+                except:
+                    retry_attempts += 1
+                    if retry_attempts > 3:
+                        self.LOG.warning(
+                            f"< {table.upper()} > Could not process {rec}. Skipping Record."
+                        )
+                        break
+                    else:
+                        self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
+
+    @threader
     def gather_docs(self, scraper, table, date_sep=None):
         # get field list from table, do not consider fist one (ID Autogenerated)
         self.cursor.execute(
@@ -650,7 +742,7 @@ class Update:
         fields = [i[0] for i in self.cursor.fetchall()[1:]]
 
         # iterate on all records that require updating and get scraper results
-        for rec in tqdm(self.all_updates[table]):
+        for rec in self.all_updates[table]:
             retry_attempts = 0
             while True:
                 try:
@@ -695,7 +787,6 @@ class Update:
 
     @threader
     def gather_placa(self, scraper, table, date_sep=None):
-
         # get field list from table, do not consider fist one (ID Autogenerated)
         self.cursor.execute(
             f"SELECT name FROM pragma_table_info('{table}') ORDER BY cid;"
@@ -703,7 +794,7 @@ class Update:
         fields = [i[0] for i in self.cursor.fetchall()[1:]]
 
         # iterate on all records that require updating and get scraper results
-        for k, rec in tqdm(enumerate(self.all_updates[table])):
+        for rec in self.all_updates[table]:
             retry_attempts = 0
             while True:
                 try:

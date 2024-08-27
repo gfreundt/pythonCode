@@ -2,7 +2,6 @@ import os
 from gft_utils import GoogleUtils
 from datetime import datetime as dt, timedelta as td
 from jinja2 import Environment, FileSystemLoader
-from pprint import pprint
 import uuid
 
 
@@ -37,8 +36,9 @@ def date_friendly(fecha, delta=False):
 
 class Messages:
 
-    def __init__(self, LOG, members) -> None:
+    def __init__(self, LOG, members, MONITOR) -> None:
         self.LOG = LOG
+        self.MONITOR = MONITOR
         self.cursor = members.cursor
         self.conn = members.conn
         self.sql = members.sql
@@ -98,7 +98,7 @@ class Messages:
             placas = [i[0] for i in self.cursor.fetchall()]
 
             email_id = f"{member[1]}|{str(uuid.uuid4())[-12:]}"
-            content, attachments, numalertas = self.compose_message(
+            content, attachments, numalertas, msgrecords = self.compose_message(
                 member, template_welcome, email_id, alertas, placas
             )
             _subj = (
@@ -113,7 +113,7 @@ class Messages:
                     "subject": f"Bienvenido al Servicio de Alertas Perú ({_subj})",
                     "body": content,
                     "attachments": attachments,
-                    "tipoMensaje": 12,
+                    "tipoMensajes": [12] + msgrecords,
                     "idMember": int(IdMember),
                     "timestamp": dt.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "hashcode": email_id,
@@ -141,7 +141,7 @@ class Messages:
             placas = [i[0] for i in self.cursor.fetchall()]
 
             email_id = f"{member[1]}|{str(uuid.uuid4())[-12:]}"
-            content, attachments, numalertas = self.compose_message(
+            content, attachments, numalertas, msgrecords = self.compose_message(
                 member, template_regular, email_id, alertas, placas
             )
             _subj = (
@@ -157,7 +157,7 @@ class Messages:
                     "subject": f"Informe Mensual del Servicio de Alertas Perú ({_subj})",
                     "body": content,
                     "attachments": attachments,
-                    "tipoMensaje": 13,
+                    "tipoMensajes": [13] + msgrecords,
                     "idMember": int(IdMember),
                     "timestamp": dt.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "hashcode": email_id,
@@ -167,12 +167,15 @@ class Messages:
                 f"Regular message crafted (not sent) to: {member[6]} ({member[3]}:{member[4]})"
             )
 
-        # save local html for debugging
+        # erase html from previous iterations
         for existing in os.listdir(os.path.join(os.curdir, "templates")):
             if "message" in existing:
                 os.remove(os.path.join(os.curdir, "templates", existing))
 
+        self.MONITOR.add_widget(len(messages), type=2)
+
         for msg, message in enumerate(messages):
+            # save local html for debugging
             with open(
                 os.path.join(os.curdir, "templates", f"message{msg:03d}.html"),
                 "w",
@@ -196,7 +199,7 @@ class Messages:
             for result, message in zip(results, messages):
                 if result:
                     self.LOG.info(
-                        f"Email sent to {message['to']} (IdMember = {message['idMember']}). Type: {message['tipoMensaje']}"
+                        f"Email sent to {message['to']} (IdMember = {message['idMember']}). Type: {message['tipoMensajes']}"
                     )
                     # populate mensaje tables
                     cmd = self.sql(table, fields)
@@ -206,14 +209,15 @@ class Messages:
                         message["hashcode"],
                     )
                     self.cursor.execute(cmd, values)
-                    # get just crated record
+                    # get just crafted record
                     self.cursor.execute(
                         f"SELECT * FROM {table} WHERE HashCode = '{message['hashcode']}'"
                     )
                     _x = self.cursor.fetchone()
-                    cmd = self.sql(table2, fields2)
-                    values = _x[0], message["tipoMensaje"]
-                    self.cursor.execute(cmd, values)
+                    for msgtype in message["tipoMensajes"]:
+                        cmd = self.sql(table2, fields2)
+                        values = _x[0], msgtype
+                        self.cursor.execute(cmd, values)
                 else:
                     self.LOG.warning(f"ERROR sending email to {message['to']}.")
             self.conn.commit()
@@ -225,6 +229,7 @@ class Messages:
         _txtal = []
         _attachments = []
         _attach_txt = []
+        _msgrecords = []
 
         # create list of alerts
         for i in alertas:
@@ -374,6 +379,7 @@ class Messages:
                 _attach_txt.append(
                     f"Certificado Electrónico SOAT de Vehículo Placa {_m[5]}."
                 )
+                _msgrecords.append(15)
         _info.update({"soats": _soats})
 
         # add SATMUL information
@@ -404,6 +410,7 @@ class Messages:
                 _attach_txt.append(
                     f"Papeleta de Infracción de Tránsito de Vehículo Placa {_m[2]}."
                 )
+                _msgrecords.append(17)
         _info.update({"satmuls": _satmuls})
 
         # add PAPELETA information
@@ -426,7 +433,8 @@ class Messages:
 
         # add SUNARP image
         self.cursor.execute(
-            f"SELECT * FROM sunarps WHERE IdPlaca_FK IN (SELECT IdPlaca FROM placas WHERE IdMember_FK = {member[0]}) ORDER BY LastUpdate DESC"
+            f"""SELECT * FROM sunarps WHERE IdPlaca_FK IN (SELECT IdPlaca FROM placas WHERE IdMember_FK = {member[0]}
+                AND IdMember_FK IN _newSunarpRequired) ORDER BY LastUpdate DESC"""
         )
         for _m in self.cursor.fetchall():
             # add image to attachment list
@@ -436,6 +444,7 @@ class Messages:
                 _attach_txt.append(
                     f"Consulta Vehicular SUNARP de Vehículo Placa {_m[17][-10:-4]}."
                 )
+                _msgrecords.append(16)
 
         # add RECORD DE CONDUCTOR image
         self.cursor.execute(
@@ -447,8 +456,30 @@ class Messages:
             if os.path.isfile(_img_path):
                 _attachments.append(str(_img_path))
                 _attach_txt.append("Récord del Conductor MTC.")
+                _msgrecords.append(14)
+
+        # add SUNAT information
+        _sunats = []
+        self.cursor.execute(
+            f"SELECT * FROM sunats WHERE IdMember_FK = {member[0]} ORDER BY LastUpdate DESC"
+        )
+        _m = self.cursor.fetchone()
+        if _m:
+            _sunats = {
+                "ruc": _m[2],
+                "tipo_contribuyente": _m[3],
+                "nombre_comercial": _m[5],
+                "fecha_inscripcion": _m[6],
+                "fecha_inicio_actividades": _m[10],
+                "estado": _m[7],
+                "condicion": _m[8],
+            }
+        else:
+            _sunats = []
+
+        _info.update({"sunats": _sunats})
 
         # add text list of Attachments or "Ninguno" if empty
         _info.update({"adjuntos": _attach_txt if _attach_txt else ["Ninguno"]})
 
-        return template.render(_info), _attachments, len(_txtal)
+        return template.render(_info), _attachments, len(_txtal), _msgrecords
