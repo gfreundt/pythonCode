@@ -1,5 +1,5 @@
 import speech_recognition
-import pyttsx3
+import os
 
 recog = speech_recognition.Recognizer()
 
@@ -14,10 +14,26 @@ def get_speech():
         text = text.lower()
 
         if text == "quit":
-            return
+            quit()
+
+        return text
 
         print(f"Output: {text}")
 
 
-for i in range(5):
-    get_speech()
+def military_alphabet(text):
+    with open(
+        os.path.join(
+            "D:\pythonCode", "Resources", "StaticData", "military_alphabet.txt"
+        )
+    ) as file:
+        ma_index = [i.strip() for i in file.readlines()]
+
+    for word in ma_index:
+        text = text.replace(word, word[0])
+
+    print(text)
+
+
+# for i in range(5):
+#     print(get_speech())

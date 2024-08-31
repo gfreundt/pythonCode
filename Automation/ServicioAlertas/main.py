@@ -62,7 +62,7 @@ def main():
     # check email account for unsubscribe or resubscribe requests
     if "MEMBER" in sys.argv or "FULL" in sys.argv:
         MONITOR.add_widget("Checking New Members...", type=0)
-        MEMBERS.sub_unsub()
+        # MEMBERS.sub_unsub()
         MEMBERS.add_new_members()
 
     # define records that require updating and perform updates (scraping)
@@ -75,6 +75,7 @@ def main():
 
         # automatic scrapers
         if "AUTO" in sys.argv or "ALL" in sys.argv or "FULL" in sys.argv:
+            MONITOR.add_widget("Updating records...", type=0)
             # generic Scrapers
             if UPD.all_updates["revtecs"]:
                 MONITOR.add_widget("Revision Tecnica...", type=1)
@@ -92,7 +93,6 @@ def main():
                 UPD.gather_sunarp(scraper=scrapers.Sunarp(), table="sunarps")
             if UPD.all_updates["brevetes"]:
                 MONITOR.add_widget("Brevete...", type=1)
-
                 UPD.gather_brevete(
                     scraper=scrapers.Brevete(), table="brevetes", date_sep="/"
                 )
@@ -108,7 +108,6 @@ def main():
 
         # manual scrapers
         if "MAN" in sys.argv or "ALL" in sys.argv or "FULL" in sys.argv:
-            MONITOR.add_widget("Updating records...", type=0)
             if UPD.all_updates["satmuls"]:
                 MONITOR.add_widget("Multas SAT...", type=1)
                 UPD.gather_satmul(
@@ -117,6 +116,11 @@ def main():
             if UPD.all_updates["soats"]:
                 MONITOR.add_widget("SOATS...", type=1)
                 UPD.gather_soat(scraper=scrapers.Soat(), table="soats", date_sep="-")
+
+        # continue only if all gathering threads have finished
+        while any([i.is_alive() for i in UPD.threads]):
+            print("waiting for threads")
+            time.sleep(1.5)
 
     # define records that require messages, craft updates from templates and send email
     if "MSG" in sys.argv or "FULL" in sys.argv:

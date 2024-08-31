@@ -1,0 +1,155 @@
+Date: 1/7/2024
+Time: 11:1
+Phone Number: +51989034311
+Message: Hello from SAP
+--------------------
+Date: 1/7/2024
+Time: 11:29
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 11:31
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 11:32
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 11:39
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 11:41
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 11:59
+Phone Number: +51999925531
+Message: Besos desde el Sistema de Alertas!
+--------------------
+Date: 1/7/2024
+Time: 15:9
+Phone Number: +51989034311
+Message: El Sistema de Alertas Perú te informa:Gabriel Freundt-Thurne Sturmann, tu Revision Técnica de placa AMQ073 vence el 01-Jul-2024.
+--------------------
+Date: 1/7/2024
+Time: 15:11
+Phone Number: +51989034311
+Message: El Sistema de Alertas Perú te informa:Gabriel Freundt-Thurne Sturmann, tu Certificado SOAT de placa AMQ073 vence el 01-Jul-2024.
+--------------------
+Date: 1/7/2024
+Time: 15:14
+Phone Number: +51989034311
+Message: El Sistema de Alertas Perú te informa:Gabriel Freundt-Thurne Sturmann, tu Revision Técnica de placa *AMQ073* vence el *01-Jul-2024*.
+--------------------
+Date: 1/7/2024
+Time: 15:15
+Phone Number: +51989034311
+Message: El Sistema de Alertas Perú te informa:Gabriel Freundt-Thurne Sturmann, tu Certificado SOAT de placa *AMQ073* vence el *01-Jul-2024*.
+--------------------
+Date: 4/7/2024
+Time: 19:52
+Phone Number: +51967744401
+Message: El Sistema de Alertas Perú te informa:Alejandra Prado, tu Certificado SOAT de placa *BJT510* vence el *04-Jul-2024*.
+--------------------
+Date: 7/7/2024
+Time: 11:5
+Phone Number: +51995742347
+Message: El Sistema de Alertas Perú te informa:Patrick Lerner, tu Revision Técnica de placa *AJP209* vence el *17-Jul-2024*.
+--------------------
+Date: 18/7/2024
+Time: 19:9
+Phone Number: +51989018420
+Message: El Sistema de Alertas Perú te informa:Talia Graña, tu Revision Técnica de placa *BLB551* vence el *28-Jul-2024*.
+--------------------
+Date: 18/7/2024
+Time: 19:17
+Phone Number: +51989018420
+Message: El Sistema de Alertas Perú te informa:Talia Graña, tu Revision Técnica de placa *BLB551* vence el *28-Jul-2024*.
+--------------------
+Date: 30/7/2024
+Time: 12:54
+Phone Number: +51993653088
+Message: El Sistema de Alertas Perú te informa:Eileen Loyer, tu Certificado SOAT de placa *AHN426* vence el *04-Ago-2024*.
+--------------------
+Date: 30/7/2024
+Time: 12:57
+Phone Number: +51993653088
+Message: El Sistema de Alertas Perú te informa:Eileen Loyer, tu Certificado SOAT de placa *AHN426* vence el *04-Ago-2024*.
+--------------------
+Date: 1/8/2024
+Time: 12:58
+Phone Number: +51979767777
+Message: El Sistema de Alertas Perú te informa:Guillermo Malqui, tu Revision Técnica de placa *ATR393* vence el *01-Ago-2024*.
+--------------------
+Date: 4/8/2024
+Time: 18:27
+Phone Number: +51993653088
+Message: El Sistema de Alertas Perú te informa:Eileen Loyer, tu Certificado SOAT de placa *AHN426* vence el *04-Ago-2024*.
+--------------------
+Date: 5/8/2024
+Time: 13:10
+Phone Number: +51994660795
+Message: El Sistema de Alertas Perú te informa:Rodrigo Parra Del Riego, tu Certificado SOAT de placa *CBF485* vence el *10-Ago-2024*.
+--------------------
+Date: 8/8/2024
+Time: 12:25
+Phone Number: +51975158551
+Message: El Sistema de Alertas Perú te informa:José Luis Agramonte, tu Revision Técnica de placa *AHJ311* vence el *18-Ago-2024*.
+--------------------
+Date: 10/8/2024
+Time: 11:6
+Phone Number: +51994660795
+Message: El Sistema de Alertas Perú te informa:Rodrigo Parra Del Riego, tu Certificado SOAT de placa *CBF485* vence el *10-Ago-2024*.
+--------------------
+Date: 10/8/2024
+Time: 11:7
+Phone Number: +51988051146
+Message: El Sistema de Alertas Perú te informa:Patricia Rojas, tu Certificado SOAT de placa *CBA688* vence el *15-Ago-2024*.
+--------------------
+Date: 15/8/2024
+Time: 12:7
+Phone Number: +51988051146
+Message: El Sistema de Alertas Perú te informa:Patricia Rojas, tu Certificado SOAT de placa *CBA688* vence el *15-Ago-2024*.
+--------------------
+Date: 15/8/2024
+Time: 12:8
+Phone Number: +51997894666
+Message: El Sistema de Alertas Perú te informa:Ricardo Cossio, tu Revision Técnica de placa *F3H541* vence el *25-Ago-2024*.
+--------------------
+Date: 25/8/2024
+Time: 11:38
+Phone Number: +51994660795
+Message: El Sistema de Alertas Perú te informa:Rodrigo Parra Del Riego, tu Revision Técnica de placa *CBF485* vence el *04-Set-2024*.
+--------------------
+Date: 25/8/2024
+Time: 11:43
+Phone Number: +51994660795
+Message: El Sistema de Alertas Perú te informa:Rodrigo Parra Del Riego, tu Revision Técnica de placa *CBF485* vence el *04-Set-2024*.
+--------------------
+Date: 25/8/2024
+Time: 11:44
+Phone Number: +51942824206
+Message: El Sistema de Alertas Perú te informa:Aaron Zambrano, tu Revision Técnica de placa *ANV382* vence el *04-Set-2024*.
+--------------------
+Date: 26/8/2024
+Time: 21:56
+Phone Number: +51964090357
+Message: El Sistema de Alertas Perú te informa:Luis Caro Kahn , tu Certificado SOAT de placa *BLE375* vence el *31-Ago-2024*.
+--------------------
+Date: 26/8/2024
+Time: 22:0
+Phone Number: +51957422320
+Message: El Sistema de Alertas Perú te informa:Aldo Zamudio , tu Certificado SOAT de placa *CBF558* vence el *31-Ago-2024*.
+--------------------
+Date: 28/8/2024
+Time: 8:42
+Phone Number: +51991679166
+Message: El Sistema de Alertas Perú te informa:Javier Hanza, tu Revision Técnica de placa *APA503* vence el *07-Set-2024*.
+--------------------

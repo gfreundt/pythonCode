@@ -1,8 +1,9 @@
 import os
-from gft_utils import GoogleUtils
+from gft_utils import EmailUtils
 from datetime import datetime as dt, timedelta as td
 from jinja2 import Environment, FileSystemLoader
 import uuid
+import alerts
 
 
 def date_check(fecha, delta):
@@ -111,7 +112,7 @@ class Messages:
                     "to": member[6],
                     "bcc": "gabfre@gmail.com",
                     "subject": f"Bienvenido al Servicio de Alertas Perú ({_subj})",
-                    "body": content,
+                    "html_body": content,
                     "attachments": attachments,
                     "tipoMensajes": [12] + msgrecords,
                     "idMember": int(IdMember),
@@ -155,7 +156,7 @@ class Messages:
                     "to": member[6],
                     "bcc": "gabfre@gmail.com",
                     "subject": f"Informe Mensual del Servicio de Alertas Perú ({_subj})",
-                    "body": content,
+                    "html_body": content,
                     "attachments": attachments,
                     "tipoMensajes": [13] + msgrecords,
                     "idMember": int(IdMember),
@@ -181,17 +182,18 @@ class Messages:
                 "w",
                 encoding="utf-8",
             ) as file:
-                file.write(message["body"])
+                file.write(message["html_body"])
 
         # send emails if switch on
         if EMAIL:
+            email = EmailUtils(account="servicioalertasperu@outlook.com")
             try:
-                # results = [True, True]
-                results = GoogleUtils().send_gmail(
-                    fr="servicioalertaperu@gmail.com", messages=messages
-                )
+                results = email.send_from_outlook(emails=messages)
             except KeyboardInterrupt:  # Exception:
                 self.LOG.error("ERROR sending emails")
+
+            # create alerts to let members know that email has been sent
+            for 
 
             # update mensaje and mensajeContenido tables depending on success reply from email attempt
             table, fields = "mensajes", ("IdMember_FK", "Fecha", "HashCode")

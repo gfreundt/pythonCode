@@ -1,4 +1,5 @@
-import io
+import io, os
+import time
 import threading
 from datetime import datetime as dt
 import pygame
@@ -9,9 +10,7 @@ from PIL import Image, ImageTk
 
 # local imports
 import sunarp, soat_image
-
-# import scrapers
-# from gft_utils import pygameUtils
+from gft_utils import SpeechUtils
 
 
 def threader(func):
@@ -19,7 +18,9 @@ def threader(func):
 
     def wrapper(*args, **kwargs):
         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        time.sleep(2)
         thread.start()
+        args[0].threads.append(thread)  # args[0] is UPDATE instance (self)
         return thread
 
     return wrapper
@@ -44,9 +45,8 @@ class Gui:
             K_KP8,
             K_KP9,
         )
-        self.speech_driver_errors = 0
 
-    def get_speech(self):
+    def get_speech2(self):
         while True:
             try:
                 with speech_recognition.Microphone() as mic:
@@ -54,6 +54,17 @@ class Gui:
                     _audio = self.speech.listen(mic)
                     text = self.speech.recognize_google(_audio)
                     text = text.lower().replace(" ", "")
+                    with open(
+                        os.path.join(
+                            "D:\pythonCode",
+                            "Resources",
+                            "StaticData",
+                            "military_alphabet.txt",
+                        )
+                    ) as file:
+                        ma_index = [i.strip() for i in file.readlines()]
+                        for word in ma_index:
+                            text = text.replace(word, word[0])
 
                     print(f"Output: {text}")
                     if len(text) == 6:
@@ -64,6 +75,13 @@ class Gui:
                     self.speech_driver_errors += 1
                 else:
                     return None
+
+    def get_speech(self):
+        while True:
+            text = SpeechUtils().get_speech()
+            text = text.lower().replace(" ", "")
+            if len(text) == 6:
+                return text
 
     def show_captcha(self):
         window = Tk()
@@ -152,6 +170,7 @@ class Update:
         self.conn = members.conn
         self.sql = members.sql
         self.day30_list = members.day30_list
+        self.threads = []
 
     def get_records_to_process(self):
 
@@ -389,7 +408,7 @@ class Update:
                         # insert gathered record of member
                         self.cursor.execute(cmd, values)
                         self.conn.commit()
-                    self.MONITOR.add_widget(plac, type=3)
+                    self.MONITOR.add_widget(f"SOAT: {plac}", type=3)
                     # log action into actios table
                     self.log_action(scraper="soats", idPlaca=placa[0])
                     break  # escape while True loop
@@ -429,8 +448,7 @@ class Update:
                         break
                     # if there is data in response, enter into database, go to next placa
                     elif img_object:
-                        # process image and save to disk, update database with file information
-                        # add image filename and image date to record
+                        # add image filename
                         _img_filename = f"SUNARP_{placa[1]}.png"
                         sunarp.process_image(img_object, _img_filename)
                         fields = ["IdPlaca_FK", "ImgFilename", "LastUpdate"]
@@ -439,28 +457,6 @@ class Update:
                             _img_filename,
                             dt.now().strftime("%Y-%m-%d"),
                         ]
-                        # add ocr results to record
-                        # ocr_result = sunarp.ocr_and_parse(_img_filename)
-                        # if ocr_result:
-                        #     fields += [
-                        #         "IdPlaca_FK",
-                        #         "PlacaValidate",
-                        #         "Serie",
-                        #         "VIN",
-                        #         "Motor",
-                        #         "Color",
-                        #         "Marca",
-                        #         "Modelo",
-                        #         "PlacaVigente",
-                        #         "PlacaAnterior",
-                        #         "Estado",
-                        #         "Anotaciones",
-                        #         "Sede",
-                        #         "Propietarios",
-                        #         "Ano",
-                        #     ]
-                        #     values += [placa[0]] + ocr_result
-
                         # delete all old records from placa
                         self.cursor.execute(
                             f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{placa[1]}')"
@@ -515,6 +511,7 @@ class Update:
                             self.cursor.execute(cmd, values)
                         self.conn.commit()
 
+                    self.MONITOR.add_widget(f"SOAT: {plac}", type=3)
                     self.log_action(scraper=table, idPlaca=placa[0])
 
                     break
@@ -546,6 +543,7 @@ class Update:
                 # update database
                 cmd = self.sql(table, fields)
                 self.cursor.execute(cmd, values)
+                self.MONITOR.add_widget(f"RECORD: {doc[0]}", type=3)
                 self.log_action(scraper=table, idMember=doc[0])
                 self.conn.commit()
 
@@ -600,6 +598,7 @@ class Update:
 
                     self.conn.commit()
                     # register action and skip to next record
+                    self.MONITOR.add_widget(f"SATIMP: {doc_tipo}-{doc_num}", type=3)
                     self.log_action(scraper=table1, idMember=rec[0])
                     break
                 except KeyboardInterrupt:
@@ -649,6 +648,9 @@ class Update:
                             # insert gathered record of member
                             self.cursor.execute(cmd, values)
                             self.conn.commit()
+                            self.MONITOR.add_widget(
+                                f"BREVETE: {doc_tipo}-{doc_num}", type=3
+                            )
 
                     for papeleta in new_record_dates_fixed[-1]:
                         # adjust date format for SQL (YYYY-MM-DD)
@@ -720,6 +722,7 @@ class Update:
                         self.conn.commit()
                     # register action and skip to next record
                     self.log_action(scraper=table, idMember=rec[0])
+                    self.MONITOR.add_widget(f"SUNAT: {doc_tipo}-{doc_num}", type=3)
                     break
                 except KeyboardInterrupt:
                     quit()
@@ -771,6 +774,7 @@ class Update:
                             self.cursor.execute(cmd, values)
                             self.conn.commit()
                     # register action and skip to next record
+                    self.MONITOR.add_widget(f"DOCS: {doc_tipo}-{doc_num}", type=3)
                     self.log_action(scraper=table, idMember=rec[0])
                     break
                 except KeyboardInterrupt:
@@ -786,7 +790,7 @@ class Update:
                         self.LOG.warning(f"< {table.upper()} > Retrying {rec}.")
 
     @threader
-    def gather_placa(self, scraper, table, date_sep=None):
+    def gather_placa(self, scraper, table, date_sep):
         # get field list from table, do not consider fist one (ID Autogenerated)
         self.cursor.execute(
             f"SELECT name FROM pragma_table_info('{table}') ORDER BY cid;"
@@ -813,17 +817,16 @@ class Update:
                                 + new_record_dates_fixed
                                 + [dt.now().strftime("%Y-%m-%d")]
                             )
-                            # self.lock.acquire()
                             # delete all old records from member
                             self.cursor.execute(
                                 f"DELETE FROM {table} WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{placa}')"
                             )
                             # insert gathered record of member
                             self.cursor.execute(cmd, values)
-                            self.conn.commit()  # writes every time - maybe take away later
-                            # self.lock.release()
+                            self.conn.commit()
 
                     # register action and skip to next record
+                    self.MONITOR.add_widget(f"PLACA: {placa}", type=3)
                     self.log_action(scraper=table, idPlaca=rec[0])
                     break
                 except KeyboardInterrupt:

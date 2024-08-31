@@ -2,28 +2,28 @@ from tkinter import Tk, Label
 import tkinter.font as TkFont
 
 
-import time
-
-
 class Monitor:
 
     def __init__(self) -> None:
         self.counter = 1
 
     def add_widget(self, txt, type=0):
+        # level-1 text
         if type == 0:
             self.text = f"{self.counter}. {txt}"
             self.font_size = 12
             self.counter += 1
+        # level-2 text
         if type == 1:
             self.text = f"{' ' * 4}> {txt}"
             self.font_size = 10
+        # adds to last entry on same line
         if type == 2:
             self.text += f" {txt}"
             self.current_row -= 1
+        # level-3 text
         if type == 3:
             self.text = f"{' ' * 8}>> {txt}"
-            self.current_row -= 1
 
         label = Label(
             self.window,
@@ -54,22 +54,3 @@ class Monitor:
 
     def end_monitor(self):
         self.window.quit()
-
-    def test(self):
-        fonts = list(TkFont.families())
-        for f in fonts:
-            _font = TkFont.Font(family=f, size=50)
-            label1 = Label(
-                self.window,
-                font=_font,
-                text=f"{f:>30}",
-                fg="white",
-                bg="black",
-            )
-            label1.grid(row=1, column=1)
-            time.sleep(1)
-
-
-# Cascadia Mono
-# Roboto
-# Bahnschrift
