@@ -2,21 +2,21 @@ from copy import deepcopy as copy
 from tkinter import Tk, Text, END, Button
 from pprint import pprint
 from datetime import datetime as dt
-import json
 import uuid
 import openpyxl as pyxl
 
 
 class Visor:
 
-    def __init__(self, configuracion):
+    def __init__(self, configuracion, proceso):
         self.configuracion = configuracion
+        self.proceso = proceso
         self.fecha = dt.strftime(dt.now(), "%Y-%m-%d")
         self.file_name = f"L{str(uuid.uuid4())[-10:]}.json"
         self.detalle = False
+        self.status_graba_db = False
 
-    def mostrar(self, ggmk):
-        self.ggmk = ggmk
+    def mostrar(self):
 
         # crear nueva ventana, dimensionar
         self.window = Tk()
@@ -24,14 +24,27 @@ class Visor:
 
         # definir y colocar botones de menu
         self.buttons = [
-            Button(self.window, text="Detalle", command=self.menu_detalle),
-            Button(self.window, text="Exportar XLS", command=self.menu_exportar_xls),
-            Button(self.window, text="Exportar PDF", command=self.menu_exportar_pdf),
-            Button(self.window, text="Guardar", command=self.menu_guardar),
-            Button(self.window, text="Regresar", command=self.arbol_regresar),
+            (Button(self.window, text="Detalle", command=self.menu_detalle), (75, 20)),
+            (
+                Button(
+                    self.window, text="Exportar XLS", command=self.menu_exportar_xls
+                ),
+                (150, 20),
+            ),
+            (
+                Button(
+                    self.window, text="Exportar PDF", command=self.menu_exportar_pdf
+                ),
+                (250, 20),
+            ),
+            (Button(self.window, text="Guardar", command=self.menu_guardar), (350, 20)),
+            (
+                Button(self.window, text="Regresar", command=self.menu_regresar),
+                (420, 20),
+            ),
         ]
-        for x, button in enumerate(self.buttons, start=1):
-            button.place(x=x * 75, y=20)
+        for button, pos in self.buttons:
+            button.place(x=pos[0], y=pos[1])
 
         # crear zona donde se muestra el texto del arbol
         self.text_area = Text(self.window, height=100, width=130)
@@ -71,50 +84,62 @@ class Visor:
             else:
                 fila -= 1
 
-        wb.save("export.xlsx")
+        wb.save(f"{self.proceso.nombre_tabla}.xlsx")
 
     def menu_exportar_pdf(self):
         return
 
     def menu_guardar(self):
-        with open(self.file_name, "w") as outfile:
-            json_object = json.dumps(self.ggmk, indent=4)
-            outfile.write(json_object)
+        self.proceso.conn.commit()
+        self.status_graba_db = True
 
-    def arbol_regresar(self):
+    def menu_regresar(self):
+        if not self.status_graba_db:
+            self.proceso.cursor.execute(f"DROP TABLE '{self.proceso.nombre_tabla}'")
+            self.proceso.conn.commit()
         self.window.destroy()
 
     def genera_texto_arbol(self, detalle):
-        totalx = 0
-        total = 1
 
-        output = f"GGMK | Codigo:{self.ggmk['codigo']}\n"
-        for p, gmk in enumerate(self.ggmk["subkeys"], start=1):
-            total += 1
-            output += "|\n"
-            output += f"|{'-'*9}GMK-{p:02d} <> Codigo:{gmk['codigo']}\n"
+        self.proceso.cursor.execute(f"SELECT * FROM '{self.proceso.nombre_tabla}'")
+        data = self.proceso.cursor.fetchall()
 
-            for q, mk in enumerate(gmk["subkeys"], start=1):
-                total += 1
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}|\n"
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys'])+1 else '|'}{'-'*9} MK-{p:02d}-{q:02d} <> Codigo:{mk['codigo']}\n"
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}|\n"
+        previous = [0] * 10
+        output = f"GGMK <> Codigo:{data[0][0]}\n"
+
+        for line, d in enumerate(data):
+
+            gmk = d[0]
+            mk = d[1]
+            k = d[3]
+            sec = d[4]
+            cil = d[8]
+            cop = d[14]
+            nombre = " - ".join(d[9:13])
+
+            if gmk != previous[1]:
+                output += "|\n"
+                output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+
+            if mk != previous[2]:
+                output += f"|{' '*9}|\n"
+                output += f"|{' '*9}|{'-'*7} M{sec[:7]} <> Codigo:{mk}\n"
+                output += f"|{' '*9}|{' '*8}|\n"
 
                 if not detalle:
-                    output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}Unicas: {len(mk['subkeys'])}\n"
-                    totalx += len(mk["subkeys"])
-                else:
-                    for r, key in enumerate(mk["subkeys"], start=1):
-                        totalx += 1
-                        output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}{' ' if r==len(mk['subkeys'])+1 else '|'}{'-'*9}{key['secuencia']} <> Codigo:{key['codigo']} - Cilindro:{key['cilindro']:<30} {key['cilindro'].count(':')} MP) \n"
+                    self.proceso.cursor.execute(
+                        f"SELECT * FROM '{self.proceso.nombre_tabla}' WHERE MK = '{mk}'"
+                    )
+                    _unicas = len(self.proceso.cursor.fetchall())
+                    output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
 
-        output += f"\nTotal Llaves: {total+totalx:,}\n"
-        output += f"Total Puertas: {totalx:,}\n"
+            if detalle:
+                output += f"|{' '*9}|{' '*8}|- {sec} [ {nombre:<25} ] <> Codigo:{k} - Cilindro ({cil.count(':')} MP): {cil:<30} - Copias: {cop}\n"
+
+            previous = copy(data[line])
 
         return output
 
     def muestra_arbol(self, arbol):
         self.text_area.delete("1.0", "end")
         self.text_area.insert(END, arbol)
-
-

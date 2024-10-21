@@ -3,19 +3,348 @@ from copy import deepcopy as copy
 from tkinter import Tk, Label, Text, END, font, PhotoImage, Button
 from pprint import pprint
 from datetime import datetime as dt
-import json, time
-import uuid
 import openpyxl as pyxl
+from visor import Visor
 
 
-def genera_mp_pos():
-    pines = list(range(0, 6))
-    shuffle(pines)
-    mp_pos = {"gmk": pines[0:1]}
-    mp_pos.update({"mk": pines[1:2]})
-    mp_pos.update({"k": pines[2:]})
+class Libro:
 
-    return mp_pos
+    def __init__(self, conn):
+
+        self.conn = conn
+        self.cursor = self.conn.cursor()
+
+        self.detalle = False
+        self.status_graba_db = False
+
+        self.vista = Visor(configuracion="libro", proceso=self)
+
+    def menu_detalle(self):
+        self.detalle = not self.detalle
+        arbol = self.genera_texto_arbol(detalle=self.detalle)
+        self.muestra_arbol(arbol)
+
+    def menu_rehacer(self):
+        self.text_area.delete("1.0", "end")
+        self.text_area.insert(END, "Procesando...\n")
+        self.crea_libro()
+
+    def menu_exportar(self):
+        wb = pyxl.Workbook()
+        ws = wb.active
+
+        arbol = self.genera_texto_arbol(detalle=True)
+        fila = 0
+        for linea in arbol.split("\n"):
+            fila += 1
+            if "GGMK" in linea:
+                ws[f"A{fila}"] = linea
+            elif "GMK-" in linea:
+                ws[f"B{fila}"] = linea
+            elif "MK-" in linea:
+                ws[f"C{fila}"] = linea
+            elif "K-" in linea:
+                ws[f"D{fila}"] = linea
+            else:
+                fila -= 1
+
+        wb.save("export.xlsx")
+
+    def menu_guardar(self):
+        self.conn.commit()
+        self.status_graba_db = True
+
+    def menu_regresar(self):
+        if not self.status_graba_db:
+            self.cursor.execute(f"DROP TABLE '{self.nombre_tabla}'")
+            self.conn.commit()
+        self.window.destroy()
+
+    def crea_libro(self, **kwargs):
+
+        # en primera solicitud de libro nuevo, recibe toda esta informacion (no en rehacer libro)
+        if kwargs:
+            self.formato = kwargs["formato"]
+            self.codigo_ggmk = kwargs["codigo_ggmk"]
+            self.libro_nombre = kwargs["libro_nombre"]
+            self.libro_notas = kwargs["libro_notas"]
+
+        self.ggmk = {
+            "codigo": copy(self.codigo_ggmk),
+            "nombre": "Llave GGMK",
+            "libro": self.libro_nombre,
+            "notas": self.libro_notas,
+            "fecha": dt.strftime(dt.now(), "%Y-%m-%d"),
+            "subkeys": [],
+        }
+
+        self.llaves_usadas = []
+        self.todas_maestras = []
+
+        self.genera_mp_pos()
+
+        # crea nueva tabla
+        self.cursor.execute(
+            f"CREATE TABLE '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP, V_Unica, V_GGMK, V_GMK, V_MK, V_SMK, V_Cruzada)"
+        )
+
+        c1 = 0
+        while True:
+            x1 = self.siguiente_codigo(
+                tipo="gmk",
+                codigo_base=(
+                    self.ggmk["codigo"]
+                    if not self.ggmk["subkeys"]
+                    else self.ggmk["subkeys"][-1]["codigo"]
+                ),
+            )
+            if x1 == -1:
+                break
+            self.ggmk["subkeys"].append(
+                {
+                    "codigo": copy(x1),
+                    "secuencia": f"GMK-{c1+1:02d}",
+                    "nombre": f"Llave {c1+1:02d}",
+                    "subkeys": [],
+                }
+            )
+            self.llaves_usadas.append(copy(x1))
+            self.todas_maestras.append(copy(x1))
+
+            c2 = 0
+            while True:
+                x2 = self.siguiente_codigo(
+                    tipo="mk",
+                    codigo_base=(
+                        x1
+                        if not self.ggmk["subkeys"][c1]["subkeys"]
+                        else self.ggmk["subkeys"][c1]["subkeys"][-1]["codigo"]
+                    ),
+                )
+                if x2 == -1:
+                    break
+                self.ggmk["subkeys"][c1]["subkeys"].append(
+                    {
+                        "codigo": copy(x2),
+                        "secuencia": f"MK-{c1+1:02d}-{c2+1:02d}",
+                        "nombre": f"Llave {c1+1:02d}-{c2+1:02d}",
+                        "subkeys": [],
+                    }
+                )
+                self.llaves_usadas.append(copy(x2))
+                self.todas_maestras.append(copy(x2))
+
+                c3 = 0
+                while True:
+                    x3 = self.siguiente_codigo(
+                        tipo="k",
+                        codigo_base=(
+                            x2
+                            if not self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"]
+                            else self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"][-1][
+                                "codigo"
+                            ]
+                        ),
+                    )
+                    if x3 == -1:
+                        break
+                    self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"].append(
+                        {
+                            "codigo": copy(x3),
+                            "cilindro": crea_cilindro(
+                                ggmk=self.codigo_ggmk, key=copy(x3)
+                            ),
+                            "secuencia": f"K-{c1+1:02d}-{c2+1:02d}-{c3+1:03d}",
+                            "nombre": f"Llave {c1+1:02d}-{c2+1:02d}-{c3+1:03d}",
+                        }
+                    )
+                    self.llaves_usadas.append(copy(x3))
+
+                    _record = (
+                        self.ggmk["codigo"],
+                        x1,
+                        x2,
+                        0,
+                        x3,
+                        f"K-{c1+1:02d}-{c2+1:02d}-{c3+1:03d}",
+                        crea_cilindro(ggmk=self.codigo_ggmk, key=x3),
+                    )
+                    self.cursor.execute(
+                        f"INSERT INTO '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro) VALUES (?,?,?,?,?,?,?)",
+                        _record,
+                    )
+
+                    c3 += 1
+                c2 += 1
+            c1 += 1
+
+        self.valida_libro_completo()
+        self.muestra_arbol()
+
+    def siguiente_codigo(self, tipo, codigo_base):
+
+        while True:
+
+            codigo_nuevo = [i for i in codigo_base]
+            pos = self.mp_pos[tipo]
+
+            if len(pos) == 1:
+
+                codigo_nuevo[pos[0]] = str((int(codigo_nuevo[pos[0]]) + 2) % 10)
+                codigo_nuevo = "".join(codigo_nuevo)
+
+                if codigo_nuevo in self.llaves_usadas:
+                    return -1
+
+                if valida_codigo(codigo_nuevo):
+                    return codigo_nuevo
+
+                return -1
+
+            elif len(pos) == 2:
+
+                for a in range(0, 9, 2):
+                    codigo_nuevo[pos[0]] = str((int(codigo_nuevo[pos[0]]) + a) % 10)
+                    for b in range(0, 9, 2):
+                        codigo_nuevo[pos[1]] = str((int(codigo_nuevo[pos[1]]) + b) % 10)
+                        cn = "".join(codigo_nuevo)
+                        if cn not in self.llaves_usadas and valida_codigo(cn):
+                            return cn
+                return -1
+
+            elif len(pos) == 3:
+
+                for a in range(0, 9, 2):
+                    codigo_nuevo[pos[0]] = str((int(codigo_nuevo[pos[0]]) + a) % 10)
+                    for b in range(0, 9, 2):
+                        codigo_nuevo[pos[1]] = str((int(codigo_nuevo[pos[1]]) + b) % 10)
+                        for c in range(0, 9, 2):
+                            codigo_nuevo[pos[2]] = str(
+                                (int(codigo_nuevo[pos[2]]) + c) % 10
+                            )
+                            cn = "".join(codigo_nuevo)
+                            if cn not in self.llaves_usadas and valida_codigo(cn):
+                                return cn
+                return -1
+
+            elif len(pos) == 4:
+
+                for a in range(0, 9, 2):
+                    codigo_nuevo[pos[0]] = str((int(codigo_nuevo[pos[0]]) + a) % 10)
+                    for b in range(0, 9, 2):
+                        codigo_nuevo[pos[1]] = str((int(codigo_nuevo[pos[1]]) + b) % 10)
+                        for c in range(0, 9, 2):
+                            codigo_nuevo[pos[2]] = str(
+                                (int(codigo_nuevo[pos[2]]) + c) % 10
+                            )
+                            for d in range(0, 9, 2):
+                                codigo_nuevo[pos[3]] = str(
+                                    (int(codigo_nuevo[pos[3]]) + d) % 10
+                                )
+                                cn = "".join(codigo_nuevo)
+                                if cn not in self.llaves_usadas and valida_codigo(cn):
+                                    return cn
+                return -1
+
+    def valida_libro_completo(self):
+
+        # extraer toda las filas de la tabla
+        self.cursor.execute(f"SELECT * FROM '{self.nombre_tabla}'")
+        table_data = self.cursor.fetchall()
+
+        # extrae todos los codigos de las master keys en la tabla
+        self.cursor.execute(
+            f"SELECT * FROM (SELECT GGMK FROM '{self.nombre_tabla}' UNION SELECT GMK FROM '{self.nombre_tabla}' UNION SELECT MK FROM '{self.nombre_tabla}' UNION SELECT SMK FROM '{self.nombre_tabla}' WHERE GGMK IS NOT 0)"
+        )
+        todas_maestras = [i[0] for i in self.cursor.fetchall()]
+
+        # extraer todos los codigos de las llaves de la tabla
+        self.cursor.execute(f"SELECT K FROM '{self.nombre_tabla}'")
+        llaves_usadas = [i[0] for i in self.cursor.fetchall()]
+
+        # iterar todas las llaves y realizar validaciones
+        for row_num, row in enumerate(table_data, start=1):
+            t = (
+                row[6].count(":"),
+                valida_llave_es_unica(llave=row[4], llaves_usadas=llaves_usadas),
+                valida_llave_abre_cilindro(llave=row[0], cilindro=row[6]),
+                valida_llave_abre_cilindro(llave=row[1], cilindro=row[6]),
+                valida_llave_abre_cilindro(llave=row[2], cilindro=row[6]),
+                valida_llave_no_cruzada(
+                    cilindro=row[6],
+                    mis_maestras=[i for i in row[:5] if i != 0],
+                    todas_maestras=todas_maestras,
+                ),
+            )
+
+            self.cursor.execute(
+                f"UPDATE '{self.nombre_tabla}' SET MP={t[0]}, V_Unica={t[1]}, V_GGMK={t[1]}, V_GMK={t[1]}, V_MK={t[1]}, V_SMK={t[1]}, V_Cruzada={t[1]} WHERE rowid={row_num}"
+            )
+
+    def genera_mp_pos(self):
+        _pines = list(range(0, 6))
+        shuffle(_pines)
+
+        s = "!"
+        k = 0
+        self.mp_pos = {}
+
+        for pin_size, dic_key in zip(
+            self.formato.split("-")[1:], ["gmk", "mk", "smk", "k"]
+        ):
+            p = int(pin_size)
+            if p > 0:
+                _m = [_pines[i] for i in range(k, k + p)]
+                _n = f"{''.join(str(_pines[i]+1) for i in range(k, k + p))}!"
+            else:
+                _m = []
+                _n = "0!"
+
+            self.mp_pos[dic_key] = _m
+            s += _n
+            k += p
+
+        self.nombre_tabla = f"L-{self.codigo_ggmk}-{s}"
+
+    def carga_libro(self, nombre_tabla):
+
+        # extraer toda las filas de la tabla
+        self.cursor.execute(f"SELECT * FROM '{nombre_tabla}'")
+        libro_data = self.cursor.fetchall()
+
+        # extrae todos los codigos de las master keys en la tabla
+        self.cursor.execute(
+            f"SELECT * FROM (SELECT GGMK FROM '{nombre_tabla}' UNION SELECT GMK FROM '{nombre_tabla}' UNION SELECT MK FROM '{nombre_tabla}' UNION SELECT SMK FROM '{nombre_tabla}' WHERE GGMK IS NOT 0)"
+        )
+        todas_maestras = [i[0] for i in self.cursor.fetchall()]
+
+        # extraer todos los codigos de las llaves de la tabla
+        self.cursor.execute(f"SELECT K FROM '{self.nombre_tabla}'")
+        llaves_usadas = [i[0] for i in self.cursor.fetchall()]
+
+        # eliminar botones de Rehacer y Guardar del menu
+        self.buttons[1].destroy()
+        self.buttons[3].destroy()
+
+        arbol = self.genera_texto_arbol(detalle=False)
+        self.muestra_arbol(arbol)
+
+    def muestra_arbol(self):
+        self.vista.mostrar(self.ggmk)
+
+    def valida_llave_es_unica(self, llave):
+        if self.llaves_usadas.count(llave) == 1:
+            return 1
+        return 0
+
+    def valida_llave_no_cruzada(self, cilindro, mis_maestras):
+        for maestra in self.todas_maestras:
+            if maestra in mis_maestras:
+                continue
+            if valida_llave_abre_cilindro(maestra, cilindro):
+                return 0
+
+        return 1
 
 
 def crea_cilindro(ggmk, key):
@@ -57,7 +386,14 @@ def valida_codigo(codigo):
     return True
 
 
+def valida_llave_es_unica(llave, llaves_usadas):
+    if llaves_usadas.count(llave) == 1:
+        return 1
+    return 0
+
+
 def valida_llave_abre_cilindro(llave, cilindro):
+
     opciones = []
     for pos in cilindro.split("]")[:-1]:
         if ":" in pos:
@@ -80,290 +416,11 @@ def valida_llave_abre_cilindro(llave, cilindro):
     return 0
 
 
-def cantidad_master_pines(cilindro):
-    return cilindro.count(":")
+def valida_llave_no_cruzada(cilindro, mis_maestras, todas_maestras):
+    for maestra in todas_maestras:
+        if maestra in mis_maestras:
+            continue
+        if valida_llave_abre_cilindro(maestra, cilindro):
+            return 0
 
-
-class Libro:
-
-    def __init__(self, libro, notas):
-        self.libro = libro
-        self.notas = notas
-        self.fecha = dt.strftime(dt.now(), "%Y-%m-%d")
-        self.file_name = f"L{str(uuid.uuid4())[-10:]}.json"
-        self.detalle = False
-
-        self.window = Tk()
-        self.window.geometry("800x1300")
-        self.text_area = Text(self.window, height=100, width=80)
-        self.text_area.place(x=10, y=60)
-        # definir y colocar botones de menu
-        self.buttons = [
-            Button(self.window, text="Detalle", command=self.libro_detalle),
-            Button(self.window, text="Rehacer", command=self.libro_rehacer),
-            Button(self.window, text="Exportar", command=self.libro_exportar),
-            Button(self.window, text="Guardar", command=self.libro_guardar),
-            Button(self.window, text="Regresar", command=self.arbol_regresar),
-        ]
-        for x, button in enumerate(self.buttons, start=1):
-            button.place(x=x * 75, y=20)
-
-    def libro_detalle(self):
-        self.detalle = not self.detalle
-        arbol = self.genera_texto_arbol(detalle=self.detalle)
-        self.muestra_arbol(arbol)
-
-    def libro_rehacer(self):
-        self.crea_libro(codigo_ggmk=copy(self.ggmk["codigo"]))
-        self.detalle = False
-        arbol = self.genera_texto_arbol(detalle=self.detalle)
-        self.muestra_arbol(arbol)
-
-    def libro_exportar(self):
-        wb = pyxl.Workbook()
-        ws = wb.active
-
-        arbol = self.genera_texto_arbol(detalle=True)
-        fila = 0
-        for linea in arbol.split("\n"):
-            fila += 1
-            if "GGMK" in linea:
-                ws[f"A{fila}"] = linea
-            elif "GMK-" in linea:
-                ws[f"B{fila}"] = linea
-            elif "MK-" in linea:
-                ws[f"C{fila}"] = linea
-            elif "K-" in linea:
-                ws[f"D{fila}"] = linea
-            else:
-                fila -= 1
-
-        wb.save("export.xlsx")
-
-    def libro_guardar(self):
-        with open(self.file_name, "w") as outfile:
-            json_object = json.dumps(self.ggmk, indent=4)
-            outfile.write(json_object)
-
-    def arbol_regresar(self):
-        self.window.destroy()
-
-    def crea_libro(self, codigo_ggmk):
-        self.todas_maestras = []
-        mp_pos = genera_mp_pos()
-
-        self.ggmk = {
-            "codigo": copy(codigo_ggmk),
-            "nombre": "Llave GGMK",
-            "libro": self.libro,
-            "notas": self.notas,
-            "fecha": dt.strftime(dt.now(), "%Y-%m-%d"),
-            "subkeys": [],
-        }
-
-        self.llaves_usadas = [copy(codigo_ggmk)]
-        self.todas_maestras.append(copy(codigo_ggmk))
-
-        c1 = 0
-        while True:
-            x1 = self.siguiente_codigo(
-                tipo="gmk",
-                codigo_base=(
-                    self.ggmk["codigo"]
-                    if not self.ggmk["subkeys"]
-                    else self.ggmk["subkeys"][-1]["codigo"]
-                ),
-                mp_pos=mp_pos,
-            )
-            if x1 == -1:
-                break
-            self.ggmk["subkeys"].append(
-                {
-                    "codigo": copy(x1),
-                    "secuencia": f"GMK-{c1+1:02d}",
-                    "nombre": f"Llave {c1+1:02d}",
-                    "subkeys": [],
-                }
-            )
-            self.llaves_usadas.append(copy(x1))
-            self.todas_maestras.append(copy(x1))
-
-            c2 = 0
-            while True:
-                x2 = self.siguiente_codigo(
-                    tipo="mk",
-                    codigo_base=(
-                        x1
-                        if not self.ggmk["subkeys"][c1]["subkeys"]
-                        else self.ggmk["subkeys"][c1]["subkeys"][-1]["codigo"]
-                    ),
-                    mp_pos=mp_pos,
-                )
-                if x2 == -1:
-                    break
-                self.ggmk["subkeys"][c1]["subkeys"].append(
-                    {
-                        "codigo": copy(x2),
-                        "secuencia": f"MK-{c1+1:02d}-{c2+1:02d}",
-                        "nombre": f"Llave {c1+1:02d}-{c2+1:02d}",
-                        "subkeys": [],
-                    }
-                )
-                self.llaves_usadas.append(copy(x2))
-                self.todas_maestras.append(copy(x2))
-
-                c3 = 0
-                while True:
-                    x3 = self.siguiente_codigo(
-                        tipo="k",
-                        codigo_base=(
-                            x2
-                            if not self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"]
-                            else self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"][-1][
-                                "codigo"
-                            ]
-                        ),
-                        mp_pos=mp_pos,
-                    )
-                    if x3 == -1:
-                        break
-                    self.ggmk["subkeys"][c1]["subkeys"][c2]["subkeys"].append(
-                        {
-                            "codigo": copy(x3),
-                            "cilindro": crea_cilindro(ggmk=codigo_ggmk, key=copy(x3)),
-                            "secuencia": f"K-{c1+1:02d}-{c2+1:02d}-{c3+1:03d}",
-                            "nombre": f"Llave {c1+1:02d}-{c2+1:02d}-{c3+1:03d}",
-                        }
-                    )
-                    self.llaves_usadas.append(copy(x3))
-                    c3 += 1
-                c2 += 1
-            c1 += 1
-
-    def siguiente_codigo(self, tipo, codigo_base, mp_pos):
-
-        while True:
-
-            codigo_nuevo = [i for i in codigo_base]
-            pos = mp_pos[tipo]
-
-            if len(pos) == 1:
-
-                codigo_nuevo[pos[0]] = str((int(codigo_nuevo[pos[0]]) + 2) % 10)
-                codigo_nuevo = "".join(codigo_nuevo)
-
-                if codigo_nuevo in self.llaves_usadas:
-                    return -1
-
-                if valida_codigo(codigo_nuevo):
-                    return codigo_nuevo
-
-                return -1
-
-            else:
-
-                for a in range(0, 9, 2):
-                    codigo_nuevo[pos[3]] = str((int(codigo_nuevo[pos[3]]) + a) % 10)
-                    for b in range(0, 9, 2):
-                        codigo_nuevo[pos[2]] = str((int(codigo_nuevo[pos[2]]) + b) % 10)
-                        for c in range(0, 9, 2):
-                            codigo_nuevo[pos[1]] = str(
-                                (int(codigo_nuevo[pos[1]]) + c) % 10
-                            )
-                            for d in range(0, 9, 2):
-                                codigo_nuevo[pos[0]] = str(
-                                    (int(codigo_nuevo[pos[0]]) + d) % 10
-                                )
-                                cn = "".join(codigo_nuevo)
-                                if cn not in self.llaves_usadas and valida_codigo(cn):
-                                    return cn
-                return -1
-
-    def genera_texto_arbol(self, detalle):
-        totalx = 0
-        total = 1
-
-        output = f"GGMK | Codigo:{self.ggmk['codigo']}\n"
-        for p, gmk in enumerate(self.ggmk["subkeys"], start=1):
-            total += 1
-            output += "|\n"
-            output += f"|{'-'*9}GMK-{p:02d} <> Codigo:{gmk['codigo']}\n"
-
-            for q, mk in enumerate(gmk["subkeys"], start=1):
-                total += 1
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}|\n"
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys'])+1 else '|'}{'-'*9} MK-{p:02d}-{q:02d} <> Codigo:{mk['codigo']}\n"
-                output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}|\n"
-
-                if not detalle:
-                    output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}Unicas: {len(mk['subkeys'])}\n"
-                    totalx += len(mk["subkeys"])
-                else:
-                    for r, key in enumerate(mk["subkeys"], start=1):
-                        totalx += 1
-                        output += f"{' ' if p==len(self.ggmk['subkeys']) else '|'}{' '*9}{' ' if q==len(gmk['subkeys']) else '|'}{' '*10}{' ' if r==len(mk['subkeys'])+1 else '|'}{'-'*9}{key['secuencia']} <> Codigo:{key['codigo']} - Cilindro:{key['cilindro']:<30} ({cantidad_master_pines(key['cilindro'])} MP) | Validaciones: self.ggmk:{valida_llave_abre_cilindro(self.ggmk['codigo'], key['cilindro'])} GMK:{valida_llave_abre_cilindro(gmk['codigo'], key['cilindro'])} MK:{valida_llave_abre_cilindro(mk['codigo'], key['cilindro'])} UNICA:{self.valida_llave_es_unica(mk['codigo'])} CRUZADA:{self.valida_llave_no_cruzada(key['cilindro'],[self.ggmk['codigo'],gmk['codigo'],mk['codigo']])}\n"
-
-        output += f"\nTotal Llaves: {total+totalx:,}\n"
-        output += f"Total Puertas: {totalx:,}\n"
-
-        return output
-
-    def carga_libro(self, ggmk):
-
-        self.ggmk = ggmk
-
-        # crear variables todas maestras y llaves usadas de la informacion del libro
-        self.llaves_usadas = []
-        self.todas_maestras = [self.ggmk["codigo"]]
-        for gmk in self.ggmk["subkeys"]:
-            self.todas_maestras.append(gmk["codigo"])
-            for mk in gmk["subkeys"]:
-                self.todas_maestras.append(mk["codigo"])
-                for k in mk["subkeys"]:
-                    self.llaves_usadas.append(k["codigo"])
-
-        # eliminar botones de Rehacer y Guardar del menu
-        self.buttons[1].destroy()
-        self.buttons[3].destroy()
-
-        arbol = self.genera_texto_arbol(detalle=False)
-        self.muestra_arbol(arbol)
-
-    def muestra_arbol(self, arbol):
-        self.text_area.delete("1.0", "end")
-        self.text_area.insert(END, arbol)
-
-    def valida_llave_es_unica(self, llave):
-        if self.llaves_usadas.count(llave) == 1:
-            return 1
-        return 0
-
-    def valida_llave_no_cruzada(self, cilindro, mis_maestras):
-        for maestra in self.todas_maestras:
-            if maestra in mis_maestras:
-                continue
-            if valida_llave_abre_cilindro(maestra, cilindro):
-                return 0
-
-        return 1
-
-
-def main(**kwargs):
-
-    if kwargs.get("codigo"):
-        libro = Libro(libro=kwargs["proyecto"], notas=kwargs["notas"])
-        # crea arbol de libro completo
-        libro.crea_libro(kwargs["codigo"])
-
-    else:
-        return
-        libro = Libro()
-        # carga libro completo de disco
-        libro.carga_libro()
-
-    # muestra arbol de libro completo
-    arbol = libro.genera_texto_arbol(detalle=libro.detalle)
-    libro.muestra_arbol(arbol)
-
-    # graba arbol
-    # graba_arbol(proyecto=proyecto, notas=notas)
+    return 1
