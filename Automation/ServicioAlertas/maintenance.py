@@ -1,4 +1,4 @@
-import scrapers, sunarp
+import scrapers
 from datetime import datetime as dt
 
 

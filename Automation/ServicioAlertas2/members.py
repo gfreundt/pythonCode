@@ -6,7 +6,7 @@ import uuid
 from gft_utils import GoogleUtils
 
 
-class Members:
+class Db:
     """Used to download new members and add them to local database, manage unsubscribe
     requests and create 30-day list"""
 
@@ -14,23 +14,12 @@ class Members:
         self.LOG = LOG
         self.MONITOR = MONITOR
         self.GOOGLE = GoogleUtils()
+        self.GMAIL_ACCOUNT = "servicioalertaperu@gmail.com"
 
         # connect to database, enable threading
         SQLDATABASE = os.path.join(os.getcwd(), "data", "members.db")
         self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
         self.cursor = self.conn.cursor()
-
-        # generate stats
-        # self.kpis = {}
-        # self.cursor.execute("SELECT Name, NiceName FROM '@tableinfo'")
-        # for table in self.cursor.fetchall():
-        #     self.cursor.execute(f"SELECT COUNT(*) FROM {table[0]}")
-        #     self.kpis.update({table[1]: self.cursor.fetchone()[0]})
-        # self.kpis = {i: self.kpis[i] for i in sorted(self.kpis)}
-        # print(self.kpis)
-
-        # self.cursor.execute("SELECT * FROM actions ORDER BY Timestamp DESC")
-        # _laction = self.cursor.fetchone()[4]
 
     def add_new_members(self):
         # log start of process
@@ -241,13 +230,6 @@ class Members:
                 }
             )
         return raw_data
-
-    def sql(self, table, fields):
-        """Create generic SQL statement to insert new records in any table in database."""
-
-        _qmarks = ",".join(["?" for _ in range(len(fields))])
-        # return example: REPLACE INTO members (IdMember, Email) VALUES (?,?)
-        return f"REPLACE INTO {table} ({','.join(fields)}) VALUES ({_qmarks})"
 
     def restart_database(self):
         """Erases all data in database. Only for testing purposes. DO NOT USE."""

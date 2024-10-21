@@ -3,7 +3,6 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from statistics import mean
 from datetime import datetime as dt
-from google.cloud import vision
 
 
 def process_image(img_object, img_filename):
@@ -42,9 +41,9 @@ def process_image(img_object, img_filename):
 
     # add text at bottom (center measuring size previously)
     months = [
-        "Ebero",
+        "Enero",
         "Febrero",
-        "Marzp",
+        "Marzo",
         "Abril",
         "Mayo",
         "Junio",

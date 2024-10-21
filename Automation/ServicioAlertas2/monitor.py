@@ -1,9 +1,7 @@
 from tkinter import Tk, Label
 import tkinter.font as TkFont
-
-# import streamlit as st
+import streamlit as st
 import os
-from PIL import Image
 
 
 class Monitor:
@@ -13,7 +11,6 @@ class Monitor:
         self.table = False
 
     def add_item(self, text, type=0):
-        return
         if type == 0:
             st.subheader(text)
             self.table = False
@@ -69,20 +66,9 @@ class Monitor:
             st.write(f"<i>{txt}</i>")
 
     def start_monitor(self):
-        return
         st.set_page_config(page_title="Monitor", layout="wide")
-        logo = Image.open(os.path.join(os.curdir, "other", "titleimg.png"))
-        _, col2, _ = st.columns((0.2, 0.6, 0.2))
-        with col2:
-
-            _, col2B, _ = st.columns((0.2, 0.6, 0.2))
-            with col2B:
-                st.image(logo, width=200)
-            st.title("Sistema de Alertas Perú")
-            # st.image(os.path.join(os.curdir, "other", "titleimg.png"))
-
-    def show_stats(self, data):
-        st.bar_chart(data, horizontal=True, width=750, use_container_width=False)
+        st.image(os.path.join(os.curdir, "other", "titleimg.png"))
+        st.title("Sistema de Alertas Perú")
 
     def start_monitor2(self):
 

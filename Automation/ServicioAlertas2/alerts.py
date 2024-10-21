@@ -39,11 +39,10 @@ class Alerts:
         self.MONITOR = MONITOR
         self.cursor = members.cursor
         self.conn = members.conn
-        self.sql = members.sql
         self.alert_list = []
         self.WAPP = WhatsAppUtils()
 
-    def get_alert_list(self):
+    def get_alert_list(db_cursor, log, monitor):
         # generate list (only expiration records that meet date criteria)
         cmd = f"""  DROP TABLE IF EXISTS _alertaEnviar;
                     CREATE TABLE _alertaEnviar (CodMember, NombreCompleto, Celular, Placa, FechaHasta, TipoAlerta, Correo, IdMember_FK, IdPlaca_FK);
@@ -71,9 +70,9 @@ class Alerts:
 							WHERE DATE('now', 'localtime', '10 days') = FechaHasta OR DATE('now', 'localtime', '0 days') = FechaHasta)
                     ON IdMember = IdMember_FK;"""
 
-        self.cursor.executescript(cmd)
-        self.cursor.execute("SELECT * FROM _alertaEnviar")
-        self.alert_list = self.cursor.fetchall()
+        db_cursor.executescript(cmd)
+        db_cursor.execute("SELECT * FROM _alertaEnviar")
+        return db_cursor.fetchall()
 
     def send_alerts(self, SMS=False):
 

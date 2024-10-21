@@ -1,15 +1,13 @@
-import io, os
+import io
 import time
 import threading
 from datetime import datetime as dt
-import pygame
 from pygame.locals import *
-import speech_recognition
 from tkinter import Tk, Label
 from PIL import Image, ImageTk
 
 # local imports
-import sunarp, soat_image
+import soat_image
 from gft_utils import SpeechUtils
 
 
@@ -27,12 +25,10 @@ def threader(func):
 
 
 class Gui:
-    """Manages PyGame window that captures manual captcha."""
 
     def __init__(self, zoomto, numchar) -> None:
         self.zoomto = zoomto
         self.numchar = numchar
-        self.speech = speech_recognition.Recognizer()
         self.numpad = (
             K_KP0,
             K_KP1,
@@ -46,40 +42,11 @@ class Gui:
             K_KP9,
         )
 
-    def get_speech2(self):
-        while True:
-            try:
-                with speech_recognition.Microphone() as mic:
-                    self.speech.adjust_for_ambient_noise(mic, duration=0.2)
-                    _audio = self.speech.listen(mic)
-                    text = self.speech.recognize_google(_audio)
-                    text = text.lower().replace(" ", "")
-                    with open(
-                        os.path.join(
-                            "D:\pythonCode",
-                            "Resources",
-                            "StaticData",
-                            "military_alphabet.txt",
-                        )
-                    ) as file:
-                        ma_index = [i.strip() for i in file.readlines()]
-                        for word in ma_index:
-                            text = text.replace(word, word[0])
-
-                    print(f"Output: {text}")
-                    if len(text) == 6:
-                        return text
-            except:
-                if self.speech_driver_errors < 5:
-                    self.speech = speech_recognition.Recognizer()
-                    self.speech_driver_errors += 1
-                else:
-                    return None
-
     def get_speech(self):
         while True:
             text = SpeechUtils().get_speech()
             text = text.lower().replace(" ", "")
+            print(f"Captured: {text}")
             if len(text) == 6:
                 return text
 
@@ -93,21 +60,21 @@ class Gui:
         label.grid(row=0, column=0)
         window.mainloop()
 
-    def gui2(self, captcha_img):
+    def gui_with_speech(self, captcha_img):
         self.captcha_img = captcha_img
         t1 = threading.Thread(target=self.show_captcha, daemon=True)
         t1.start()
         return self.get_speech()
 
-    def gui(self, canvas, captcha_img):
+    def gui_with_text_entry(self, canvas, captcha_img):
+        import pygame
+
         TEXTBOX = pygame.Surface((80, 120))
         UPPER_LEFT = (10, 10)
         image = pygame.image.load(io.BytesIO(captcha_img)).convert()
         image = pygame.transform.scale(image, self.zoomto)
         canvas.MAIN_SURFACE.fill(canvas.COLORS["BLACK"])
         canvas.MAIN_SURFACE.blit(image, UPPER_LEFT)
-
-        # return self.get_speech()
 
         chars, col = [], 0
         while True:
@@ -236,9 +203,8 @@ class Update:
         self.cursor.execute(
             "SELECT IdPlaca, Placa FROM placas JOIN _regmsg_placas ON IdPlaca = IdPlaca_FK "
         )
-        self.all_updates["satmuls"] = self.all_updates["sutrans"] = (
-            self.cursor.fetchall()
-        )
+        # self.all_updates["satmuls"] =
+        self.all_updates["sutrans"] = self.cursor.fetchall()
 
         # records
         self.cursor.execute(
@@ -321,8 +287,14 @@ class Update:
         # log action
         self.LOG.info(f"Will update: {self.all_updates}")
 
-        for k, v in self.all_updates.items():
-            self.MONITOR.add_widget(f"{k}...{len(v)}", type=1)
+        # TODO: get nice names with SQL query
+
+        data = {
+            "Process": [i for i in self.all_updates.keys()],
+            "Quant": [len(j) for j in self.all_updates.values()],
+        }
+        print(data)
+        self.MONITOR.add_item(data, type=4)
 
     def log_action(self, scraper, idMember=None, idPlaca=None):
         """Registers scraping action in actions table in database."""
@@ -371,8 +343,8 @@ class Update:
                 try:
                     plac = placa[1]
                     captcha_img = scraper.get_captcha_img()
-                    # captcha = GUI.gui(canvas, captcha_img)
-                    captcha = GUI.gui2(captcha_img)
+                    # captcha = GUI.gui_with_text_entry(canvas, captcha_img)
+                    captcha = GUI.gui_with_speech(captcha_img)
                     response = scraper.browser(placa=plac, captcha_txt=captcha)
                     # wrong captcha - restart loop with same placa
                     if response == -2:
@@ -408,7 +380,8 @@ class Update:
                         # insert gathered record of member
                         self.cursor.execute(cmd, values)
                         self.conn.commit()
-                    self.MONITOR.add_widget(f"SOAT: {plac}", type=3)
+                    self.MONITOR.add_item("SOAT:", type=2)
+                    self.MONITOR.add_item(plac, type=3)
                     # log action into actios table
                     self.log_action(scraper="soats", idPlaca=placa[0])
                     break  # escape while True loop
@@ -450,7 +423,7 @@ class Update:
                     elif img_object:
                         # add image filename
                         _img_filename = f"SUNARP_{placa[1]}.png"
-                        sunarp.process_image(img_object, _img_filename)
+                        # sunarp.process_image(img_object, _img_filename)
                         fields = ["IdPlaca_FK", "ImgFilename", "LastUpdate"]
                         values = [
                             placa[0],
@@ -511,7 +484,8 @@ class Update:
                             self.cursor.execute(cmd, values)
                         self.conn.commit()
 
-                    self.MONITOR.add_widget(f"SOAT: {plac}", type=3)
+                    self.MONITOR.add_item("SOAT:", type=2)
+                    self.MONITOR.add_item(plac, type=3)
                     self.log_action(scraper=table, idPlaca=placa[0])
 
                     break
@@ -543,7 +517,8 @@ class Update:
                 # update database
                 cmd = self.sql(table, fields)
                 self.cursor.execute(cmd, values)
-                self.MONITOR.add_widget(f"RECORD: {doc[0]}", type=3)
+                self.MONITOR.add_item("RECORD:", type=2)
+                self.MONITOR.add_item(doc[0], type=3)
                 self.log_action(scraper=table, idMember=doc[0])
                 self.conn.commit()
 
@@ -598,7 +573,8 @@ class Update:
 
                     self.conn.commit()
                     # register action and skip to next record
-                    self.MONITOR.add_widget(f"SATIMP: {doc_tipo}-{doc_num}", type=3)
+                    self.MONITOR.add_item("SATIMP:", type=2)
+                    self.MONITOR.add_item(f"{doc_tipo}-{doc_num}", type=3)
                     self.log_action(scraper=table1, idMember=rec[0])
                     break
                 except KeyboardInterrupt:
@@ -648,9 +624,8 @@ class Update:
                             # insert gathered record of member
                             self.cursor.execute(cmd, values)
                             self.conn.commit()
-                            self.MONITOR.add_widget(
-                                f"BREVETE: {doc_tipo}-{doc_num}", type=3
-                            )
+                            self.MONITOR.item("BREVETE:", type=2)
+                            self.MONITOR.item(f"{doc_tipo}-{doc_num}", type=3)
 
                     for papeleta in new_record_dates_fixed[-1]:
                         # adjust date format for SQL (YYYY-MM-DD)
@@ -722,7 +697,8 @@ class Update:
                         self.conn.commit()
                     # register action and skip to next record
                     self.log_action(scraper=table, idMember=rec[0])
-                    self.MONITOR.add_widget(f"SUNAT: {doc_tipo}-{doc_num}", type=3)
+                    self.MONITOR.add_item("SUNAT:", type=2)
+                    self.MONITOR.add_item(f"{doc_tipo}-{doc_num}", type=3)
                     break
                 except KeyboardInterrupt:
                     quit()
@@ -774,7 +750,8 @@ class Update:
                             self.cursor.execute(cmd, values)
                             self.conn.commit()
                     # register action and skip to next record
-                    self.MONITOR.add_widget(f"DOCS: {doc_tipo}-{doc_num}", type=3)
+                    self.MONITOR.item("DOCS:", type=2)
+                    self.MONITOR.item(f"{doc_tipo}-{doc_num}", type=3)
                     self.log_action(scraper=table, idMember=rec[0])
                     break
                 except KeyboardInterrupt:
@@ -826,7 +803,8 @@ class Update:
                             self.conn.commit()
 
                     # register action and skip to next record
-                    self.MONITOR.add_widget(f"PLACA: {placa}", type=3)
+                    self.MONITOR.item("PLACA:", type=2)
+                    self.MONITOR.item(placa, type=3)
                     self.log_action(scraper=table, idPlaca=rec[0])
                     break
                 except KeyboardInterrupt:

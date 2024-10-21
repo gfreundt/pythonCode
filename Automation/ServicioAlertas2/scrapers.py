@@ -281,27 +281,18 @@ class Brevete:
             time.sleep(1)
             timeout += 1
             if timeout > 10:
-                raise TimeoutError
-        time.sleep(3)
+                return {}
+        time.sleep(1.5)
 
         action = ActionChains(self.WEBD)
         try:
-            # enter key combination to open tab
-            keys = (
-                Keys.TAB,
-                Keys.TAB,
-                Keys.TAB,
-                Keys.TAB,
-                Keys.TAB,
-                Keys.RIGHT,
-                Keys.ENTER,
-            )
-            for key in keys:
+            # enter key combination to open tabs
+            for key in (Keys.TAB * 5, Keys.RIGHT, Keys.ENTER):
                 action.send_keys(key)
                 action.perform()
                 time.sleep(0.5)
-            # extract data
 
+            # extract data
             _puntos = self.WEBD.find_element(
                 By.XPATH,
                 "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[2]/div/div/mat-card/mat-card-content/div/app-visor-sclp/mat-card/mat-card-content/div/div[2]/label",
@@ -318,6 +309,7 @@ class Brevete:
             action.send_keys(Keys.ENTER)
             action.perform()
             time.sleep(0.5)
+
             _recordnum = self.WEBD.find_element(
                 By.XPATH,
                 "/html/body/app-root/div[2]/app-search/div[2]/mat-tab-group/div/mat-tab-body[3]/div/div/mat-card/mat-card-content/div/app-visor-record/div[1]/div/mat-card-title",

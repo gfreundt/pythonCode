@@ -1,12 +1,7 @@
 import os
-from copy import deepcopy as copy
 from datetime import datetime as dt
 from PIL import Image, ImageDraw, ImageFont
 from gft_utils import PDFUtils
-
-
-def friendly_date(date):
-    return dt.strftime(dt.strptime(date, "%Y-%m-%d"), "%d/%m/%Y")
 
 
 class SoatImage:
@@ -18,7 +13,7 @@ class SoatImage:
 
     def generate(self, id):
         _resources = os.path.join("D:\pythonCode", "Resources", "Fonts")
-        _path = os.path.join(os.curdir, "images")
+        _path = os.path.join(os.curdir, "templates")
         base_img = Image.open(os.path.join(_path, "SOAT_base.png"))
         cias = [i.split(".")[0] for i in os.listdir(_path)]
         editable_img = ImageDraw.Draw(base_img)
@@ -30,8 +25,9 @@ class SoatImage:
         self.cursor.execute(cmd)
         info = self.cursor.fetchone()
 
-        # turn date into friendly format
-        info[2], info[3] = friendly_date(info[2]), friendly_date(info[3])
+        # turn date into correct format
+        info[2] = dt.strftime(dt.strptime(info[2], "%Y-%m-%d"), "%d/%m/%Y")
+        info[3] = dt.strftime(dt.strptime(info[3], "%Y-%m-%d"), "%d/%m/%Y")
 
         # if logo in database add it to image, else add word
         if info[0] in cias:

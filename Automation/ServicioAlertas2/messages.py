@@ -185,11 +185,9 @@ class Messages:
 
         # send emails if switch on
         if EMAIL:
-            email = EmailUtils()
+            email = EmailUtils(account="servicioalertasperu@outlook.com")
             try:
-                print("trying")
                 results = email.send_from_outlook(emails=messages)
-                print("fgfgfgfgfgfg")
             except KeyboardInterrupt:  # Exception:
                 self.LOG.error("ERROR sending emails")
 
