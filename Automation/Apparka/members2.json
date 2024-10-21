@@ -20,7 +20,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10059261",
@@ -30,7 +30,7 @@
                 "fecha_hasta": "11/05/2031",
                 "centro": "MTC - ANTENOR ORREGO"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -56,13 +56,13 @@
                 ],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 [],
                 [],
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024",
+            "Sutran_Actualizado": "02/05/2024",
             "SOAT": [
                 {},
                 {
@@ -78,10 +78,11 @@
                     "fecha_venta": "06-03-2024 19:27"
                 },
                 {}
-            ]
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
-            "Bienvenida": {},
+            "Bienvenida": true,
             "Resumen": [],
             "Alertas": {
                 "Brevete": [],
@@ -111,7 +112,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q09343936",
@@ -121,15 +122,32 @@
                 "fecha_hasta": "15/09/2033",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "14-10-2023",
+                    "fecha_fin": "14-10-2024",
+                    "placa": "CBW475",
+                    "certificado": "000000000200909875600100",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "06-10-2023 16:58"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -160,7 +178,7 @@
         },
         "Resultados": {
             "Satimp": [],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10557545",
@@ -170,15 +188,32 @@
                 "fecha_hasta": "13/03/2034",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "24-01-2024",
+                    "fecha_fin": "24-01-2025",
+                    "placa": "4536FC",
+                    "certificado": "000000000200936010500100",
+                    "uso": "Particular",
+                    "clase": "Motocicleta",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "11-12-2023 16:07"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -214,7 +249,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q09856416",
@@ -224,7 +259,7 @@
                 "fecha_hasta": "20/10/2032",
                 "centro": "MTC - ANTENOR ORREGO"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -238,11 +273,28 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "04-03-2024",
+                    "fecha_fin": "04-03-2025",
+                    "placa": "F4J162",
+                    "certificado": "000000000000000593514099",
+                    "uso": "Particular",
+                    "clase": "Automovil",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "04-03-2024 08:01"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -279,7 +331,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q09872067",
@@ -289,7 +341,7 @@
                 "fecha_hasta": "31/10/2027",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -315,12 +367,12 @@
                 ],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 [],
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024",
+            "Sutran_Actualizado": "02/05/2024",
             "SOAT": [
                 {
                     "aseguradora": "Rimac Seguros",
@@ -347,10 +399,14 @@
                     "fecha_venta": "22-06-2023 15:08"
                 },
                 []
-            ]
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
-            "Bienvenida": {},
+            "Bienvenida": {
+                "fecha": "29/04/2024",
+                "hash": "SAP-630432|ce444f7658d8"
+            },
             "Resumen": [],
             "Alertas": {
                 "Brevete": [],
@@ -380,7 +436,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q09342827",
@@ -390,7 +446,7 @@
                 "fecha_hasta": "29/03/2027",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -404,11 +460,11 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024",
+            "Sutran_Actualizado": "02/05/2024",
             "SOAT": [
                 {
                     "aseguradora": "Interseguro",
@@ -424,10 +480,14 @@
                 },
                 [],
                 []
-            ]
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
-            "Bienvenida": {},
+            "Bienvenida": {
+                "fecha": "29/04/2024",
+                "hash": "SAP-7E17C0|ce444f7658d8"
+            },
             "Resumen": [],
             "Alertas": {
                 "Brevete": [],
@@ -457,7 +517,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10220909",
@@ -467,15 +527,32 @@
                 "fecha_hasta": "07/11/2032",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "15-11-2023",
+                    "fecha_fin": "15-11-2024",
+                    "placa": "CJM179",
+                    "certificado": "000000000200926042900100",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "15-11-2023 13:10"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -515,7 +592,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q06674196",
@@ -525,7 +602,7 @@
                 "fecha_hasta": "05/07/2030",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -539,11 +616,28 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "15-05-2023",
+                    "fecha_fin": "15-05-2024",
+                    "placa": "APA503",
+                    "certificado": "000000000000000592879403",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "15-05-2023 12:47"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -580,7 +674,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q09341676",
@@ -590,7 +684,7 @@
                 "fecha_hasta": "04/07/2029",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -615,7 +709,7 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 [],
                 {
@@ -626,7 +720,35 @@
                     "clasificacion": "Muy Grave"
                 }
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "01-08-2023",
+                    "fecha_fin": "01-08-2024",
+                    "placa": "D7Z065",
+                    "certificado": "000000000200881083500100",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "31-07-2023 19:15"
+                },
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "17-11-2023",
+                    "fecha_fin": "17-11-2024",
+                    "placa": "F2L100",
+                    "certificado": "000000000200925586100100",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "14-11-2023 16:33"
+                },
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -673,7 +795,7 @@
                     ]
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q08257907",
@@ -683,7 +805,7 @@
                 "fecha_hasta": "13/12/2027",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -697,11 +819,28 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Rimac Seguros",
+                    "fecha_inicio": "20-01-2024",
+                    "fecha_fin": "20-01-2025",
+                    "placa": "BAW484",
+                    "certificado": "000009118745000000000001",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "02-01-2024 15:59"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -737,7 +876,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10609369",
@@ -747,7 +886,7 @@
                 "fecha_hasta": "26/07/2032",
                 "centro": "MTC - ANTENOR ORREGO"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -761,7 +900,7 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 {
                     "documento": "2450337514",
@@ -771,7 +910,24 @@
                     "clasificacion": "Muy Grave"
                 }
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Rimac Seguros",
+                    "fecha_inicio": "02-08-2023",
+                    "fecha_fin": "02-08-2024",
+                    "placa": "AKE119",
+                    "certificado": "000008395589000000000001",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "02-08-2023 09:37"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -807,9 +963,9 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": [],
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -823,11 +979,28 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Pacifico Seguros",
+                    "fecha_inicio": "19-05-2023",
+                    "fecha_fin": "19-05-2024",
+                    "placa": "A1L239",
+                    "certificado": "000000000200847302800100",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "10-05-2023 10:14"
+                },
+                [],
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -864,7 +1037,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10805548",
@@ -874,7 +1047,7 @@
                 "fecha_hasta": "14/03/2030",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -900,7 +1073,7 @@
                 ],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 [],
                 {
@@ -912,7 +1085,35 @@
                 },
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "10-03-2024",
+                    "fecha_fin": "10-03-2025",
+                    "placa": "BAV066",
+                    "certificado": "000000000000000593520962",
+                    "uso": "Particular",
+                    "clase": "Automovil",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "04-03-2024 09:20"
+                },
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "01-07-2023",
+                    "fecha_fin": "01-07-2024",
+                    "placa": "B2Y297",
+                    "certificado": "000000000000000592994150",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "30-06-2023 20:38"
+                },
+                []
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -950,7 +1151,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q40080207",
@@ -960,7 +1161,7 @@
                 "fecha_hasta": "16/09/2031",
                 "centro": "MTC - ANTENOR ORREGO"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [],
                 [
@@ -986,9 +1187,48 @@
                     }
                 ]
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Rimac Seguros",
+                    "fecha_inicio": "27-09-2023",
+                    "fecha_fin": "27-09-2024",
+                    "placa": "CHO571",
+                    "certificado": "000008792421000000000001",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "27-09-2023 17:28"
+                },
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "30-03-2024",
+                    "fecha_fin": "30-03-2025",
+                    "placa": "BJK193",
+                    "certificado": "000000000000000593558634",
+                    "uso": "Taxi",
+                    "clase": "Automovil",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "30-03-2024 00:27"
+                },
+                {
+                    "aseguradora": "Rimac Seguros",
+                    "fecha_inicio": "23-01-2024",
+                    "fecha_fin": "23-01-2025",
+                    "placa": "AZK376",
+                    "certificado": "000008910467000000000001",
+                    "uso": "Particular",
+                    "clase": "Automovil",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "17-01-2024 17:00"
+                }
+            ],
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -1048,7 +1288,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "H29548887",
@@ -1058,7 +1298,7 @@
                 "fecha_hasta": "07/12/2029",
                 "centro": "MTC - ANTENOR ORREGO"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -1074,7 +1314,7 @@
                 [],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 [],
                 {
@@ -1086,7 +1326,35 @@
                 },
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "18-06-2023",
+                    "fecha_fin": "18-06-2024",
+                    "placa": "AHJ311",
+                    "certificado": "000000000000000592958897",
+                    "uso": "Particular",
+                    "clase": "Automovil",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "16-06-2023 11:41"
+                },
+                {
+                    "aseguradora": "Interseguro",
+                    "fecha_inicio": "20-01-2024",
+                    "fecha_fin": "20-01-2025",
+                    "placa": "BWT453",
+                    "certificado": "000000000000000593436886",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "20-01-2024 10:29"
+                },
+                []
+            ]
         },
         "Envios": {
             "Bienvenida": {
@@ -1126,7 +1394,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "Q10263710",
@@ -1136,7 +1404,7 @@
                 "fecha_hasta": "27/11/2027",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -1152,7 +1420,7 @@
                 [],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 {
                     "documento": "2450497059",
@@ -1164,7 +1432,8 @@
                 [],
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat_Actualizado": "02/05/2024"
         },
         "Envios": {
             "Bienvenida": {
@@ -1190,7 +1459,7 @@
             "Celular": "997102004",
             "Correo": "jyanezgiles@gmail.com",
             "Placas": [
-                "ATR393"
+                "A7X390"
             ]
         },
         "Resultados": {
@@ -1200,7 +1469,7 @@
                     "deudas": []
                 }
             ],
-            "Satimp_Actualizado": "30/04/2024",
+            "Satimp_Actualizado": "02/05/2024",
             "Brevete": {
                 "clase": "A I",
                 "numero": "J09993024",
@@ -1210,7 +1479,7 @@
                 "fecha_hasta": "08/09/2032",
                 "centro": "MTC - LINCE"
             },
-            "Brevete_Actualizado": "30/04/2024",
+            "Brevete_Actualizado": "02/05/2024",
             "Revtec": [
                 [
                     {
@@ -1226,7 +1495,7 @@
                 [],
                 []
             ],
-            "Revtec_Actualizado": "30/04/2024",
+            "Revtec_Actualizado": "02/05/2024",
             "Sutran": [
                 {
                     "documento": "2501066721",
@@ -1238,74 +1507,29 @@
                 [],
                 []
             ],
-            "Sutran_Actualizado": "30/04/2024"
+            "Sutran_Actualizado": "02/05/2024",
+            "Soat_Actualizado": "02/05/2024",
+            "Soat": [
+                {
+                    "aseguradora": "Rimac Seguros",
+                    "fecha_inicio": "11-09-2023",
+                    "fecha_fin": "11-09-2024",
+                    "placa": "A7X390",
+                    "certificado": "000008423231000000000001",
+                    "uso": "Particular",
+                    "clase": "Camioneta suv/rural",
+                    "vigencia": "Activo",
+                    "tipo": "Digital",
+                    "fecha_venta": "11-09-2023 16:17"
+                },
+                [],
+                []
+            ]
         },
         "Envios": {
             "Bienvenida": {
                 "fecha": "30/04/2024",
                 "hash": "SAP-E7B06B|151e66a16570"
-            },
-            "Resumen": [],
-            "Alertas": {
-                "Brevete": [],
-                "Satimp": [],
-                "Revtec": [],
-                "Sutran": []
-            }
-        }
-    },
-    {
-        "Correlativo": 17,
-        "Codigo": "SAP-3D7223",
-        "Datos": {
-            "Nombre y Apellido": "Patrick Lerner",
-            "Documento Tipo": "DNI",
-            "N\u00famero de Documento": "09872078",
-            "Celular": "995742347",
-            "Correo": "patrick_lerner@yahoo.com",
-            "Placas": [
-                "AJP209",
-                "D5U002"
-            ]
-        },
-        "Resultados": {
-            "Satimp": [],
-            "Satimp_Actualizado": "30/04/2024",
-            "Brevete": {},
-            "Brevete_Actualizado": "30/04/2024",
-            "Revtec": [
-                [
-                    {
-                        "certificadora": "REVISIONES TECNICAS DEL PERU S.A.C.",
-                        "placa": "AJP209",
-                        "certificado": "C-2023-013-185-015140",
-                        "fecha_desde": "17/07/2023",
-                        "fecha_hasta": "17/07/2024",
-                        "resultado": "APROBADO",
-                        "vigencia": "VIGENTE"
-                    }
-                ],
-                [
-                    {
-                        "certificadora": "REVISIONES TECNICAS DEL PERU S.A.C.",
-                        "placa": "D5U002",
-                        "certificado": "C-2023-013-185-015114",
-                        "fecha_desde": "17/07/2023",
-                        "fecha_hasta": "17/07/2024",
-                        "resultado": "APROBADO",
-                        "vigencia": "VIGENTE"
-                    }
-                ],
-                []
-            ],
-            "Revtec_Actualizado": "30/04/2024",
-            "Sutran": [],
-            "Sutran_Actualizado": "30/04/2024"
-        },
-        "Envios": {
-            "Bienvenida": {
-                "fecha": "30/04/2024",
-                "hash": "SAP-3D7223|dbe9f54fa312"
             },
             "Resumen": [],
             "Alertas": {
