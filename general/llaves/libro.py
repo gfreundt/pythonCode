@@ -330,7 +330,7 @@ class Libro:
         self.muestra_arbol(arbol)
 
     def muestra_arbol(self):
-        self.vista.mostrar(self.ggmk)
+        self.vista.mostrar()
 
     def valida_llave_es_unica(self, llave):
         if self.llaves_usadas.count(llave) == 1:

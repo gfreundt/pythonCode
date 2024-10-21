@@ -1,8 +1,8 @@
-from tkinter import Tk, Label, Button, PhotoImage, StringVar, Entry, OptionMenu
+from tkinter import Tk, Label, Button, PhotoImage, StringVar, Entry, OptionMenu, Canvas
 from PIL import Image, ImageTk
 import libro as libro, proyecto
 import sqlite3
-
+from random import randrange
 
 class Menu:
 
@@ -13,8 +13,12 @@ class Menu:
         self.cursor = self.conn.cursor()
 
         # GUI - inicializar
+        winx, winy = (500, 300)
         self.window = Tk()
-        self.window.geometry("500x300")
+        self.window.configure(bg="white")
+        x = (int(self.window.winfo_screenwidth()) - winx) // 2
+        y = (int(self.window.winfo_screenheight()) - winy) // 3
+        self.window.geometry(f"{winx}x{winy}+{x}+{y}")
         self.window.title("Sistema de Maestranza de Llaves REDTOWER v0.6")
         self.window.iconphoto(False, PhotoImage(file="key1.png"))
 
@@ -22,27 +26,30 @@ class Menu:
         self.image = ImageTk.PhotoImage(
             Image.open("LOGOS-CMYK-10-2048x1160.png").resize((205, 116))
         )
-        Label(self.window, image=self.image).place(x=90, y=10)
+        Label(self.window, image=self.image).place(x=145, y=10)
 
         # GUI - empezar
         self.main_menu()
 
     def main_menu(self):
 
+        # crear lineas
+        canvas = Canvas(bg="white", border=-1)
+        canvas.create_rectangle(10, 10, 90, 130)
+        canvas.create_rectangle(110, 10, 190, 130)
+        
         # crear botones del menu principal
-        self.main_widgets = [
-            (Button(text="Nuevo Libro", command=self.menu_nuevo_libro), (100, 150)),
-            (Button(text="Cargar Libro", command=self.menu_cargar_libro), (200, 150)),
-            (
-                Button(text="Nuevo Proyecto", command=self.menu_nuevo_proyecto),
-                (100, 180),
-            ),
-            (
-                Button(text="Cargar Proyecto", command=self.menu_cargar_proyecto),
-                (200, 180),
-            ),
-            (Button(text="Herramients", command=self.menu_cargar_proyecto), (300, 150)),
-            (Button(text="Salir", command=self.salir), (300, 250)),
+        self.main_widgets = [(canvas, (80, 130)),
+            (Button(text="Nuevo", padx=7, command=self.menu_nuevo_libro), (100, 150)),
+            (Button(text="Cargar", padx=7, command=self.menu_cargar_libro), (100, 190)),
+            (Button(text="Listado", padx=7, command=self.menu_cargar_libro), (100, 230)),
+            (Button(text="Nuevo", padx=7, command=self.menu_nuevo_proyecto), (200, 150)),
+            (Button(text="Cargar", padx=7, command=self.menu_cargar_proyecto), (200, 190)),
+            (Button(text="Listado", padx=7, command=self.menu_cargar_proyecto), (200, 230)),
+            (Button(text="Herramients", padx=7, command=self.menu_cargar_proyecto), (300, 150)),
+            (Button(text="Salir", padx=7, command=self.salir), (320, 230)),
+            (Label(text="LIBROS", bg="white"), (105, 270)),
+            (Label(text="PROYECTOS", bg="white"), (193, 270)),
         ]
 
         for button in self.main_widgets:
@@ -65,23 +72,15 @@ class Menu:
         # definir inputs y sus titulos, y los botones
         options = ["1-1-1-0-4", "1-1-2-0-3", "1-1-1-1-3"]
         self.option1_widgets = [
-            (Label(self.window, text="Codigo GGMK: "), (10, 150)),
-            (Label(self.window, text="Formato: "), (10, 120)),
-            (Label(self.window, text="Nombre del Libro: "), (10, 170)),
-            (Label(self.window, text="Notas: "), (10, 190)),
-            (OptionMenu(self.window, self.formato_libro, *options), (130, 120)),
+            (Label(self.window, text="Codigo GGMK: "), (10, 170)),
+            (Label(self.window, text="Formato: "), (10, 140)),
+            (Label(self.window, text="Nombre del Libro: "), (10, 200)),
+            (Label(self.window, text="Notas: "), (10, 230)),
+            (OptionMenu(self.window, self.formato_libro, *options), (130, 140)),
             (
                 Entry(
                     self.window,
                     textvariable=self.codigo_ggmk,
-                    font=("calibre", 10, "normal"),
-                ),
-                (130, 150),
-            ),
-            (
-                Entry(
-                    self.window,
-                    textvariable=self.nombre_libro,
                     font=("calibre", 10, "normal"),
                 ),
                 (130, 170),
@@ -89,18 +88,31 @@ class Menu:
             (
                 Entry(
                     self.window,
+                    textvariable=self.nombre_libro,
+                    font=("calibre", 10, "normal"),
+                ),
+                (130, 200),
+            ),
+            (
+                Entry(
+                    self.window,
                     textvariable=self.notas_libro,
                     font=("calibre", 10, "normal"),
                 ),
-                (130, 190),
-            ),
-            (Button(text="Crear Libro", command=self.nuevo_libro_crear), (100, 250)),
-            (Button(text="Regresar", command=self.nuevo_regresar), (200, 250)),
+                (130, 230),
+            ),(Button(text="aleatoria", command=self.ggmk_aleatoria), (280, 170)),
+            (Button(text="Crear Libro", command=self.nuevo_libro_crear), (370, 140)),
+            (Button(text="Regresar", command=self.nuevo_regresar), (370, 180)),
         ]
 
         # colocar widgets definidos
         for button in self.option1_widgets:
             button[0].place(x=button[1][0], y=button[1][1])
+
+    def ggmk_aleatoria(self):
+        v = "".join([str(randrange(0,10)) for _ in range(6)])
+        self.codigo_ggmk.set(value=v)
+        return
 
     def nuevo_libro_crear(self):
         # desactivar botones de menu secundario
