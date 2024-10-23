@@ -11,7 +11,9 @@ def generador(ggmk, formato):
         for p in matriz:
             m[p] = PAR if int(ggmk[0]) % 2 == 0 else IMPAR
 
-        return [i for i in it.product(*m) if i != codigo and valida_codigo(codigo)]
+        comb = [i for i in it.product(*m)]
+
+        return [i for i in comb if (i != codigo and valida_codigo(i))]
 
     def con_smk(level1, matriz, ggmk):
 

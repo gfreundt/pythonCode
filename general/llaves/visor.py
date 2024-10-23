@@ -102,9 +102,9 @@ class Visor:
     def genera_texto_arbol(self, detalle):
 
         if "proyecto" in self.configuracion:
-            return self.genera_texto_arbol_proyecto(detalle=self.detalle)
+            return self.genera_texto_arbol_proyecto(detalle=detalle)
         else:
-            return self.genera_texto_arbol_libro(detalle=self.detalle)
+            return self.genera_texto_arbol_libro(detalle=detalle)
 
     def genera_texto_arbol_proyecto(self, detalle):
 
@@ -156,7 +156,10 @@ class Visor:
         data = self.proceso.cursor.fetchall()
 
         previous = [0] * 10
-        output = f"GGMK <> Codigo:{data[0][0]}\n"
+
+        output = f"{'-'*50}\nLibro: {self.proceso.nombre_tabla}\nValidaciones: OK\nCilindros: {len(data):,}\n{'-'*50}\n"
+
+        output += f"GGMK <> Codigo:{data[0][0]}\n"
 
         for line, d in enumerate(data):
 

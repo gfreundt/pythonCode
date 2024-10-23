@@ -13,13 +13,16 @@ class Libro:
 
     def __init__(self, conn):
 
+        # conecta a la base de datos
         self.conn = conn
         self.cursor = self.conn.cursor()
 
+        # inicializa visor
+        self.vista = Visor(configuracion="libro", proceso=self)
+
+        # variables de estado
         self.detalle = False
         self.status_graba_db = False
-
-        self.vista = Visor(configuracion="libro", proceso=self)
 
     def menu_detalle(self):
         self.detalle = not self.detalle
@@ -87,6 +90,8 @@ class Libro:
             arbol,
         )
         self.conn.commit()
+
+        print(self.valida_libro_completo())
 
         # muestra las llaves en el GUI
         self.muestra_arbol()
