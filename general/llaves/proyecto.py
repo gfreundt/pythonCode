@@ -108,7 +108,7 @@ class Proyecto:
         # copia estructura de tabla de libro a nuevo proyecto
         self.cursor.execute(f"DROP TABLE IF EXISTS '{self.nombre_proyecto}'")
         self.cursor.execute(
-            f"CREATE TABLE '{self.nombre_proyecto}' (GGMK, GMK, MK, SMK, K, Secuencia, TipoPuerta, Cerradura, Cilindro, Zona1, Zona2, Zona3, Zona4, ZonaCodigo, Copias, Notas)"
+            f"CREATE TABLE '{self.nombre_proyecto}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP, TipoPuerta, Cerradura, Copias, Zona1, Zona2, Zona3, Zona4, ZonaCodigo, Notas)"
         )
 
         # extrae del libro la cantidad de GMK necesarias para el proyecto
@@ -126,8 +126,8 @@ class Proyecto:
 
             # llena la tabla del proyecto con las llaves necesarias
             for m, mk in enumerate(required_mks):
-                cmd = f"""  INSERT INTO '{self.nombre_proyecto}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, Copias)
-                            SELECT GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, 1
+                cmd = f"""  INSERT INTO '{self.nombre_proyecto}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP, Copias)
+                            SELECT GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP, 1
                             FROM '{self.nombre_tabla}' WHERE MK = '{mk}' LIMIT {self.arbol[g][m]}"""
                 self.cursor.execute(cmd)
 

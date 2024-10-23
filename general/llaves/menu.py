@@ -4,6 +4,7 @@ import libro as libro, proyecto
 import sqlite3
 from random import randrange
 
+
 class Menu:
 
     def __init__(self):
@@ -37,16 +38,32 @@ class Menu:
         canvas = Canvas(bg="white", border=-1)
         canvas.create_rectangle(10, 10, 90, 130)
         canvas.create_rectangle(110, 10, 190, 130)
-        
+
         # crear botones del menu principal
-        self.main_widgets = [(canvas, (80, 130)),
+        self.main_widgets = [
+            (canvas, (80, 130)),
             (Button(text="Nuevo", padx=7, command=self.menu_nuevo_libro), (100, 150)),
             (Button(text="Cargar", padx=7, command=self.menu_cargar_libro), (100, 190)),
-            (Button(text="Listado", padx=7, command=self.menu_cargar_libro), (100, 230)),
-            (Button(text="Nuevo", padx=7, command=self.menu_nuevo_proyecto), (200, 150)),
-            (Button(text="Cargar", padx=7, command=self.menu_cargar_proyecto), (200, 190)),
-            (Button(text="Listado", padx=7, command=self.menu_cargar_proyecto), (200, 230)),
-            (Button(text="Herramients", padx=7, command=self.menu_cargar_proyecto), (300, 150)),
+            (
+                Button(text="Listado", padx=7, command=self.menu_cargar_libro),
+                (100, 230),
+            ),
+            (
+                Button(text="Nuevo", padx=7, command=self.menu_nuevo_proyecto),
+                (200, 150),
+            ),
+            (
+                Button(text="Cargar", padx=7, command=self.menu_cargar_proyecto),
+                (200, 190),
+            ),
+            (
+                Button(text="Listado", padx=7, command=self.menu_cargar_proyecto),
+                (200, 230),
+            ),
+            (
+                Button(text="Herramients", padx=7, command=self.menu_cargar_proyecto),
+                (300, 150),
+            ),
             (Button(text="Salir", padx=7, command=self.salir), (320, 230)),
             (Label(text="LIBROS", bg="white"), (105, 270)),
             (Label(text="PROYECTOS", bg="white"), (193, 270)),
@@ -100,7 +117,8 @@ class Menu:
                     font=("calibre", 10, "normal"),
                 ),
                 (130, 230),
-            ),(Button(text="aleatoria", command=self.ggmk_aleatoria), (280, 170)),
+            ),
+            (Button(text="aleatoria", command=self.ggmk_aleatoria), (280, 170)),
             (Button(text="Crear Libro", command=self.nuevo_libro_crear), (370, 140)),
             (Button(text="Regresar", command=self.nuevo_regresar), (370, 180)),
         ]
@@ -110,9 +128,12 @@ class Menu:
             button[0].place(x=button[1][0], y=button[1][1])
 
     def ggmk_aleatoria(self):
-        v = "".join([str(randrange(0,10)) for _ in range(6)])
-        self.codigo_ggmk.set(value=v)
-        return
+
+        _codigo = "123456"  # ggmk invalida
+        while not valida_codigo(_codigo):
+            _codigo = "".join([str(randrange(0, 10)) for _ in range(6)])
+
+        self.codigo_ggmk.set(value=_codigo)
 
     def nuevo_libro_crear(self):
         # desactivar botones de menu secundario
@@ -189,7 +210,7 @@ class Menu:
         # cargar libro
         if self.servicio_elegido == "libro":
             w = libro.Libro(conn=self.conn)
-            w.carga_libro(libro_data=libro_data)
+            w.carga_libro(tabla=self.selected.get())
 
         # nuevo proyecto
         elif self.servicio_elegido == "nuevo_proyecto":
@@ -212,6 +233,31 @@ class Menu:
 
     def salir(self):
         self.window.quit()
+
+
+def valida_codigo(codigo):
+
+    # string to tuple
+    codigo = tuple(int(i) for i in codigo)
+
+    # no puede haber 8 o 9 de diferencia entre pines
+    for position in range(len(codigo) - 1):
+        c = codigo[position]
+        n = codigo[position + 1]
+        if abs(n - c) >= 8:
+            return False
+
+    # no puede haber una secuencia [par-impar-par-impar-par-impar] o [impar-par-impar-par-impar-par]
+    test = [int(i) % 2 for i in codigo]
+    if test == [0, 1, 0, 1, 0, 1] or test == [1, 0, 1, 0, 1, 0]:
+        return False
+
+    # no pueden haber tres pines seguidos iguales
+    for pos in range(4):
+        if codigo[pos : pos + 3].count(codigo[pos]) == 3:
+            return False
+
+    return True
 
 
 menu = Menu()

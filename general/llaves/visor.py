@@ -101,6 +101,57 @@ class Visor:
 
     def genera_texto_arbol(self, detalle):
 
+        if "proyecto" in self.configuracion:
+            return self.genera_texto_arbol_proyecto(detalle=self.detalle)
+        else:
+            return self.genera_texto_arbol_libro(detalle=self.detalle)
+
+    def genera_texto_arbol_proyecto(self, detalle):
+
+        self.proceso.cursor.execute(f"SELECT * FROM '{self.proceso.nombre_proyecto}'")
+        data = self.proceso.cursor.fetchall()
+
+        previous = [0] * 10
+        output = f"GGMK <> Codigo:{data[0][0]}\n"
+
+        for line, d in enumerate(data):
+
+            gmk = d[1]
+            mk = d[2]
+            k = d[4]
+            sec = d[5]
+            cil = d[6]
+            mp = d[7]
+            tpuerta = d[8]
+            cerrad = d[9]
+            cop = d[10]
+            nombre = " - ".join([str(i) for i in d[11:16] if i])
+
+            if gmk != previous[1]:
+                output += "|\n"
+                output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+
+            if mk != previous[2]:
+                output += f"|{' '*9}|\n"
+                output += f"|{' '*9}|{'-'*7} M{sec[:7]} <> Codigo:{mk}\n"
+                output += f"|{' '*9}|{' '*8}|\n"
+
+                if not detalle:
+                    self.proceso.cursor.execute(
+                        f"SELECT * FROM '{self.proceso.nombre_proyecto}' WHERE MK = '{mk}'"
+                    )
+                    _unicas = len(self.proceso.cursor.fetchall())
+                    output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
+
+            if detalle:
+                output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} - Copias: {cop} [{nombre if nombre else '(sin nombre)'}]\n"
+
+            previous = copy(data[line])
+
+        return output
+
+    def genera_texto_arbol_libro(self, detalle):
+
         self.proceso.cursor.execute(f"SELECT * FROM '{self.proceso.nombre_tabla}'")
         data = self.proceso.cursor.fetchall()
 
@@ -109,13 +160,12 @@ class Visor:
 
         for line, d in enumerate(data):
 
-            gmk = d[0]
-            mk = d[1]
-            k = d[3]
-            sec = d[4]
-            cil = d[8]
-            cop = d[14]
-            nombre = " - ".join(d[9:13])
+            gmk = d[1]
+            mk = d[2]
+            k = d[4]
+            sec = d[5]
+            cil = d[6]
+            mp = d[7]
 
             if gmk != previous[1]:
                 output += "|\n"
@@ -134,7 +184,7 @@ class Visor:
                     output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
 
             if detalle:
-                output += f"|{' '*9}|{' '*8}|- {sec} [ {nombre:<25} ] <> Codigo:{k} - Cilindro ({cil.count(':')} MP): {cil:<30} - Copias: {cop}\n"
+                output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} -\n"
 
             previous = copy(data[line])
 
