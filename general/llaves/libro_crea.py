@@ -9,7 +9,7 @@ def generador(ggmk, formato):
         # todas las combinaciones validas cambiando los pines que correspondan
         m = list(codigo)
         for p in matriz:
-            m[p] = PAR if int(ggmk[0]) % 2 == 0 else IMPAR
+            m[p] = PAR if int(ggmk[p]) % 2 == 0 else IMPAR
 
         comb = [i for i in it.product(*m)]
 
