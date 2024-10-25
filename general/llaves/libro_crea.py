@@ -11,13 +11,12 @@ def generador(ggmk, formato):
         for p in matriz:
             m[p] = PAR if int(ggmk[p]) % 2 == 0 else IMPAR
 
-        comb = [i for i in it.product(*m)]
-
-        return [i for i in comb if (i != codigo and valida_codigo(i))]
+        return [i for i in it.product(*m) if (i != codigo and valida_codigo(i))]
 
     def con_smk(level1, matriz, ggmk):
 
         # cuatro niveles: GMK, MK, SMK, K
+        todas_maestras = {ggmk}
         llaves = []
         for n1, l1 in enumerate(level1):
             level2 = combinaciones(l1, matriz[1], ggmk)
@@ -33,16 +32,21 @@ def generador(ggmk, formato):
                                 a_codigo(l2),
                                 a_codigo(l3),
                                 a_codigo(l4),
-                                f"K-{n1+1:02d}-{n2+1:03d}-{n3+1:03d}-{n4+1:03d}",
+                                f"K-{n1+1:02d}-{n2+1:02d}-{n3+1:02d}-{n4+1:02d}",
                                 calcula_cilindro(llave=l4, ggmk=ggmk),
                                 calcula_cilindro(llave=l4, ggmk=ggmk).count(":"),
                             )
                         )
-        return llaves
+                        # actualizar lista de maestras
+                        todas_maestras.update({a_codigo(l1)})
+                        todas_maestras.update({a_codigo(l2)})
+
+        return llaves, todas_maestras
 
     def sin_smk(level1, matriz, ggmk):
 
         # tres niveles: GMK, MK, K
+        todas_maestras = {ggmk}
         llaves = []
         for n1, l1 in enumerate(level1):
             level2 = combinaciones(l1, matriz[1], ggmk)
@@ -61,7 +65,11 @@ def generador(ggmk, formato):
                             calcula_cilindro(llave=l4, ggmk=ggmk).count(":"),
                         )
                     )
-        return llaves
+                    # actualizar lista de maestras
+                    todas_maestras.update({a_codigo(l1)})
+                    todas_maestras.update({a_codigo(l2)})
+
+        return llaves, todas_maestras
 
     PAR = tuple(str(i) for i in range(0, 10, 2))
     IMPAR = tuple(str(i) for i in range(1, 10, 2))
@@ -75,11 +83,32 @@ def generador(ggmk, formato):
 
     # elige entre arbol con SMK o sin SMK
     if len([i for i in matriz if len(i) > 0]) == 4:
-        llaves = con_smk(level1, matriz, ggmk)
+        llaves, todas_maestras = con_smk(level1, matriz, ggmk)
     else:
-        llaves = sin_smk(level1, matriz, ggmk)
+        llaves, todas_maestras = sin_smk(level1, matriz, ggmk)
 
-    return llaves, genera_nombre_tabla(a_codigo(ggmk), matriz)
+    # eliminar llaves con maestras cruzadas
+    llaves2 = [
+        i
+        for i in llaves
+        if valida_llave_no_cruzada(i[6], (i[0], i[1], i[2]), todas_maestras)
+    ]
+
+    # TODO: crear secuencia de llave
+    if len(llaves) > len(llaves2):
+        pass
+        # print(len(llaves), len(llaves2))
+
+    return llaves2, genera_nombre_tabla(a_codigo(ggmk), matriz)
+
+
+def genera_todas_maestras(llaves):
+    maestras = {llaves[0][0]}
+    for llave in llaves:
+        maestras.update(llave[1])
+        maestras.update(llave[2])
+
+    return list(maestras)
 
 
 def genera_matriz_aleatoria(formato):
@@ -116,7 +145,6 @@ def calcula_cilindro(llave, ggmk):
 
 def valida_codigo(codigo):
 
-    # string to tuple
     codigo = tuple(int(i) for i in codigo)
 
     # no puede haber 8 o 9 de diferencia entre pines
@@ -142,10 +170,37 @@ def valida_codigo(codigo):
 def genera_nombre_tabla(ggmk, matriz):
 
     nombre = "("
-
     for i in matriz:
         for j in i:
             nombre += f"{j}"
         nombre += ")("
 
     return f"L-{ggmk}-{nombre[:-1]}"
+
+
+def valida_llave_no_cruzada(cilindro, mis_maestras, todas_maestras):
+
+    # revisa cilindro contra todas las llaves maestras que no le corresponden para asegurar que no lo abran
+    for maestra in todas_maestras:
+        if maestra in mis_maestras:
+            continue
+        if valida_llave_abre_cilindro([maestra], cilindro):
+            return False
+    return True
+
+
+def valida_llave_abre_cilindro(llaves, cilindro):
+
+    # crea lista de todas las llaves que pueden abrir ese cilindro
+    opciones = [
+        f"{pos[1]}{int(pos[1]) + int(pos[3])}" if ":" in pos else pos[1]
+        for pos in cilindro.split("]")[:-1]
+    ]
+    g = [i.replace("[", "").replace(":", "") for i in opciones]
+    cilindros = ["".join(i) for i in it.product(*g)]
+
+    # revisa llaves de lista y ver si abren cilindro
+    for llave in llaves:
+        if llave not in cilindros:
+            return False
+    return True

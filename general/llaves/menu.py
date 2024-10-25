@@ -3,6 +3,7 @@ from PIL import Image, ImageTk
 import libro as libro, proyecto
 import sqlite3
 from random import randrange
+import os
 
 
 class Menu:
@@ -10,8 +11,12 @@ class Menu:
     def __init__(self):
 
         # cargar base de datos
-        self.conn = sqlite3.connect("llaves.db", isolation_level="DEFERRED")
+        self.conn = sqlite3.connect("llaves.db")
         self.cursor = self.conn.cursor()
+
+        # instancias de trabajo
+        self.LIBRO = libro.Libro(conn=self.conn)
+        self.PROYECTO = proyecto.Proyecto(conn=self.conn)
 
         # GUI - inicializar
         winx, winy = (500, 300)
@@ -21,16 +26,17 @@ class Menu:
         y = (int(self.window.winfo_screenheight()) - winy) // 3
         self.window.geometry(f"{winx}x{winy}+{x}+{y}")
         self.window.title("Sistema de Maestranza de Llaves REDTOWER v0.6")
-        self.window.iconphoto(False, PhotoImage(file="key1.png"))
+        self.window.iconphoto(
+            False, PhotoImage(file=os.path.join("static", "key1.png"))
+        )
 
         # GUI - insertar logo
         self.image = ImageTk.PhotoImage(
-            Image.open("LOGOS-CMYK-10-2048x1160.png").resize((205, 116))
+            Image.open(os.path.join("static", "LOGOS-CMYK-10-2048x1160.png")).resize(
+                (205, 116)
+            )
         )
-        Label(self.window, image=self.image).place(x=145, y=10)
-
-        # GUI - empezar
-        self.main_menu()
+        Label(self.window, image=self.image, bg="white").place(x=145, y=10)
 
     def main_menu(self):
 
@@ -45,7 +51,7 @@ class Menu:
             (Button(text="Nuevo", padx=7, command=self.menu_nuevo_libro), (100, 150)),
             (Button(text="Cargar", padx=7, command=self.menu_cargar_libro), (100, 190)),
             (
-                Button(text="Listado", padx=7, command=self.menu_cargar_libro),
+                Button(text="Listado", padx=7, command=self.menu_listado_libro),
                 (100, 230),
             ),
             (
@@ -57,12 +63,16 @@ class Menu:
                 (200, 190),
             ),
             (
-                Button(text="Listado", padx=7, command=self.menu_cargar_proyecto),
+                Button(text="Listado", padx=7, command=self.menu_listado_proyecto),
                 (200, 230),
             ),
             (
-                Button(text="Herramients", padx=7, command=self.menu_cargar_proyecto),
+                Button(text="Herramients", padx=7, command=self.menu_herramientas),
                 (300, 150),
+            ),
+            (
+                Button(text="Mantenimiento", padx=7, command=self.menu_mantenimiento),
+                (300, 190),
             ),
             (Button(text="Salir", padx=7, command=self.salir), (320, 230)),
             (Label(text="LIBROS", bg="white"), (105, 270)),
@@ -87,7 +97,7 @@ class Menu:
         self.notas_libro = StringVar()
 
         # definir inputs y sus titulos, y los botones
-        options = ["1-1-1-0-4", "1-1-2-0-3", "1-1-1-1-3"]
+        options = ["1-1-1-0-4", "1-1-2-0-3", "1-1-1-1-3", "1-1-2-1-2"]
         self.option1_widgets = [
             (Label(self.window, text="Codigo GGMK: "), (10, 170)),
             (Label(self.window, text="Formato: "), (10, 140)),
@@ -141,8 +151,7 @@ class Menu:
             button[0].place_forget()
 
         # llamar a crear libro
-        w = libro.Libro(self.conn)
-        w.crea_libro(
+        self.LIBRO.crea_libro(
             codigo_ggmk=self.codigo_ggmk.get(),
             libro_nombre=self.nombre_libro.get(),
             libro_notas=self.notas_libro.get(),
@@ -166,6 +175,9 @@ class Menu:
         self.servicio_elegido = "libro"
         self.elegir_libro()
 
+    def menu_listado_libro(self):
+        self.LIBRO.listado()
+
     def menu_nuevo_proyecto(self):
         self.servicio_elegido = "nuevo_proyecto"
         self.elegir_libro()
@@ -173,6 +185,15 @@ class Menu:
     def menu_cargar_proyecto(self):
         self.servicio_elegido = "cargar_proyecto"
         self.elegir_libro()
+
+    def menu_listado_proyecto(self):
+        self.PROYECTO.listado()
+
+    def menu_herramientas(self):
+        return
+
+    def menu_mantenimiento(self):
+        return
 
     def elegir_libro(self):
         # borrar botones del menu principal
@@ -186,6 +207,10 @@ class Menu:
             for i in self.cursor.fetchall()
             if i[0][0] == ("P" if self.servicio_elegido == "cargar_proyecto" else "L")
         ]
+
+        if not options:
+            print("No hay Libros/Proyectos")
+            return
 
         self.selected = StringVar(value=options[0])
 
@@ -260,6 +285,10 @@ def valida_codigo(codigo):
     return True
 
 
-menu = Menu()
+def main():
+    menu = Menu()
+    menu.main_menu()
 
-# L-511421-!6!3!0!1245!
+
+if __name__ == "__main__":
+    main()

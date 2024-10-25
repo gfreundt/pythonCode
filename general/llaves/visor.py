@@ -4,6 +4,8 @@ from pprint import pprint
 from datetime import datetime as dt
 import uuid
 import openpyxl as pyxl
+from fpdf import FPDF
+import os
 
 
 class Visor:
@@ -87,6 +89,14 @@ class Visor:
         wb.save(f"{self.proceso.nombre_tabla}.xlsx")
 
     def menu_exportar_pdf(self):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=10)
+        arbol = self.genera_texto_arbol(detalle=True)
+        for linea in arbol.split("\n"):
+            pdf.cell(200, 10, txt=linea, ln=1, align="L")
+        pdf.output("mygfg.pdf")
+
         return
 
     def menu_guardar(self):
@@ -176,7 +186,7 @@ class Visor:
 
             if mk != previous[2]:
                 output += f"|{' '*9}|\n"
-                output += f"|{' '*9}|{'-'*7} M{sec[:7]} <> Codigo:{mk}\n"
+                output += f"|{' '*9}|{'-'*7} M{sec[:8]} <> Codigo:{mk}\n"
                 output += f"|{' '*9}|{' '*8}|\n"
 
                 if not detalle:

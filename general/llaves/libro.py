@@ -1,6 +1,6 @@
 from random import randrange, shuffle
 from copy import deepcopy as copy
-from tkinter import Tk, Label, Text, END, font, PhotoImage, Button
+from tkinter import Tk, Label, Text, END, font, PhotoImage, Button, Entry
 from pprint import pprint
 from datetime import datetime as dt
 import openpyxl as pyxl
@@ -67,31 +67,72 @@ class Libro:
 
     def crea_libro(self, **kwargs):
 
-        # en primera solicitud de libro nuevo, recibe toda esta informacion (no en rehacer libro)
-        if kwargs:
-            self.formato = kwargs["formato"]
-            self.codigo_ggmk = kwargs["codigo_ggmk"]
-            self.libro_nombre = kwargs["libro_nombre"]
-            self.libro_notas = kwargs["libro_notas"]
+        while True:
 
-        # genera arbol nuevo si el arbol creado no tenga suficientes llaves validas
-        arbol = ()
-        while len(arbol) < 10:
-            arbol, self.nombre_tabla = libro_crea.generador(
-                self.codigo_ggmk, self.formato
+            # en primera solicitud de libro nuevo, recibe toda esta informacion (no en rehacer libro)
+            if kwargs:
+                self.formato = kwargs["formato"]
+                self.codigo_ggmk = kwargs["codigo_ggmk"]
+                self.libro_nombre = kwargs["libro_nombre"]
+                self.libro_notas = kwargs["libro_notas"]
+
+            # genera arbol nuevo si el arbol creado no tenga suficientes llaves validas
+            arbol = ()
+            while len(arbol) < 10:
+                arbol, self.nombre_tabla = libro_crea.generador(
+                    self.codigo_ggmk, self.formato
+                )
+
+            # crea tabla y carga las llaves
+            self.cursor.execute(
+                f"CREATE TABLE '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP)"
+            )
+            self.cursor.executemany(
+                f"INSERT INTO '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP) VALUES (?,?,?,?,?,?,?,?)",
+                arbol,
             )
 
-        # arbol es valido, crea tabla y carga las llaves
-        self.cursor.execute(
-            f"CREATE TABLE '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP)"
-        )
-        self.cursor.executemany(
-            f"INSERT INTO '{self.nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP) VALUES (?,?,?,?,?,?,?,?)",
-            arbol,
-        )
-        self.conn.commit()
+            # hace validaciones que solo se pueden con libro completo
+            if self.valida_libro_completo():
+                break
+            else:
+                self.cursor.execute(f"DROP TABLE '{self.nombre_tabla}'")
 
-        print(self.valida_libro_completo())
+        # calcula cantidad de SMK en libro que no sean 0
+        self.cursor.executescript(
+            f"""DROP TABLE IF EXISTS temp;
+                CREATE TABLE temp (SMK);
+                INSERT INTO temp SELECT SMK FROM '{self.nombre_tabla}' WHERE SMK <> 0;
+                SELECT COUNT(DISTINCT SMK) FROM temp"""
+        )
+        self.cursor.execute("SELECT COUNT(DISTINCT SMK) FROM temp")
+        _cuenta_smk = self.cursor.fetchone()
+        self.cursor.execute("DROP TABLE temp")
+
+        # calcula cantidad de GMK, MK y K en libro
+        self.cursor.execute(
+            f"""SELECT COUNT(DISTINCT GMK), COUNT(DISTINCT MK), COUNT(DISTINCT K) FROM '{self.nombre_tabla}'"""
+        )
+        _cuenta_gmk, _cuenta_mk, _cuenta_k = self.cursor.fetchone()
+
+        # inserta todos los datos del nuevo libro en la tabla indice
+        _record = (
+            self.nombre_tabla,
+            self.codigo_ggmk,
+            self.formato,
+            self.libro_nombre,
+            self.libro_notas,
+            dt.strftime(dt.now(), "%Y-%m-%d %H:%M:%S"),
+            _cuenta_gmk,
+            _cuenta_mk,
+            _cuenta_smk[0] if _cuenta_smk else 0,
+            _cuenta_k,
+        )
+        self.cursor.execute(
+            f"""INSERT INTO 'libros' VALUES (?,?,?,?,?,?,?,?,?,?)""", _record
+        )
+
+        self.conn.commit()
 
         # muestra las llaves en el GUI
         self.muestra_arbol()
@@ -144,6 +185,40 @@ class Libro:
     def muestra_arbol(self):
         self.vista.mostrar()
 
+    def listado(self):
+        self.window2 = Tk()
+        self.window2.geometry("2000x1300")
+
+        self.cursor.execute("SELECT * FROM libros")
+
+        data = [
+            (
+                "Codigo",
+                "GGMK",
+                "Formato",
+                "Nombre",
+                "Notas",
+                "Creacion",
+                "GMKs",
+                "MKs",
+                "SMKs",
+                "Ks",
+            )
+        ] + self.cursor.fetchall()
+
+        for r, row in enumerate(data):
+            for c, col in enumerate(row):
+                self.e = Entry(self.window2, font=("calibre", 10, "normal"))
+                self.e.grid(row=r, column=c)
+                self.e.insert(END, col if col else "")
+
+        Button(self.window2, text="Regresar", command=self.listado_regreso).place(
+            x=500, y=100
+        )
+
+    def listado_regreso(self):
+        self.window2.destroy()
+
 
 def valida_llave_abre_cilindro(llaves, cilindro):
 
@@ -177,5 +252,6 @@ def valida_llave_no_cruzada(cilindro, mis_maestras, todas_maestras):
         if maestra in mis_maestras:
             continue
         if valida_llave_abre_cilindro([maestra], cilindro):
+            print("cruzada")
             return False
     return True

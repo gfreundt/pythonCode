@@ -1,5 +1,5 @@
 from copy import deepcopy as copy
-from tkinter import Tk, Label, Button, Text, Spinbox, IntVar, END
+from tkinter import Tk, Label, Button, Text, Spinbox, IntVar, END, Entry
 from pprint import pprint
 from datetime import datetime as dt
 from visor import Visor
@@ -11,13 +11,14 @@ class Proyecto:
         self.conn = conn
         self.cursor = self.conn.cursor()
 
+    def nuevo_proyecto(self, tabla):
+
         self.window2 = Tk()
         self.window2.geometry("1000x1300")
         self.text_area = Text(self.window2, height=100, width=80)
         self.text_area.place(x=10, y=60)
         self.ggmk = None
 
-    def nuevo_proyecto(self, tabla):
         self.nombre_tabla = tabla
         self.arbol = []
         self.spinbox_valor = IntVar(self.window2, value=1)
@@ -141,6 +142,40 @@ class Proyecto:
         self.nombre_tabla = tabla
         self.vista = Visor(configuracion="proyecto", proceso=self)
         self.vista.mostrar()
+
+    def listado(self):
+        self.window2 = Tk()
+        self.window2.geometry("2000x1300")
+
+        self.cursor.execute("SELECT * FROM proyectos")
+
+        data = [
+            (
+                "Codigo",
+                "GGMK",
+                "Formato",
+                "Nombre",
+                "Notas",
+                "Creacion",
+                "GMKs",
+                "MKs",
+                "SMKs",
+                "Ks",
+            )
+        ] + self.cursor.fetchall()
+
+        for r, row in enumerate(data):
+            for c, col in enumerate(row):
+                self.e = Entry(self.window2, font=("calibre", 10, "normal"))
+                self.e.grid(row=r, column=c)
+                self.e.insert(END, col if col else "")
+
+        Button(self.window2, text="Regresar", command=self.listado_regreso).place(
+            x=500, y=100
+        )
+
+    def listado_regreso(self):
+        self.window2.destroy()
 
     def genera_texto_arbol(self):
         totalx = 0
