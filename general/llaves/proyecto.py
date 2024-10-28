@@ -7,11 +7,14 @@ from visor import Visor
 
 class Proyecto:
 
-    def __init__(self, conn):
+    def __init__(self, conn, cursor):
         self.conn = conn
-        self.cursor = self.conn.cursor()
+        self.cursor = cursor
 
     def nuevo_proyecto(self, tabla):
+
+        self.proyecto_nombre = ""
+        self.proyecto_notas = ""
 
         self.window2 = Tk()
         self.window2.geometry("1000x1300")
@@ -24,6 +27,8 @@ class Proyecto:
         self.spinbox_valor = IntVar(self.window2, value=1)
 
         self.vertical = 50
+        self.nivel_boton = 0
+        self.secuencia_gmk = -1
 
         self.boton1 = Button(
             self.window2, text="Agrega GMK", command=self.menu_agrega_gmk
@@ -49,9 +54,6 @@ class Proyecto:
         )
         self.cantidad_llaves.place(x=760, y=130)
         self.cantidad_llaves.config(state="disabled")
-
-        self.nivel_boton = 0
-        self.secuencia_gmk = -1
 
         self.muestra_arbol()
 
@@ -104,7 +106,14 @@ class Proyecto:
 
     def asigna_llaves(self):
 
-        self.nombre_proyecto = "P" + self.nombre_tabla[1:]
+        # determina codigo secuencial del proyecto
+        self.cursor.execute(
+            f"SELECT COUNT(GGMK) FROM proyectos WHERE Libro_Origen = '{self.nombre_tabla}'"
+        )
+        _secuencial = self.cursor.fetchall()
+        self.nombre_proyecto = f"P{self.nombre_tabla[1:]}-{int(_secuencial[0][0]) if _secuencial else 0:03d}"
+
+        print(self.nombre_proyecto)
 
         # copia estructura de tabla de libro a nuevo proyecto
         self.cursor.execute(f"DROP TABLE IF EXISTS '{self.nombre_proyecto}'")
@@ -132,6 +141,46 @@ class Proyecto:
                             FROM '{self.nombre_tabla}' WHERE MK = '{mk}' LIMIT {self.arbol[g][m]}"""
                 self.cursor.execute(cmd)
 
+        # calcula cantidad de SMK en libro que no sean 0
+        self.cursor.executescript(
+            f"""DROP TABLE IF EXISTS temp;
+                CREATE TABLE temp (SMK);
+                INSERT INTO temp SELECT SMK FROM '{self.nombre_proyecto}' WHERE SMK <> 0;
+                SELECT COUNT(DISTINCT SMK) FROM temp"""
+        )
+        self.cursor.execute("SELECT COUNT(DISTINCT SMK) FROM temp")
+        _cuenta_smk = self.cursor.fetchone()
+        self.cursor.execute("DROP TABLE temp")
+
+        # calcula cantidad de GMK, MK y K en libro
+        self.cursor.execute(
+            f"""SELECT GGMK, COUNT(DISTINCT GMK), COUNT(DISTINCT MK), COUNT(DISTINCT K) FROM '{self.nombre_proyecto}'"""
+        )
+        _codigo_ggmk, _cuenta_gmk, _cuenta_mk, _cuenta_k = self.cursor.fetchone()
+
+        # inserta todos los datos del nuevo libro en la tabla indice
+        _record = (
+            self.nombre_proyecto,
+            self.nombre_tabla,
+            _codigo_ggmk,
+            self.proyecto_nombre,
+            self.proyecto_notas,
+            dt.strftime(dt.now(), "%Y-%m-%d %H:%M:%S"),
+            _cuenta_gmk,
+            _cuenta_mk,
+            _cuenta_smk[0] if _cuenta_smk else 0,
+            _cuenta_k,
+            "Zona1",
+            "Zona2",
+            "Zona3",
+            "Zona4",
+            "Modelo",
+            1,
+        )
+        self.cursor.execute(
+            f"""INSERT INTO 'proyectos' VALUES ({(',?'*16)[1:]})""", _record
+        )
+
         self.conn.commit()
 
     def muestra_arbol(self):
@@ -140,38 +189,45 @@ class Proyecto:
 
     def cargar_proyecto(self, tabla):
         self.nombre_tabla = tabla
+        self.nombre_proyecto = copy(self.nombre_tabla)
         self.vista = Visor(configuracion="proyecto", proceso=self)
         self.vista.mostrar()
 
     def listado(self):
         self.window2 = Tk()
-        self.window2.geometry("2000x1300")
+        self.window2.geometry("1600x1300")
 
         self.cursor.execute("SELECT * FROM proyectos")
 
         data = [
             (
                 "Codigo",
+                "Libro_Origen",
                 "GGMK",
-                "Formato",
                 "Nombre",
                 "Notas",
-                "Creacion",
-                "GMKs",
-                "MKs",
-                "SMKs",
-                "Ks",
+                "Fecha",
+                "Total_GMK",
+                "Total_MK",
+                "Total_SMK",
+                "Total_K",
+                "Zona1",
+                "Zona2",
+                "Zona3",
+                "Zona4",
+                "Modelo_Puerta",
+                "Copias",
             )
         ] + self.cursor.fetchall()
 
         for r, row in enumerate(data):
             for c, col in enumerate(row):
                 self.e = Entry(self.window2, font=("calibre", 10, "normal"))
-                self.e.grid(row=r, column=c)
+                self.e.grid(row=r, column=c, padx=5, pady=2)
                 self.e.insert(END, col if col else "")
 
         Button(self.window2, text="Regresar", command=self.listado_regreso).place(
-            x=500, y=100
+            x=1500, y=100
         )
 
     def listado_regreso(self):

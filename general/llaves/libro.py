@@ -11,11 +11,11 @@ from itertools import product
 
 class Libro:
 
-    def __init__(self, conn):
+    def __init__(self, conn, cursor):
 
         # conecta a la base de datos
         self.conn = conn
-        self.cursor = self.conn.cursor()
+        self.cursor = cursor
 
         # inicializa visor
         self.vista = Visor(configuracion="libro", proceso=self)

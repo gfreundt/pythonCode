@@ -11,12 +11,12 @@ class Menu:
     def __init__(self):
 
         # cargar base de datos
-        self.conn = sqlite3.connect("llaves.db")
+        self.conn = sqlite3.connect("llaves.db", isolation_level="DEFERRED")
         self.cursor = self.conn.cursor()
 
         # instancias de trabajo
-        self.LIBRO = libro.Libro(conn=self.conn)
-        self.PROYECTO = proyecto.Proyecto(conn=self.conn)
+        self.LIBRO = libro.Libro(conn=self.conn, cursor=self.cursor)
+        self.PROYECTO = proyecto.Proyecto(conn=self.conn, cursor=self.cursor)
 
         # GUI - inicializar
         winx, winy = (500, 300)
@@ -201,23 +201,20 @@ class Menu:
             button[0].place_forget()
 
         # buscar todas las tablas de libros
-        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        options = [
-            i[0]
-            for i in self.cursor.fetchall()
-            if i[0][0] == ("P" if self.servicio_elegido == "cargar_proyecto" else "L")
-        ]
+        self.cursor.execute(
+            f"SELECT * FROM {'proyectos' if self.servicio_elegido == 'cargar_proyecto' else 'libros'}"
+        )
+        options = [i[0] for i in self.cursor.fetchall()]
 
         if not options:
-            print("No hay Libros/Proyectos")
-            return
+            options = []
 
         self.selected = StringVar(value=options[0])
 
         self.option1_widgets = [
             (OptionMenu(self.window, self.selected, *options), (50, 120)),
             (
-                Button(text="Elegir Libro", command=self.elegir_libro_resultado),
+                Button(text="Elegir", command=self.elegir_libro_resultado),
                 (250, 120),
             ),
             (Button(text="Regresar", command=self.elegir_libro_regresar), (250, 160)),
@@ -228,24 +225,18 @@ class Menu:
             button[0].place(x=button[1][0], y=button[1][1])
 
     def elegir_libro_resultado(self):
-        # cargar informacion de libro en diccionario
-        self.cursor.execute(f"SELECT * FROM '{self.selected.get()}'")
-        libro_data = self.cursor.fetchall()
 
         # cargar libro
         if self.servicio_elegido == "libro":
-            w = libro.Libro(conn=self.conn)
-            w.carga_libro(tabla=self.selected.get())
+            self.LIBRO.carga_libro(tabla=self.selected.get())
 
         # nuevo proyecto
         elif self.servicio_elegido == "nuevo_proyecto":
-            p = proyecto.Proyecto(conn=self.conn)
-            p.nuevo_proyecto(tabla=self.selected.get())
+            self.PROYECTO.nuevo_proyecto(tabla=self.selected.get())
 
         # cargar proyecto
         elif self.servicio_elegido == "cargar_proyecto":
-            p = proyecto.Proyecto(conn=self.conn)
-            p.cargar_proyecto(tabla=self.selected.get())
+            self.PROYECTO.cargar_proyecto(tabla=self.selected.get())
 
     def elegir_libro_regresar(self):
         # desactivar botones de menu secundario

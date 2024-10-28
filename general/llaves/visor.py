@@ -22,7 +22,7 @@ class Visor:
 
         # crear nueva ventana, dimensionar
         self.window = Tk()
-        self.window.geometry("1000x1300")
+        self.window.geometry("1000x1300+10+10")
 
         # definir y colocar botones de menu
         self.buttons = [
@@ -40,16 +40,17 @@ class Visor:
                 (250, 20),
             ),
             (Button(self.window, text="Guardar", command=self.menu_guardar), (350, 20)),
+            (Button(self.window, text="Editar", command=self.menu_editar), (420, 20)),
             (
                 Button(self.window, text="Regresar", command=self.menu_regresar),
-                (420, 20),
+                (550, 20),
             ),
         ]
         for button, pos in self.buttons:
             button.place(x=pos[0], y=pos[1])
 
         # crear zona donde se muestra el texto del arbol
-        self.text_area = Text(self.window, height=100, width=130)
+        self.text_area = Text(self.window, height=75, width=130)
         self.text_area.place(x=10, y=60)
 
         # genera el texto del arbol al visor y mostrar
@@ -71,6 +72,49 @@ class Visor:
         wb = pyxl.Workbook()
         ws = wb.active
 
+        # crear hoja "Estructura"
+        ws.title = "Estructura"
+        titulos = [
+            "Codigo",
+            "GGMK",
+            "Formato",
+            "Nombre",
+            "Notas",
+            "Creacion",
+            "GMKs",
+            "MKs",
+            "SMKs",
+            "Ks",
+        ]
+        self.proceso.cursor.execute(
+            f"SELECT * FROM libros WHERE Codigo='{self.proceso.nombre_tabla}'"
+        )
+        data = self.proceso.cursor.fetchone()
+        for i, (a, b) in enumerate(zip(titulos, data), start=1):
+            ws[f"A{i}"] = str(a)
+            ws[f"B{i}"] = str(b)
+
+        # crear hoja "Resumen"
+        wb.create_sheet("Resumen")
+        ws = wb["Resumen"]
+        arbol = self.genera_texto_arbol(detalle=False)
+        fila = 0
+        for linea in arbol.split("\n"):
+            fila += 1
+            if "GGMK" in linea:
+                ws[f"A{fila}"] = linea
+            elif "GMK-" in linea:
+                ws[f"B{fila}"] = linea
+            elif "MK-" in linea:
+                ws[f"C{fila}"] = linea
+            elif "K-" in linea:
+                ws[f"D{fila}"] = linea
+            else:
+                fila -= 1
+
+        # crear hoja "Detalle"
+        wb.create_sheet("Detalle")
+        ws = wb["Detalle"]
         arbol = self.genera_texto_arbol(detalle=True)
         fila = 0
         for linea in arbol.split("\n"):
@@ -86,6 +130,10 @@ class Visor:
             else:
                 fila -= 1
 
+        # crear plantilla para carga de proyectos
+        wb.create_sheet("PlantillaProyecto")
+
+        # guardar hoja
         wb.save(f"{self.proceso.nombre_tabla}.xlsx")
 
     def menu_exportar_pdf(self):
@@ -102,6 +150,9 @@ class Visor:
     def menu_guardar(self):
         self.proceso.conn.commit()
         self.status_graba_db = True
+
+    def menu_editar(self):
+        return
 
     def menu_regresar(self):
         if not self.status_graba_db:
