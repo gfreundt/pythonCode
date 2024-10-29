@@ -2,11 +2,11 @@ from tkinter import Button, PhotoImage, StringVar, OptionMenu
 import ttkbootstrap as ttkb
 from PIL import Image, ImageTk
 
-# import libro as libro, proyecto
 import sqlite3
 import os
 
-from libros import cargar as listado_libro, nuevo as nuevo_libro
+import libros.nuevo, libros.cargar
+import proyectos.nuevo, proyectos.cargar 
 
 
 class Menu:
@@ -16,10 +16,6 @@ class Menu:
         # cargar base de datos
         self.conn = sqlite3.connect("llaves.db", isolation_level="DEFERRED")
         self.cursor = self.conn.cursor()
-
-        # instancias de trabajo
-        # self.LIBRO = libro.Libro(conn=self.conn, cursor=self.cursor)
-        # self.PROYECTO = proyecto.Proyecto(conn=self.conn, cursor=self.cursor)
 
         # GUI - inicializar
         win_size_x, win_size_y = (700, 550)
@@ -67,18 +63,28 @@ class Menu:
 
         # buttons for Libros category
         b1 = [
-            ttkb.Button(bottom_frames[0], text="Nuevo", command=self.nuevo_libro_crear),
+            ttkb.Button(
+                bottom_frames[0],
+                text="Nuevo",
+                command=lambda: libros.nuevo.gui(
+                    cursor=self.cursor,
+                    conn=self.conn,
+                    previous_window=self.window,
+                    window_posx=self.win_posx,
+                    window_posy=self.win_posy,
+                ), 
+            ),
             ttkb.Button(
                 bottom_frames[0],
                 text="Cargar",
-                command=lambda: listado_libro.listado(self.cursor, self.window),
+                command=lambda: libros.cargar.gui(self.cursor, self.window),
             ),
         ]
 
         # buttons for Proyectos category
         b2 = [
             ttkb.Button(
-                bottom_frames[1], text="Nuevo", command=self.menu_nuevo_proyecto
+                bottom_frames[1], text="Nuevo", command=lambda: proyectos.nuevo.gui()
             ),
             ttkb.Button(
                 bottom_frames[1], text="Cargar", command=self.menu_cargar_proyecto
@@ -121,7 +127,7 @@ class Menu:
     def nuevo_libro_crear(self):
 
         # llamar a crear libro
-        nuevo_libro.gui(
+        libro_nuevo.gui(
             cursor=self.cursor,
             conn=self.conn,
             previous_window=self.window,
