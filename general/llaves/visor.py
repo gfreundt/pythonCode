@@ -12,7 +12,7 @@ def mostrar(cursor, config, nombre_tabla, main_window):
 
     # crear nueva ventana, dimensionar
     window = ttkb.Toplevel()
-    window.geometry("1000x1800+10+10")
+    window.geometry("1000x2000+10+10")
 
     # GUI - Top Frame: botones
     top_frame = ttkb.Frame(window)
@@ -48,7 +48,7 @@ def mostrar(cursor, config, nombre_tabla, main_window):
         button.grid(row=0, column=x, padx=30, pady=20)
 
     # crear zona donde se muestra el texto del arbol
-    area_texto = ttkb.Text(bottom_frame, height=75, width=130)
+    area_texto = ttkb.Text(bottom_frame, height=78, width=130)
     area_texto.pack()
 
     # genera el texto del arbol al visor y mostrar
@@ -222,32 +222,30 @@ def genera_texto_arbol_proyecto(detalle, cursor, nombre_proyecto):
 
 def genera_texto_arbol_libro(detalle, cursor, nombre_libro):
 
+    # extrae data de libro de base de datos
     cursor.execute(f"SELECT * FROM '{nombre_libro}'")
     data = cursor.fetchall()
 
+    # variables en blanco para iniciar proceso
     previous = [0] * 10
+    totales = {"gmk": 0, "mk": 0}
 
-    output = f"{'-'*50}\nLibro: {nombre_libro}\nValidaciones: OK\nCilindros: {len(data):,}\n{'-'*50}\n"
+    # ingresar cabecera de texto
+    output = f"GGMK <> Codigo:{data[0][0]}\n"
 
-    output += f"GGMK <> Codigo:{data[0][0]}\n"
-
-    for line, d in enumerate(data):
-
-        gmk = d[1]
-        mk = d[2]
-        k = d[4]
-        sec = d[5]
-        cil = d[6]
-        mp = d[7]
+    # loopear todas las llaves y armar el arbol
+    for line, (_, gmk, mk, _, k, sec, cil, mp) in enumerate(data):
 
         if gmk != previous[1]:
             output += "|\n"
             output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+            totales["gmk"] += 1
 
         if mk != previous[2]:
             output += f"|{' '*9}|\n"
             output += f"|{' '*9}|{'-'*7} M{sec[:8]} <> Codigo:{mk}\n"
             output += f"|{' '*9}|{' '*8}|\n"
+            totales["mk"] += 1
 
             if not detalle:
                 cursor.execute(f"SELECT * FROM '{nombre_libro}' WHERE MK = '{mk}'")
@@ -258,6 +256,12 @@ def genera_texto_arbol_libro(detalle, cursor, nombre_libro):
             output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} -\n"
 
         previous = copy(data[line])
+
+    # agregar resumen al inicio del texto
+    output = (
+        f"""{'-'*50}\nLibro: {nombre_libro}\nValidaciones: OK\nTotal GMKs: {totales['gmk']:,}\nTotal MKs: {totales['mk']:,}\nTotal Ks: {len(data):,}\n{'-'*50}\n"""
+        + output
+    )
 
     return output
 
