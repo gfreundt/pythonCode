@@ -135,7 +135,7 @@ def calcula_cilindro(llave, ggmk):
 
     cilindro = []
     for g, k in zip(ggmk, llave):
-        if g == k:
+        if int(g) == int(k):
             cilindro.append(f"[{g}]")
         else:
             cilindro.append(f"[{min(int(g),int(k))}:{abs(int(g)-int(k))}]")

@@ -1,9 +1,12 @@
-from tkinter import Tk, Label, Button, PhotoImage, StringVar, Entry, OptionMenu, Canvas
+from tkinter import Button, PhotoImage, StringVar, OptionMenu
+import ttkbootstrap as ttkb
 from PIL import Image, ImageTk
-import libro as libro, proyecto
+
+# import libro as libro, proyecto
 import sqlite3
-from random import randrange
 import os
+
+from libros import cargar as listado_libro, nuevo as nuevo_libro
 
 
 class Menu:
@@ -15,152 +18,116 @@ class Menu:
         self.cursor = self.conn.cursor()
 
         # instancias de trabajo
-        self.LIBRO = libro.Libro(conn=self.conn, cursor=self.cursor)
-        self.PROYECTO = proyecto.Proyecto(conn=self.conn, cursor=self.cursor)
+        # self.LIBRO = libro.Libro(conn=self.conn, cursor=self.cursor)
+        # self.PROYECTO = proyecto.Proyecto(conn=self.conn, cursor=self.cursor)
 
         # GUI - inicializar
-        winx, winy = (500, 300)
-        self.window = Tk()
-        self.window.configure(bg="white")
-        x = (int(self.window.winfo_screenwidth()) - winx) // 2
-        y = (int(self.window.winfo_screenheight()) - winy) // 3
-        self.window.geometry(f"{winx}x{winy}+{x}+{y}")
-        self.window.title("Sistema de Maestranza de Llaves REDTOWER v0.6")
+        win_size_x, win_size_y = (700, 550)
+        self.window = ttkb.Window(themename="darkly")
+        self.win_posx = (int(self.window.winfo_screenwidth()) - win_size_x) // 2
+        self.win_posy = (int(self.window.winfo_screenheight()) - win_size_y) // 3
+        self.window.geometry(
+            f"{win_size_x}x{win_size_y}+{self.win_posx}+{self.win_posy}"
+        )
+        self.window.title("Sistema de Maestranza de Llaves v0.6")
         self.window.iconphoto(
             False, PhotoImage(file=os.path.join("static", "key1.png"))
         )
 
-        # GUI - insertar logo
+        # GUI - Top Frame: logo
+        self.top_frame = ttkb.Frame(self.window)
+        self.top_frame.pack(pady=10)
+
+        # GUI - Bottom Frame: botones del menu
+        self.bottom_frame = ttkb.Frame(self.window)
+        self.bottom_frame.pack(pady=10)
+
+        # Top Frame - insertar logo
         self.image = ImageTk.PhotoImage(
             Image.open(os.path.join("static", "LOGOS-CMYK-10-2048x1160.png")).resize(
-                (205, 116)
+                (400, 226)
             )
         )
-        Label(self.window, image=self.image, bg="white").place(x=145, y=10)
+        ttkb.Label(self.top_frame, image=self.image).grid(row=0, column=0, columnspan=3)
 
     def main_menu(self):
 
-        # crear lineas
-        canvas = Canvas(bg="white", border=-1)
-        canvas.create_rectangle(10, 10, 90, 130)
-        canvas.create_rectangle(110, 10, 190, 130)
-
-        # crear botones del menu principal
-        self.main_widgets = [
-            (canvas, (80, 130)),
-            (Button(text="Nuevo", padx=7, command=self.menu_nuevo_libro), (100, 150)),
-            (Button(text="Cargar", padx=7, command=self.menu_cargar_libro), (100, 190)),
-            (
-                Button(text="Listado", padx=7, command=self.menu_listado_libro),
-                (100, 230),
+        # define and place three menu categories
+        bottom_frames = [
+            ttkb.LabelFrame(self.bottom_frame, text=" Libros ", bootstyle="info"),
+            ttkb.LabelFrame(self.bottom_frame, text=" Proyectos ", bootstyle="success"),
+            ttkb.LabelFrame(
+                self.bottom_frame, text=" Herramientas ", bootstyle="warning"
             ),
-            (
-                Button(text="Nuevo", padx=7, command=self.menu_nuevo_proyecto),
-                (200, 150),
-            ),
-            (
-                Button(text="Cargar", padx=7, command=self.menu_cargar_proyecto),
-                (200, 190),
-            ),
-            (
-                Button(text="Listado", padx=7, command=self.menu_listado_proyecto),
-                (200, 230),
-            ),
-            (
-                Button(text="Herramients", padx=7, command=self.menu_herramientas),
-                (300, 150),
-            ),
-            (
-                Button(text="Mantenimiento", padx=7, command=self.menu_mantenimiento),
-                (300, 190),
-            ),
-            (Button(text="Salir", padx=7, command=self.salir), (320, 230)),
-            (Label(text="LIBROS", bg="white"), (105, 270)),
-            (Label(text="PROYECTOS", bg="white"), (193, 270)),
+            ttkb.LabelFrame(self.bottom_frame, text=" Fin ", bootstyle="danger"),
         ]
 
-        for button in self.main_widgets:
-            button[0].place(x=button[1][0], y=button[1][1])
+        for x, widget in enumerate(bottom_frames):
+            widget.grid(row=0, column=x, padx=20)
+
+        # buttons for Libros category
+        b1 = [
+            ttkb.Button(bottom_frames[0], text="Nuevo", command=self.nuevo_libro_crear),
+            ttkb.Button(
+                bottom_frames[0],
+                text="Cargar",
+                command=lambda: listado_libro.listado(self.cursor, self.window),
+            ),
+        ]
+
+        # buttons for Proyectos category
+        b2 = [
+            ttkb.Button(
+                bottom_frames[1], text="Nuevo", command=self.menu_nuevo_proyecto
+            ),
+            ttkb.Button(
+                bottom_frames[1], text="Cargar", command=self.menu_cargar_proyecto
+            ),
+            ttkb.Button(
+                bottom_frames[1], text="Fabrica", command=self.menu_fabrica_proyecto
+            ),
+        ]
+
+        # buttons for Herramientas category
+        b3 = [
+            ttkb.Button(
+                bottom_frames[2], text="Cilindros", command=self.menu_cilindros
+            ),
+            ttkb.Button(
+                bottom_frames[2], text="Validaciones", command=self.menu_validaciones
+            ),
+            ttkb.Button(
+                bottom_frames[2],
+                text="Configuracion",
+                command=self.menu_configuraciones,
+            ),
+        ]
+
+        # buttons for Fin category
+        b4 = [
+            ttkb.Button(
+                bottom_frames[3],
+                text="Salir",
+                command=self.menu_salir,
+                bootstyle="danger",
+            )
+        ]
+
+        for y, widget in enumerate(b1 + b2 + b3 + b4):
+            widget.grid(row=y, column=0, pady=10, padx=18)
 
         self.window.mainloop()
 
-    def menu_nuevo_libro(self):
-
-        # borrar botones del menu principal
-        for button in self.main_widgets:
-            button[0].place_forget()
-
-        # definir variables de inputs
-        self.formato_libro = StringVar(value="1-1-1-0-4")
-        self.codigo_ggmk = StringVar()
-        self.nombre_libro = StringVar()
-        self.notas_libro = StringVar()
-
-        # definir inputs y sus titulos, y los botones
-        options = ["1-1-1-0-4", "1-1-2-0-3", "1-1-1-1-3", "1-1-2-1-2"]
-        self.option1_widgets = [
-            (Label(self.window, text="Codigo GGMK: "), (10, 170)),
-            (Label(self.window, text="Formato: "), (10, 140)),
-            (Label(self.window, text="Nombre del Libro: "), (10, 200)),
-            (Label(self.window, text="Notas: "), (10, 230)),
-            (OptionMenu(self.window, self.formato_libro, *options), (130, 140)),
-            (
-                Entry(
-                    self.window,
-                    textvariable=self.codigo_ggmk,
-                    font=("calibre", 10, "normal"),
-                ),
-                (130, 170),
-            ),
-            (
-                Entry(
-                    self.window,
-                    textvariable=self.nombre_libro,
-                    font=("calibre", 10, "normal"),
-                ),
-                (130, 200),
-            ),
-            (
-                Entry(
-                    self.window,
-                    textvariable=self.notas_libro,
-                    font=("calibre", 10, "normal"),
-                ),
-                (130, 230),
-            ),
-            (Button(text="aleatoria", command=self.ggmk_aleatoria), (280, 170)),
-            (Button(text="Crear Libro", command=self.nuevo_libro_crear), (370, 140)),
-            (Button(text="Regresar", command=self.nuevo_regresar), (370, 180)),
-        ]
-
-        # colocar widgets definidos
-        for button in self.option1_widgets:
-            button[0].place(x=button[1][0], y=button[1][1])
-
-    def ggmk_aleatoria(self):
-
-        _codigo = "123456"  # ggmk invalida
-        while not valida_codigo(_codigo):
-            _codigo = "".join([str(randrange(0, 10)) for _ in range(6)])
-
-        self.codigo_ggmk.set(value=_codigo)
-
     def nuevo_libro_crear(self):
-        # desactivar botones de menu secundario
-        for button in self.option1_widgets:
-            button[0].place_forget()
 
         # llamar a crear libro
-        self.LIBRO.crea_libro(
-            codigo_ggmk=self.codigo_ggmk.get(),
-            libro_nombre=self.nombre_libro.get(),
-            libro_notas=self.notas_libro.get(),
-            formato=self.formato_libro.get(),
+        nuevo_libro.gui(
+            cursor=self.cursor,
+            conn=self.conn,
+            previous_window=self.window,
+            window_posx=self.win_posx,
+            window_posy=self.win_posy,
         )
-
-        # reactivar botones de menu primario
-        for button in self.main_widgets:
-            button[0].place(x=button[1][0], y=button[1][1])
 
     def nuevo_regresar(self):
         # desactivar botones de menu secundario
@@ -172,11 +139,7 @@ class Menu:
             button[0].place(x=button[1][0], y=button[1][1])
 
     def menu_cargar_libro(self):
-        self.servicio_elegido = "libro"
-        self.elegir_libro()
-
-    def menu_listado_libro(self):
-        self.LIBRO.listado()
+        listado_libro.listado(self.cursor, window)
 
     def menu_nuevo_proyecto(self):
         self.servicio_elegido = "nuevo_proyecto"
@@ -186,13 +149,22 @@ class Menu:
         self.servicio_elegido = "cargar_proyecto"
         self.elegir_libro()
 
-    def menu_listado_proyecto(self):
-        self.PROYECTO.listado()
+    def menu_fabrica_proyecto(self):
+        return
 
     def menu_herramientas(self):
         return
 
     def menu_mantenimiento(self):
+        return
+
+    def menu_cilindros(self):
+        return
+
+    def menu_validaciones(self):
+        return
+
+    def menu_configuraciones(self):
         return
 
     def elegir_libro(self):
@@ -247,7 +219,7 @@ class Menu:
         for button in self.main_widgets:
             button[0].place(x=button[1][0], y=button[1][1])
 
-    def salir(self):
+    def menu_salir(self):
         self.window.quit()
 
 

@@ -1,259 +1,267 @@
-from copy import deepcopy as copy
-from tkinter import Tk, Text, END, Button
-from pprint import pprint
-from datetime import datetime as dt
-import uuid
+from tkinter import END
+import ttkbootstrap as ttkb
 import openpyxl as pyxl
 from fpdf import FPDF
-import os
+from copy import deepcopy as copy
 
 
-class Visor:
+def mostrar(cursor, config, nombre_tabla, main_window):
 
-    def __init__(self, configuracion, proceso):
-        self.configuracion = configuracion
-        self.proceso = proceso
-        self.fecha = dt.strftime(dt.now(), "%Y-%m-%d")
-        self.file_name = f"L{str(uuid.uuid4())[-10:]}.json"
-        self.detalle = False
-        self.status_graba_db = False
+    global detalle
+    detalle = False
 
-    def mostrar(self):
+    # crear nueva ventana, dimensionar
+    window = ttkb.Toplevel()
+    window.geometry("1000x1800+10+10")
 
-        # crear nueva ventana, dimensionar
-        self.window = Tk()
-        self.window.geometry("1000x1300+10+10")
+    # GUI - Top Frame: botones
+    top_frame = ttkb.Frame(window)
+    top_frame.pack(pady=10)
 
-        # definir y colocar botones de menu
-        self.buttons = [
-            (Button(self.window, text="Detalle", command=self.menu_detalle), (75, 20)),
-            (
-                Button(
-                    self.window, text="Exportar XLS", command=self.menu_exportar_xls
-                ),
-                (150, 20),
+    # GUI - Bottom Frame: arbol
+    bottom_frame = ttkb.Frame(window)
+    bottom_frame.pack(pady=10)
+
+    # definir y colocar botones de menu
+    buttons = [
+        ttkb.Button(
+            top_frame,
+            text="Detalle",
+            command=lambda: menu_detalle(
+                config=config,
+                cursor=cursor,
+                nombre_tabla=nombre_tabla,
+                area_texto=area_texto,
             ),
-            (
-                Button(
-                    self.window, text="Exportar PDF", command=self.menu_exportar_pdf
-                ),
-                (250, 20),
-            ),
-            (Button(self.window, text="Guardar", command=self.menu_guardar), (350, 20)),
-            (Button(self.window, text="Editar", command=self.menu_editar), (420, 20)),
-            (
-                Button(self.window, text="Regresar", command=self.menu_regresar),
-                (550, 20),
-            ),
-        ]
-        for button, pos in self.buttons:
-            button.place(x=pos[0], y=pos[1])
+        ),
+        ttkb.Button(top_frame, text="Exportar XLS", command=menu_exportar_xls),
+        ttkb.Button(top_frame, text="Exportar PDF", command=menu_exportar_pdf),
+        ttkb.Button(top_frame, text="Guardar", command=menu_guardar),
+        ttkb.Button(top_frame, text="Editar", command=menu_editar),
+        ttkb.Button(
+            top_frame,
+            text="Regresar",
+            command=lambda: menu_regresar(main_window=main_window, window=window),
+        ),
+    ]
+    for x, button in enumerate(buttons):
+        button.grid(row=0, column=x, padx=30, pady=20)
 
-        # crear zona donde se muestra el texto del arbol
-        self.text_area = Text(self.window, height=75, width=130)
-        self.text_area.place(x=10, y=60)
+    # crear zona donde se muestra el texto del arbol
+    area_texto = ttkb.Text(bottom_frame, height=75, width=130)
+    area_texto.pack()
 
-        # genera el texto del arbol al visor y mostrar
-        arbol = self.genera_texto_arbol(detalle=self.detalle)
-        self.muestra_arbol(arbol)
+    # genera el texto del arbol al visor y mostrar
+    menu_detalle(
+        config=config, cursor=cursor, nombre_tabla=nombre_tabla, area_texto=area_texto
+    )
 
-    def menu_detalle(self):
-        self.detalle = not self.detalle
-        arbol = self.genera_texto_arbol(detalle=self.detalle)
-        self.muestra_arbol(arbol)
 
-    def menu_rehacer(self):
-        self.crea_libro(codigo_ggmk=copy(self.ggmk["codigo"]))
-        self.detalle = False
-        arbol = self.genera_texto_arbol(detalle=self.detalle)
-        self.muestra_arbol(arbol)
+def menu_detalle(**kwargs):
 
-    def menu_exportar_xls(self):
-        wb = pyxl.Workbook()
-        ws = wb.active
+    global detalle
 
-        # crear hoja "Estructura"
-        ws.title = "Estructura"
-        titulos = [
-            "Codigo",
-            "GGMK",
-            "Formato",
-            "Nombre",
-            "Notas",
-            "Creacion",
-            "GMKs",
-            "MKs",
-            "SMKs",
-            "Ks",
-        ]
-        self.proceso.cursor.execute(
-            f"SELECT * FROM libros WHERE Codigo='{self.proceso.nombre_tabla}'"
+    arbol = (
+        genera_texto_arbol_proyecto(
+            detalle=detalle,
+            cursor=kwargs["cursor"],
+            nombre_proyecto=kwargs["nombre_tabla"],
         )
-        data = self.proceso.cursor.fetchone()
-        for i, (a, b) in enumerate(zip(titulos, data), start=1):
-            ws[f"A{i}"] = str(a)
-            ws[f"B{i}"] = str(b)
+        if kwargs["config"] == "proyecto"
+        else genera_texto_arbol_libro(
+            detalle=detalle,
+            cursor=kwargs["cursor"],
+            nombre_libro=kwargs["nombre_tabla"],
+        )
+    )
+    muestra_arbol(arbol, area_texto=kwargs["area_texto"])
+    detalle = not detalle
 
-        # crear hoja "Resumen"
-        wb.create_sheet("Resumen")
-        ws = wb["Resumen"]
-        arbol = self.genera_texto_arbol(detalle=False)
-        fila = 0
-        for linea in arbol.split("\n"):
-            fila += 1
-            if "GGMK" in linea:
-                ws[f"A{fila}"] = linea
-            elif "GMK-" in linea:
-                ws[f"B{fila}"] = linea
-            elif "MK-" in linea:
-                ws[f"C{fila}"] = linea
-            elif "K-" in linea:
-                ws[f"D{fila}"] = linea
-            else:
-                fila -= 1
 
-        # crear hoja "Detalle"
-        wb.create_sheet("Detalle")
-        ws = wb["Detalle"]
-        arbol = self.genera_texto_arbol(detalle=True)
-        fila = 0
-        for linea in arbol.split("\n"):
-            fila += 1
-            if "GGMK" in linea:
-                ws[f"A{fila}"] = linea
-            elif "GMK-" in linea:
-                ws[f"B{fila}"] = linea
-            elif "MK-" in linea:
-                ws[f"C{fila}"] = linea
-            elif "K-" in linea:
-                ws[f"D{fila}"] = linea
-            else:
-                fila -= 1
+def menu_exportar_xls(cursor, nombre_tabla):
+    wb = pyxl.Workbook()
+    ws = wb.active
 
-        # crear plantilla para carga de proyectos
-        wb.create_sheet("PlantillaProyecto")
+    # crear hoja "Estructura"
+    ws.title = "Estructura"
+    titulos = [
+        "Codigo",
+        "GGMK",
+        "Formato",
+        "Nombre",
+        "Notas",
+        "Creacion",
+        "GMKs",
+        "MKs",
+        "SMKs",
+        "Ks",
+    ]
+    cursor.execute(f"SELECT * FROM libros WHERE Codigo='{nombre_tabla}'")
+    data = cursor.fetchone()
+    for i, (a, b) in enumerate(zip(titulos, data), start=1):
+        ws[f"A{i}"] = str(a)
+        ws[f"B{i}"] = str(b)
 
-        # guardar hoja
-        wb.save(f"{self.proceso.nombre_tabla}.xlsx")
-
-    def menu_exportar_pdf(self):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=10)
-        arbol = self.genera_texto_arbol(detalle=True)
-        for linea in arbol.split("\n"):
-            pdf.cell(200, 10, txt=linea, ln=1, align="L")
-        pdf.output("mygfg.pdf")
-
-        return
-
-    def menu_guardar(self):
-        self.proceso.conn.commit()
-        self.status_graba_db = True
-
-    def menu_editar(self):
-        return
-
-    def menu_regresar(self):
-        if not self.status_graba_db:
-            self.proceso.cursor.execute(f"DROP TABLE '{self.proceso.nombre_tabla}'")
-            self.proceso.conn.commit()
-        self.window.destroy()
-
-    def genera_texto_arbol(self, detalle):
-
-        if "proyecto" in self.configuracion:
-            return self.genera_texto_arbol_proyecto(detalle=detalle)
+    # crear hoja "Resumen"
+    wb.create_sheet("Resumen")
+    ws = wb["Resumen"]
+    arbol = genera_texto_arbol(detalle=False)
+    fila = 0
+    for linea in arbol.split("\n"):
+        fila += 1
+        if "GGMK" in linea:
+            ws[f"A{fila}"] = linea
+        elif "GMK-" in linea:
+            ws[f"B{fila}"] = linea
+        elif "MK-" in linea:
+            ws[f"C{fila}"] = linea
+        elif "K-" in linea:
+            ws[f"D{fila}"] = linea
         else:
-            return self.genera_texto_arbol_libro(detalle=detalle)
+            fila -= 1
 
-    def genera_texto_arbol_proyecto(self, detalle):
+    # crear hoja "Detalle"
+    wb.create_sheet("Detalle")
+    ws = wb["Detalle"]
+    arbol = genera_texto_arbol(detalle=True)
+    fila = 0
+    for linea in arbol.split("\n"):
+        fila += 1
+        if "GGMK" in linea:
+            ws[f"A{fila}"] = linea
+        elif "GMK-" in linea:
+            ws[f"B{fila}"] = linea
+        elif "MK-" in linea:
+            ws[f"C{fila}"] = linea
+        elif "K-" in linea:
+            ws[f"D{fila}"] = linea
+        else:
+            fila -= 1
 
-        self.proceso.cursor.execute(f"SELECT * FROM '{self.proceso.nombre_proyecto}'")
-        data = self.proceso.cursor.fetchall()
+    # crear plantilla para carga de proyectos
+    wb.create_sheet("PlantillaProyecto")
 
-        previous = [0] * 10
-        output = f"GGMK <> Codigo:{data[0][0]}\n"
+    # guardar hoja
+    wb.save(f"{nombre_tabla}.xlsx")
 
-        for line, d in enumerate(data):
 
-            gmk = d[1]
-            mk = d[2]
-            k = d[4]
-            sec = d[5]
-            cil = d[6]
-            mp = d[7]
-            tpuerta = d[8]
-            cerrad = d[9]
-            cop = d[10]
-            nombre = " - ".join([str(i) for i in d[11:16] if i])
+def menu_exportar_pdf(self):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=10)
+    arbol = genera_texto_arbol(detalle=True)
+    for linea in arbol.split("\n"):
+        pdf.cell(200, 10, txt=linea, ln=1, align="L")
+    pdf.output("mygfg.pdf")
 
-            if gmk != previous[1]:
-                output += "|\n"
-                output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+    return
 
-            if mk != previous[2]:
-                output += f"|{' '*9}|\n"
-                output += f"|{' '*9}|{'-'*7} M{sec[:7]} <> Codigo:{mk}\n"
-                output += f"|{' '*9}|{' '*8}|\n"
 
-                if not detalle:
-                    self.proceso.cursor.execute(
-                        f"SELECT * FROM '{self.proceso.nombre_proyecto}' WHERE MK = '{mk}'"
-                    )
-                    _unicas = len(self.proceso.cursor.fetchall())
-                    output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
+def menu_guardar(conn):
+    conn.commit()
+    status_graba_db = True
 
-            if detalle:
-                output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} - Copias: {cop} [{nombre if nombre else '(sin nombre)'}]\n"
 
-            previous = copy(data[line])
+def menu_editar(self):
+    return
 
-        return output
 
-    def genera_texto_arbol_libro(self, detalle):
+def menu_regresar(window, main_window):
 
-        self.proceso.cursor.execute(f"SELECT * FROM '{self.proceso.nombre_tabla}'")
-        data = self.proceso.cursor.fetchall()
+    main_window.deiconify()
+    window.destroy()
+    return
 
-        previous = [0] * 10
+    if not status_graba_db:
+        proceso.cursor.execute(f"DROP TABLE '{proceso.nombre_tabla}'")
+        proceso.conn.commit()
 
-        output = f"{'-'*50}\nLibro: {self.proceso.nombre_tabla}\nValidaciones: OK\nCilindros: {len(data):,}\n{'-'*50}\n"
 
-        output += f"GGMK <> Codigo:{data[0][0]}\n"
+def genera_texto_arbol_proyecto(detalle, cursor, nombre_proyecto):
 
-        for line, d in enumerate(data):
+    cursor.execute(f"SELECT * FROM '{nombre_proyecto}'")
+    data = cursor.fetchall()
 
-            gmk = d[1]
-            mk = d[2]
-            k = d[4]
-            sec = d[5]
-            cil = d[6]
-            mp = d[7]
+    previous = [0] * 10
+    output = f"GGMK <> Codigo:{data[0][0]}\n"
 
-            if gmk != previous[1]:
-                output += "|\n"
-                output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+    for line, d in enumerate(data):
 
-            if mk != previous[2]:
-                output += f"|{' '*9}|\n"
-                output += f"|{' '*9}|{'-'*7} M{sec[:8]} <> Codigo:{mk}\n"
-                output += f"|{' '*9}|{' '*8}|\n"
+        gmk = d[1]
+        mk = d[2]
+        k = d[4]
+        sec = d[5]
+        cil = d[6]
+        mp = d[7]
+        tpuerta = d[8]
+        cerrad = d[9]
+        cop = d[10]
+        nombre = " - ".join([str(i) for i in d[11:16] if i])
 
-                if not detalle:
-                    self.proceso.cursor.execute(
-                        f"SELECT * FROM '{self.proceso.nombre_tabla}' WHERE MK = '{mk}'"
-                    )
-                    _unicas = len(self.proceso.cursor.fetchall())
-                    output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
+        if gmk != previous[1]:
+            output += "|\n"
+            output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
 
-            if detalle:
-                output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} -\n"
+        if mk != previous[2]:
+            output += f"|{' '*9}|\n"
+            output += f"|{' '*9}|{'-'*7} M{sec[:7]} <> Codigo:{mk}\n"
+            output += f"|{' '*9}|{' '*8}|\n"
 
-            previous = copy(data[line])
+            if not detalle:
+                cursor.execute(f"SELECT * FROM '{nombre_proyecto}' WHERE MK = '{mk}'")
+                _unicas = len(cursor.fetchall())
+                output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
 
-        return output
+        if detalle:
+            output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} - Copias: {cop} [{nombre if nombre else '(sin nombre)'}]\n"
 
-    def muestra_arbol(self, arbol):
-        self.text_area.delete("1.0", "end")
-        self.text_area.insert(END, arbol)
+        previous = copy(data[line])
+
+    return output
+
+
+def genera_texto_arbol_libro(detalle, cursor, nombre_libro):
+
+    cursor.execute(f"SELECT * FROM '{nombre_libro}'")
+    data = cursor.fetchall()
+
+    previous = [0] * 10
+
+    output = f"{'-'*50}\nLibro: {nombre_libro}\nValidaciones: OK\nCilindros: {len(data):,}\n{'-'*50}\n"
+
+    output += f"GGMK <> Codigo:{data[0][0]}\n"
+
+    for line, d in enumerate(data):
+
+        gmk = d[1]
+        mk = d[2]
+        k = d[4]
+        sec = d[5]
+        cil = d[6]
+        mp = d[7]
+
+        if gmk != previous[1]:
+            output += "|\n"
+            output += f"|{'-'*8} GM{sec[:4]} <> Codigo: {gmk}\n"
+
+        if mk != previous[2]:
+            output += f"|{' '*9}|\n"
+            output += f"|{' '*9}|{'-'*7} M{sec[:8]} <> Codigo:{mk}\n"
+            output += f"|{' '*9}|{' '*8}|\n"
+
+            if not detalle:
+                cursor.execute(f"SELECT * FROM '{nombre_libro}' WHERE MK = '{mk}'")
+                _unicas = len(cursor.fetchall())
+                output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
+
+        if detalle:
+            output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} - Cilindro ({mp} MP): {cil:<30} -\n"
+
+        previous = copy(data[line])
+
+    return output
+
+
+def muestra_arbol(arbol, area_texto):
+    area_texto.delete("1.0", "end")
+    area_texto.insert(END, arbol)
