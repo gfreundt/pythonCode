@@ -6,7 +6,7 @@ import sqlite3
 import os
 
 import libros.nuevo, libros.cargar
-import proyectos.nuevo, proyectos.cargar 
+import proyectos.nuevo, proyectos.cargar, proyectos.fabrica
 
 
 class Menu:
@@ -72,7 +72,7 @@ class Menu:
                     previous_window=self.window,
                     window_posx=self.win_posx,
                     window_posy=self.win_posy,
-                ), 
+                ),
             ),
             ttkb.Button(
                 bottom_frames[0],
@@ -84,13 +84,23 @@ class Menu:
         # buttons for Proyectos category
         b2 = [
             ttkb.Button(
-                bottom_frames[1], text="Nuevo", command=lambda: proyectos.nuevo.gui()
+                bottom_frames[1],
+                text="Nuevo",
+                command=lambda: proyectos.nuevo.gui(
+                    self.cursor, self.window, self.conn
+                ),
             ),
             ttkb.Button(
-                bottom_frames[1], text="Cargar", command=self.menu_cargar_proyecto
+                bottom_frames[1],
+                text="Cargar",
+                command=lambda: proyectos.cargar.gui(
+                    self.cursor, self.window, self.conn
+                ),
             ),
             ttkb.Button(
-                bottom_frames[1], text="Fabrica", command=self.menu_fabrica_proyecto
+                bottom_frames[1], text="Fabrica", command=lambda: proyectos.fabrica.gui(
+                    self.cursor, self.window, self.conn
+                ),
             ),
         ]
 

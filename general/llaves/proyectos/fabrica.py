@@ -1,83 +1,60 @@
-from tkinter import IntVar, END
-import ttkbootstrap as ttkb
-from ttkbootstrap.tableview import Tableview
+from copy import deepcopy as copy
+from tkinter import Tk, Label, Button, Text, Spinbox, IntVar, END, Entry
+from pprint import pprint
 from datetime import datetime as dt
-import visor
 
 
-def gui(cursor, previous_window, conn):
+class Proyecto:
 
-    # global arbol
-    # arbol = Arbol()
+    def __init__(self, conn, cursor):
+        self.conn = conn
+        self.cursor = cursor
 
-    # previous_window.withdraw()
+    def nuevo_proyecto(self, tabla):
 
-    window = ttkb.Toplevel()
-    window.geometry("1400x1300")
+        self.proyecto_nombre = ""
+        self.proyecto_notas = ""
 
-    cursor.execute("SELECT * FROM proyectos")
+        self.window2 = Tk()
+        self.window2.geometry("1000x1300")
+        self.text_area = Text(self.window2, height=100, width=80)
+        self.text_area.place(x=10, y=60)
+        self.ggmk = None
 
-    col_data = [
-        "Codigo",
-        "Libro Origen",
-        "GGMK",
-        "Nombre",
-        "Notas",
-        "Creacion",
-        "GMKs",
-        "MKs",
-        "SMKs",
-        "Ks",
-    ]
+        self.nombre_tabla = tabla
+        self.arbol = []
+        self.spinbox_valor = IntVar(self.window2, value=1)
 
-    row_data = aplica_formato(cursor.fetchall())
+        self.vertical = 50
+        self.nivel_boton = 0
+        self.secuencia_gmk = -1
 
-    dt = Tableview(
-        window,
-        coldata=col_data,
-        rowdata=row_data,
-        autofit=True,
-        autoalign=True,
-        height=min(60, len(row_data)),
-    )
+        self.boton1 = Button(
+            self.window2, text="Agrega GMK", command=self.menu_agrega_gmk
+        )
+        self.boton1.place(x=700, y=70)
 
-    dt.pack(padx=20, pady=10)
+        self.boton2 = Button(
+            self.window2, text="Agrega MK", command=self.menu_agrega_mk
+        )
+        self.boton2.place(x=730, y=100)
+        self.boton2.config(state="disabled")
 
-    # crea y coloca botones
-    ttkb.Button(
-        window,
-        text="Seleccionar",
-        command=lambda: seleccion(window, dt, cursor=cursor, conn=conn),
-    ).pack(pady=20)
-    ttkb.Button(window, text="Regresar", command=lambda: regresar(window)).pack(pady=20)
+        self.boton3 = Button(
+            self.window2, text="Nivel Completo", command=self.menu_nivel_completo
+        )
+        self.boton3.place(x=860, y=85)
 
+        self.boton4 = Button(self.window2, text="Deshacer", command=self.menu_deshacer)
+        self.boton4.place(x=860, y=135)
 
-def aplica_formato(data):
-    new_data = [list(i) for i in data]
+        self.cantidad_llaves = Spinbox(
+            self.window2, from_=1, to=8, textvariable=self.spinbox_valor, width=2
+        )
+        self.cantidad_llaves.place(x=760, y=130)
+        self.cantidad_llaves.config(state="disabled")
 
-    # elimina cero
-    for i, m in enumerate(data):
-        for j, n in enumerate(m):
-            if n == 0:
-                new_data[i][j] = ""
-
-    return new_data
-
-
-def seleccion(window, dt, cursor, conn):
-
-    selected = dt.get_rows(selected=True)
-    window.destroy()
-    visor.mostrar(
-        cursor=cursor,
-        config="libro",
-        nombre_tabla=selected[0].values[0],
-        main_window=window,
-    )
-
-
-def regresar(window):
-    window.destroy()
+        self.muestra_arbol()
 
     def menu_agrega_gmk(self):
         self.boton1.config(state="disabled")
