@@ -2,7 +2,7 @@ from tkinter import IntVar, END
 import ttkbootstrap as ttkb
 from ttkbootstrap.tableview import Tableview
 from datetime import datetime as dt
-import visor
+import proyectos.visor
 
 
 def gui(cursor, previous_window, conn):
@@ -68,9 +68,8 @@ def seleccion(window, dt, cursor, conn):
 
     selected = dt.get_rows(selected=True)
     window.destroy()
-    visor.mostrar(
+    proyectos.visor.mostrar(
         cursor=cursor,
-        config="libro",
         nombre_tabla=selected[0].values[0],
         main_window=window,
     )

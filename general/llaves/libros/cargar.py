@@ -1,10 +1,10 @@
 from tkinter import END
 import ttkbootstrap as ttkb
 from ttkbootstrap.tableview import Tableview
-import visor
+import libros.visor
 
 
-def listado(cursor, previous_window):
+def gui(cursor, previous_window):
 
     previous_window.withdraw()
 
@@ -58,9 +58,8 @@ def seleccion(window, dt, cursor, previous_window):
 
     selected = dt.get_rows(selected=True)
     window.destroy()
-    visor.mostrar(
+    libros.visor.mostrar(
         cursor=cursor,
-        config="libro",
         nombre_tabla=selected[0].values[0],
         main_window=previous_window,
     )

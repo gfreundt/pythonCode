@@ -5,7 +5,7 @@ from fpdf import FPDF
 from copy import deepcopy as copy
 
 
-def mostrar(cursor, config, nombre_tabla, main_window):
+def mostrar(cursor, nombre_tabla, main_window):
 
     global detalle
     detalle = False
@@ -28,7 +28,6 @@ def mostrar(cursor, config, nombre_tabla, main_window):
             top_frame,
             text="Detalle",
             command=lambda: menu_detalle(
-                config=config,
                 cursor=cursor,
                 nombre_tabla=nombre_tabla,
                 area_texto=area_texto,
@@ -52,20 +51,17 @@ def mostrar(cursor, config, nombre_tabla, main_window):
     area_texto.pack()
 
     # genera el texto del arbol al visor y mostrar
-    menu_detalle(
-        config=config, cursor=cursor, nombre_tabla=nombre_tabla, area_texto=area_texto
-    )
+    menu_detalle(cursor=cursor, nombre_tabla=nombre_tabla, area_texto=area_texto)
 
 
 def menu_detalle(**kwargs):
 
     global detalle
 
-    arbol = (        genera_texto_arbol(
-            detalle=detalle,
-            cursor=kwargs["cursor"],
-            nombre_libro=kwargs["nombre_tabla"],
-        )
+    arbol = genera_texto_arbol(
+        detalle=detalle,
+        cursor=kwargs["cursor"],
+        nombre_libro=kwargs["nombre_tabla"],
     )
     muestra_arbol(arbol, area_texto=kwargs["area_texto"])
     detalle = not detalle
