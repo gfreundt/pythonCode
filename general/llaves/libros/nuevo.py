@@ -5,7 +5,7 @@ from datetime import datetime as dt
 import os, random
 from libros import generador
 import herramientas
-import visor
+import libros.visor
 
 
 def gui(**kwargs):
@@ -184,9 +184,8 @@ def crear(**kwargs):
 
     # muestra las llaves en el GUI
     kwargs["window"].destroy()
-    visor.mostrar(
+    libros.visor.mostrar(
         cursor=cursor,
-        config="libro",
         nombre_tabla=nombre_tabla,
         main_window=kwargs["previous_window"],
     )
