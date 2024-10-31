@@ -17,20 +17,8 @@ def gui(frames, cursor, nombre_proyecto):
     )
 
     opciones = {"cod_puerta": ["Tipo A", "Tipo A", "Tipo B", "Tipo C"]}
-    rptas = {
-        "nombre": StringVar(),
-        "copias": StringVar(),
-        "cod_puerta": StringVar(value=opciones["cod_puerta"][0]),
-        "tip_puerta": StringVar(value=opciones["cod_puerta"][0]),
-        "tip_cerr": StringVar(value=opciones["cod_puerta"][0]),
-        "cod_puerta": StringVar(value=opciones["cod_puerta"][0]),
-        "zona1": StringVar(),
-        "zona2": StringVar(),
-        "zona3": StringVar(),
-        "zona4": StringVar(),
-        "zona_cod": StringVar(),
-        "notas": StringVar(),
-    }
+
+    rptas = asigna_valor_campos(cursor, nombre_proyecto, secuencia_elegida.get())
 
     campos = [
         ("Nombre", 1, ttkb.Entry(frames["bottom"], textvariable=rptas["nombre"])),
@@ -105,6 +93,27 @@ def boton_grabar(secuencia_elegida, rptas, nombre_proyecto):
 def boton_regresar(frames):
     lock_frame(frames["bottom"])
     lock_frame(frames["top"], unlock=True)
+
+
+def asigna_valor_campos(cursor, nombre_proyecto, secuencia_elegida):
+    cursor.execute(
+        f"SELECT * FROM '{nombre_proyecto}' WHERE Secuencia = '{secuencia_elegida}'"
+    )
+    r = cursor.fetchone()
+
+    return {
+        "nombre": StringVar(value=r[2] if r[2] else ""),
+        "copias": StringVar(value=r[3]),
+        "cod_puerta": StringVar(value=r[4] if r[4] else ""),
+        "tip_puerta": StringVar(value=r[5] if r[5] else ""),
+        "tip_cerr": StringVar(value=r[6] if r[6] else ""),
+        "zona1": StringVar(value=r[7] if r[7] else ""),
+        "zona2": StringVar(value=r[8] if r[8] else ""),
+        "zona3": StringVar(value=r[9] if r[9] else ""),
+        "zona4": StringVar(value=r[10] if r[10] else ""),
+        "zona_cod": StringVar(value=r[11] if r[11] else ""),
+        "notas": StringVar(value=r[12] if r[12] else ""),
+    }
 
 
 def lock_frame(frame, unlock=False):
