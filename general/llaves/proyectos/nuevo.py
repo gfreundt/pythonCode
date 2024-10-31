@@ -97,7 +97,7 @@ def arma_arbol(nombre_libro, cursor, conn):
     arbol.b4 = ttkb.Button(window, text="Deshacer", command=menu_deshacer)
     arbol.b4.place(x=860, y=135)
 
-    arbol.s1 = ttkb.Spinbox(window, from_=1, to=8, textvariable=arbol.s1_valor, width=2)
+    arbol.s1 = ttkb.Spinbox(window, from_=1, textvariable=arbol.s1_valor, width=2)
     arbol.s1.place(x=760, y=130)
     arbol.s1.config(state="disabled")
 

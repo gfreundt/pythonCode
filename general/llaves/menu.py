@@ -98,7 +98,9 @@ class Menu:
                 ),
             ),
             ttkb.Button(
-                bottom_frames[1], text="Fabrica", command=lambda: proyectos.fabrica.gui(
+                bottom_frames[1],
+                text="Fabrica",
+                command=lambda: proyectos.fabrica.gui(
                     self.cursor, self.window, self.conn
                 ),
             ),
@@ -133,17 +135,6 @@ class Menu:
             widget.grid(row=y, column=0, pady=10, padx=18)
 
         self.window.mainloop()
-
-    def nuevo_libro_crear(self):
-
-        # llamar a crear libro
-        libro_nuevo.gui(
-            cursor=self.cursor,
-            conn=self.conn,
-            previous_window=self.window,
-            window_posx=self.win_posx,
-            window_posy=self.win_posy,
-        )
 
     def nuevo_regresar(self):
         # desactivar botones de menu secundario
