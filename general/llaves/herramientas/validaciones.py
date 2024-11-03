@@ -1,5 +1,8 @@
 import itertools
 
+def gui(*args):
+    pass
+
 
 def valida_libro_completo(cursor, nombre_tabla):
 

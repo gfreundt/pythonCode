@@ -1,7 +1,7 @@
 import itertools as it
 import random
 
-import herramientas
+from herramientas import validaciones
 
 
 def con_smk(level1, matriz, codigo_ggmk):
@@ -80,7 +80,7 @@ def combinaciones(codigo_origen, matriz, codigo_ggmk):
     return [
         i
         for i in it.product(*m)
-        if (i != codigo_origen and herramientas.valida_codigo(i))
+        if (i != codigo_origen and validaciones.valida_codigo(i))
     ]
 
 
@@ -115,14 +115,12 @@ def genera_matriz_aleatoria(formato):
 
 def calcula_cilindro(llave, codigo_ggmk):
 
-    # TODO: pin 0?
-
     # computa nomenclatura de cilindro (master pin + pin para que llave y maestras abran)
     codigo_ggmk = (int(i) for i in codigo_ggmk)
 
     cilindro = []
     for g, k in zip(codigo_ggmk, llave):
-        if int(g) == int(k):
+        if int(g) == int(k) or int(g) == 0 or int(k) == 0:
             cilindro.append(f"[{g}]")
         else:
             cilindro.append(f"[{min(int(g),int(k))}:{abs(int(g)-int(k))}]")
@@ -161,13 +159,12 @@ def main(codigo_ggmk, formato):
     llaves2 = [
         i
         for i in llaves
-        if herramientas.valida_llave_no_cruzada(
+        if validaciones.valida_llave_no_cruzada(
             i[6], (i[0], i[1], i[2]), todas_maestras
         )
     ]
 
-    # reestablece la secuencia de las llaves en caso se hayan eliminado llaves por cruzadas
-    # TODO: crear secuencia de llave
+    # TODO: reestablece la secuencia de las llaves en caso se hayan eliminado llaves por cruzadas
     if len(llaves) > len(llaves2):
         pass
         # print(len(llaves), len(llaves2))

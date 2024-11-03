@@ -7,9 +7,10 @@ import os
 
 import libros.nuevo, libros.cargar
 import proyectos.nuevo, proyectos.cargar, proyectos.fabrica
+import herramientas.cilindros, herramientas.validaciones, herramientas.configurar
 
 
-class Menu:
+class MainMenu:
 
     def __init__(self):
 
@@ -17,8 +18,10 @@ class Menu:
         self.conn = sqlite3.connect("llaves.db", isolation_level="DEFERRED")
         self.cursor = self.conn.cursor()
 
+    def main_menu(self):
+
         # GUI - inicializar
-        win_size_x, win_size_y = (700, 550)
+        win_size_x, win_size_y = (800, 550)
         self.window = ttkb.Window(themename="darkly")
         self.win_posx = (int(self.window.winfo_screenwidth()) - win_size_x) // 2
         self.win_posy = (int(self.window.winfo_screenheight()) - win_size_y) // 3
@@ -46,9 +49,7 @@ class Menu:
         )
         ttkb.Label(self.top_frame, image=self.image).grid(row=0, column=0, columnspan=3)
 
-    def main_menu(self):
-
-        # define and place three menu categories
+        # definir cuatro grupos de botones: libros, proyectos, herramientas, salir
         bottom_frames = [
             ttkb.LabelFrame(self.bottom_frame, text=" Libros ", bootstyle="info"),
             ttkb.LabelFrame(self.bottom_frame, text=" Proyectos ", bootstyle="success"),
@@ -61,27 +62,19 @@ class Menu:
         for x, widget in enumerate(bottom_frames):
             widget.grid(row=0, column=x, padx=20)
 
-        # buttons for Libros category
+        # libros - botones: nuevo y cargar
         b1 = [
             ttkb.Button(
-                bottom_frames[0],
-                text="Nuevo",
-                command=lambda: libros.nuevo.gui(
-                    cursor=self.cursor,
-                    conn=self.conn,
-                    previous_window=self.window,
-                    window_posx=self.win_posx,
-                    window_posy=self.win_posy,
-                ),
+                bottom_frames[0], text="Nuevo", command=lambda: libros.nuevo.gui(self)
             ),
             ttkb.Button(
                 bottom_frames[0],
                 text="Cargar",
-                command=lambda: libros.cargar.gui(self.cursor, self.window),
+                command=lambda: libros.cargar.gui(self),
             ),
         ]
 
-        # buttons for Proyectos category
+        # proyectos - botones: nuevo, cargar, fabrica
         b2 = [
             ttkb.Button(
                 bottom_frames[1],
@@ -106,22 +99,26 @@ class Menu:
             ),
         ]
 
-        # buttons for Herramientas category
+        # herramientas - botones: cilindros, validaciones, configuracion
         b3 = [
             ttkb.Button(
-                bottom_frames[2], text="Cilindros", command=self.menu_cilindros
+                bottom_frames[2],
+                text="Cilindros",
+                command=lambda: herramientas.cilindros.gui(),
             ),
             ttkb.Button(
-                bottom_frames[2], text="Validaciones", command=self.menu_validaciones
+                bottom_frames[2],
+                text="Validaciones",
+                command=lambda: herramientas.validaciones.gui(),
             ),
             ttkb.Button(
                 bottom_frames[2],
                 text="Configuracion",
-                command=self.menu_configuraciones,
+                command=lambda: herramientas.configuraciones.gui(),
             ),
         ]
 
-        # buttons for Fin category
+        # salir - unico boton
         b4 = [
             ttkb.Button(
                 bottom_frames[3],
@@ -135,44 +132,6 @@ class Menu:
             widget.grid(row=y, column=0, pady=10, padx=18)
 
         self.window.mainloop()
-
-    def nuevo_regresar(self):
-        # desactivar botones de menu secundario
-        for button in self.option1_widgets:
-            button[0].place_forget()
-
-        # reactivar botones de menu primario
-        for button in self.main_widgets:
-            button[0].place(x=button[1][0], y=button[1][1])
-
-    def menu_cargar_libro(self):
-        listado_libro.listado(self.cursor, window)
-
-    def menu_nuevo_proyecto(self):
-        self.servicio_elegido = "nuevo_proyecto"
-        self.elegir_libro()
-
-    def menu_cargar_proyecto(self):
-        self.servicio_elegido = "cargar_proyecto"
-        self.elegir_libro()
-
-    def menu_fabrica_proyecto(self):
-        return
-
-    def menu_herramientas(self):
-        return
-
-    def menu_mantenimiento(self):
-        return
-
-    def menu_cilindros(self):
-        return
-
-    def menu_validaciones(self):
-        return
-
-    def menu_configuraciones(self):
-        return
 
     def elegir_libro(self):
         # borrar botones del menu principal
@@ -255,10 +214,6 @@ def valida_codigo(codigo):
     return True
 
 
-def main():
-    menu = Menu()
-    menu.main_menu()
-
-
 if __name__ == "__main__":
-    main()
+    menu = MainMenu()
+    menu.main_menu()

@@ -4,14 +4,14 @@ from ttkbootstrap.tableview import Tableview
 import libros.visor
 
 
-def gui(cursor, previous_window):
+def gui(main):
 
-    previous_window.withdraw()
+    main.window.withdraw()
 
     window = ttkb.Toplevel()
-    window.geometry("1400x1300")
+    window.geometry("1900x1300")
 
-    cursor.execute("SELECT * FROM libros")
+    main.cursor.execute("SELECT * FROM libros")
 
     col_data = [
         "Codigo",
@@ -26,7 +26,7 @@ def gui(cursor, previous_window):
         "Ks",
     ]
 
-    row_data = aplica_formato(cursor.fetchall())
+    row_data = aplica_formato(main.cursor.fetchall())
 
     dt = Tableview(
         window,
@@ -44,14 +44,17 @@ def gui(cursor, previous_window):
         window,
         text="Seleccionar",
         command=lambda: seleccion(
-            window, dt, cursor=cursor, previous_window=previous_window
+            window, dt, cursor=main.cursor, previous_window=main.window
         ),
     ).pack(pady=20)
-    ttkb.Button(window, text="Regresar", command=lambda: regresar(window)).pack(pady=20)
+    ttkb.Button(window, text="Regresar", command=lambda: regresar(main, window)).pack(
+        pady=20
+    )
 
 
-def regresar(window):
+def regresar(main, window):
     window.destroy()
+    main.window.deiconify()
 
 
 def seleccion(window, dt, cursor, previous_window):
