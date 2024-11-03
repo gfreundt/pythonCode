@@ -14,7 +14,7 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
 
     # crear nueva ventana, dimensionar
     window = ttkb.Toplevel()
-    window.geometry("1600x2000+10+10")
+    window.geometry("1900x1800+10+10")
 
     # GUI - Top Frame: botones
     frames = {
@@ -44,7 +44,6 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
         ),
         ttkb.Button(frames["top"], text="Exportar XLS", command=menu_exportar_xls),
         ttkb.Button(frames["top"], text="Exportar PDF", command=menu_exportar_pdf),
-        ttkb.Button(frames["top"], text="Guardar", command=menu_guardar),
         ttkb.Button(
             frames["top"],
             text="Editar",
@@ -60,13 +59,17 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
             frames["top"],
             text="Regresar",
             command=lambda: menu_regresar(main_window=main_window, window=window),
+            bootstyle="warning",
+        ),
+        ttkb.Button(
+            frames["top"], text="Guardar", command=menu_guardar, bootstyle="success"
         ),
     ]
     for x, button in enumerate(buttons):
         button.grid(row=0, column=x, padx=30, pady=20)
 
     # crear zona donde se muestra el texto del arbol
-    area_texto = ttkb.Text(frames["mid"], height=65, width=250)
+    area_texto = ttkb.Text(frames["mid"], height=38, width=250)
     area_texto.pack()
 
     # genera el texto del arbol al visor y mostrar
