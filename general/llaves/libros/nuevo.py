@@ -4,23 +4,19 @@ from PIL import Image, ImageTk
 from datetime import datetime as dt
 import os, random
 from libros import generador
-import herramientas
+from herramientas import validaciones
 import libros.visor
 
 
-def gui(**kwargs):
+def gui(main):
 
-    # conexion a base de datos
-    cursor = kwargs["cursor"]
-    conn = kwargs["conn"]
-
-    kwargs["previous_window"].withdraw()
+    main.window.withdraw()
 
     # GUI - ventana secundaria
-    winx, winy = (700, 500)
+    winx, winy = (900, 500)
     window = ttkb.Toplevel()
-    x = kwargs["window_posx"] + 150
-    y = kwargs["window_posy"] + 150
+    x = main.win_posx + 150
+    y = main.win_posy + 150
     window.geometry(f"{winx}x{winy}+{x}+{y}")
     window.title("Crear Nuevo Libro")
     window.iconphoto(False, PhotoImage(file=os.path.join("static", "key1.png")))
@@ -95,9 +91,9 @@ def gui(**kwargs):
             formato=formato.get(),
             nombre=nombre.get(),
             notas=notas.get(),
-            conn=conn,
-            cursor=cursor,
-            previous_window=kwargs["previous_window"],
+            conn=main.conn,
+            cursor=main.cursor,
+            previous_window=main.window,
             window=window,
         ),
         bootstyle="success",
@@ -106,7 +102,7 @@ def gui(**kwargs):
     ttkb.Button(
         bottom_frame,
         text="Regresar",
-        command=lambda: regresar(kwargs["previous_window"], window),
+        command=lambda: regresar(main.window, window),
         bootstyle="warning",
     ).grid(row=3, column=3, padx=20, pady=10)
 
@@ -140,7 +136,7 @@ def crear(**kwargs):
         )
 
         # hace validaciones que solo se pueden con libro completo
-        if not herramientas.valida_libro_completo(
+        if not validaciones.valida_libro_completo(
             cursor=cursor, nombre_tabla=nombre_tabla
         ):
             cursor.execute(f"DROP TABLE '{nombre_tabla}'")
@@ -194,7 +190,7 @@ def crear(**kwargs):
 def ggmk_aleatoria(codigo_ggmk):
 
     _codigo = "123456"  # ggmk invalida
-    while not herramientas.valida_codigo(_codigo):
+    while not validaciones.valida_codigo(_codigo):
         _codigo = "".join([str(random.randrange(0, 10)) for _ in range(6)])
 
     codigo_ggmk.set(value=_codigo)

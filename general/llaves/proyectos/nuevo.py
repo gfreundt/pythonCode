@@ -17,7 +17,7 @@ def gui(cursor, previous_window, conn):
     # previous_window.withdraw()
 
     window = ttkb.Toplevel()
-    window.geometry("1400x1300")
+    window.geometry("1800x1300")
 
     cursor.execute("SELECT * FROM libros")
 
@@ -70,7 +70,7 @@ def regresar(window):
 def arma_arbol(nombre_libro, cursor, conn):
 
     window = ttkb.Toplevel()
-    window.geometry("1000x1300")
+    window.geometry("1600x1300")
     arbol.text_area = ttkb.Text(window, height=100, width=80)
     arbol.text_area.place(x=10, y=60)
 
@@ -84,7 +84,7 @@ def arma_arbol(nombre_libro, cursor, conn):
     arbol.b1.place(x=700, y=70)
 
     arbol.b2 = ttkb.Button(window, text="Agrega MK", command=menu_agrega_mk)
-    arbol.b2.place(x=730, y=100)
+    arbol.b2.place(x=800, y=120)
     arbol.b2.config(state="disabled")
 
     arbol.b3 = ttkb.Button(
@@ -92,13 +92,13 @@ def arma_arbol(nombre_libro, cursor, conn):
         text="Nivel Completo",
         command=lambda: menu_nivel_completo(window, cursor, nombre_libro, conn),
     )
-    arbol.b3.place(x=860, y=85)
+    arbol.b3.place(x=900, y=90)
 
     arbol.b4 = ttkb.Button(window, text="Deshacer", command=menu_deshacer)
-    arbol.b4.place(x=860, y=135)
+    arbol.b4.place(x=900, y=170)
 
     arbol.s1 = ttkb.Spinbox(window, from_=1, textvariable=arbol.s1_valor, width=2)
-    arbol.s1.place(x=760, y=130)
+    arbol.s1.place(x=800, y=170)
     arbol.s1.config(state="disabled")
 
     muestra_arbol()
@@ -225,7 +225,6 @@ def asigna_llaves(cursor, nombre_libro, conn):
         required_ks,
     )
 
-    print(_record)
     cursor.execute(f"""INSERT INTO 'proyectos' VALUES ({(',?'*10)[1:]})""", _record)
 
     conn.commit()

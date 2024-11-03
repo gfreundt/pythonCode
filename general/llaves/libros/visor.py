@@ -12,7 +12,7 @@ def mostrar(cursor, nombre_tabla, main_window):
 
     # crear nueva ventana, dimensionar
     window = ttkb.Toplevel()
-    window.geometry("1000x2000+10+10")
+    window.geometry("1300x2000+10+10")
 
     # GUI - Top Frame: botones
     top_frame = ttkb.Frame(window)
