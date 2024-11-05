@@ -13,7 +13,7 @@ def gui(main):
     main.window.withdraw()
 
     # GUI - ventana secundaria
-    winx, winy = (900, 500)
+    winx, winy = (900, 400)
     window = ttkb.Toplevel()
     x = main.win_posx + 150
     y = main.win_posy + 150
@@ -80,13 +80,16 @@ def gui(main):
 
     # crear y colocar botones de accion
     ttkb.Button(
-        bottom_frame, text="Aleatorio", command=lambda: ggmk_aleatoria(codigo_ggmk)
+        bottom_frame,
+        text="Aleatorio",
+        command=lambda: ggmk_aleatoria(codigo_ggmk),
     ).grid(row=0, column=2)
 
     ttkb.Button(
         bottom_frame,
         text="Crear Libro",
         command=lambda: crear(
+            inputs=inputs,
             codigo_ggmk=codigo_ggmk.get(),
             formato=formato.get(),
             nombre=nombre.get(),
@@ -108,6 +111,20 @@ def gui(main):
 
 
 def crear(**kwargs):
+
+    # revisa que codigo GGMK sea valido
+    if validaciones.valida_codigo(kwargs["codigo_ggmk"]):
+        kwargs["inputs"][0].configure(bootstyle="success")
+        ttkb.Label(kwargs["window"], text="Creando Libro", bootstyle="success").pack(
+            pady=5
+        )
+        kwargs["window"].update()
+    else:
+        kwargs["inputs"][0].configure(bootstyle="danger")
+        ttkb.Label(kwargs["window"], text="Codigo Invalido", bootstyle="danger").pack(
+            pady=5
+        )
+        return
 
     # conexion a base de datos
     conn = kwargs["conn"]

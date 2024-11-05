@@ -1,5 +1,6 @@
 import itertools
 
+
 def gui(*args):
     pass
 
@@ -76,6 +77,10 @@ def valida_llave_no_cruzada(cilindro, mis_maestras, todas_maestras):
 
 
 def valida_codigo(codigo):
+
+    # no puede tener mas o menos de 6 digitos
+    if len(codigo) != 6:
+        return False
 
     codigo = tuple(int(i) for i in codigo)
 

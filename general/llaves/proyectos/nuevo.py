@@ -179,7 +179,7 @@ def asigna_llaves(cursor, nombre_libro, conn):
     required_gmks = [i[0] for i in cursor.fetchall()]
 
     # extrae del libro todas las MK necesarias para el proyecto
-    required_ks = 0
+    total_mks = total_smks = total_ks = 0
     for g, gmk in enumerate(required_gmks):
         # genera secuencia de GMK e inserta
         cursor.execute(f"SELECT Secuencia FROM '{nombre_libro}' WHERE GMK='{gmk}'")
@@ -192,6 +192,7 @@ def asigna_llaves(cursor, nombre_libro, conn):
             f"SELECT DISTINCT MK FROM '{nombre_libro}' WHERE GMK = '{gmk}' LIMIT {len(arbol.data[g])}"
         )
         required_mks = [i[0] for i in cursor.fetchall()]
+        total_mks += len(required_mks)
 
         # llena la tabla del proyecto con las llaves necesarias
         for m, mk in enumerate(required_mks):
@@ -206,12 +207,17 @@ def asigna_llaves(cursor, nombre_libro, conn):
                             SELECT '{nombre_libro}', Secuencia, 1
                             FROM '{nombre_libro}' WHERE MK = '{mk}' LIMIT {arbol.data[g][m]}"""
             cursor.execute(cmd)
-            required_ks += 1
 
-    # calcula cantidad de SMK en libro que no sean 0
-    required_smks = 0
+    # calcula cantidad de K en proyecto
+    cursor.execute(
+        f"SELECT COUNT (*) FROM '{nombre_proyecto}' WHERE Secuencia LIKE 'K-%'"
+    )
+    total_ks = cursor.fetchone()[0]
 
-    # inserta todos los datos del nuevo libro en la tabla indice
+    # TODO: calcula cantidad de SMK en proyecto que no sean 0
+    total_smks = 0
+
+    # inserta todos los datos del nuevo proyecto en la tabla indice
     _record = (
         nombre_proyecto,
         nombre_libro,
@@ -220,9 +226,9 @@ def asigna_llaves(cursor, nombre_libro, conn):
         proyecto_notas,
         dt.strftime(dt.now(), "%Y-%m-%d %H:%M:%S"),
         len(required_gmks),
-        len(required_mks),
-        required_smks,
-        required_ks,
+        total_mks,
+        total_smks,
+        total_ks,
     )
 
     cursor.execute(f"""INSERT INTO 'proyectos' VALUES ({(',?'*10)[1:]})""", _record)

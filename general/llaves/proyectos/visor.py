@@ -14,14 +14,16 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
 
     # crear nueva ventana, dimensionar
     window = ttkb.Toplevel()
-    window.geometry("1900x1800+10+10")
+    window.geometry(f"2000x{int(int(window.winfo_screenheight())*.92)}+10+10")
+
+    # definir Frames
+    frames = {
+        "top": ttkb.Frame(window, height=100),
+        "mid": ttkb.Frame(window, height=1000),
+        "bottom": ttkb.Frame(window, height=100),
+    }
 
     # GUI - Top Frame: botones
-    frames = {
-        "top": ttkb.Frame(window),
-        "mid": ttkb.Frame(window),
-        "bottom": ttkb.Frame(window),
-    }
     frames["top"].pack(pady=10)
 
     # GUI - Mid Frame: arbol
@@ -56,13 +58,13 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
             ),
         ),
         ttkb.Button(
+            frames["top"], text="Guardar", command=menu_guardar, bootstyle="success"
+        ),
+        ttkb.Button(
             frames["top"],
             text="Regresar",
             command=lambda: menu_regresar(main_window=main_window, window=window),
             bootstyle="warning",
-        ),
-        ttkb.Button(
-            frames["top"], text="Guardar", command=menu_guardar, bootstyle="success"
         ),
     ]
     for x, button in enumerate(buttons):

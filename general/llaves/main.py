@@ -93,9 +93,7 @@ class MainMenu:
             ttkb.Button(
                 bottom_frames[1],
                 text="Fabrica",
-                command=lambda: proyectos.fabrica.gui(
-                    self.cursor, self.window, self.conn
-                ),
+                command=lambda: proyectos.fabrica.gui(self),
             ),
         ]
 
