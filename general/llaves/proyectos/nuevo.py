@@ -171,7 +171,14 @@ def asigna_llaves(cursor, nombre_libro, conn):
     # copia estructura de tabla de libro a nuevo proyecto
     cursor.execute(f"DROP TABLE IF EXISTS '{nombre_proyecto}'")
     cursor.execute(
-        f"CREATE TABLE '{nombre_proyecto}' (LibroOrigen, Secuencia, Nombre, Copias, CodigoPuerta, TipoPuerta, TipoCerradura, Zona1, Zona2, Zona3, Zona4, ZonaCodigo, Notas)"
+        f"CREATE TABLE '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, Nombre, Copias, CodigoPuerta, TipoPuerta, TipoCerradura, Zona1, Zona2, Zona3, Zona4, ZonaCodigo, Notas, FabricadoLlaveCopias, FabricadoCilindro)"
+    )
+
+    # extrae del libro la GGMK
+    cursor.execute(f"SELECT DISTINCT GGMK FROM '{nombre_libro}'")
+    required_gmks = [i[0] for i in cursor.fetchone()]
+    cursor.execute(
+        f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, Copias, FabricadoLlaveCopias, FabricadoCilindro) VALUES ('{nombre_libro}','GGMK','GGMK',1,0,0)"
     )
 
     # extrae del libro la cantidad de GMK necesarias para el proyecto
@@ -185,7 +192,7 @@ def asigna_llaves(cursor, nombre_libro, conn):
         cursor.execute(f"SELECT Secuencia FROM '{nombre_libro}' WHERE GMK='{gmk}'")
         mk_secuencia = cursor.fetchone()
         cursor.execute(
-            f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Copias) VALUES ('{nombre_libro}','GM{mk_secuencia[0][:4]}',1)"
+            f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, Copias, FabricadoLlaveCopias, FabricadoCilindro) VALUES ('{nombre_libro}','GM{mk_secuencia[0][:4]}','GMK',1,0,0)"
         )
 
         cursor.execute(
@@ -200,11 +207,11 @@ def asigna_llaves(cursor, nombre_libro, conn):
             cursor.execute(f"SELECT Secuencia FROM '{nombre_libro}' WHERE MK='{mk}'")
             mk_secuencia = cursor.fetchone()
             cursor.execute(
-                f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Copias) VALUES ('{nombre_libro}','M{mk_secuencia[0][:8]}',1)"
+                f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, Copias, FabricadoLlaveCopias, FabricadoCilindro) VALUES ('{nombre_libro}','M{mk_secuencia[0][:8]}','MK', 1,0,0)"
             )
             # inserta todas las k necesarias para esa mk
-            cmd = f"""  INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Copias)
-                            SELECT '{nombre_libro}', Secuencia, 1
+            cmd = f"""  INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, Copias, FabricadoLlaveCopias, FabricadoCilindro)
+                            SELECT '{nombre_libro}', Secuencia, 'K', 1, 0, 0
                             FROM '{nombre_libro}' WHERE MK = '{mk}' LIMIT {arbol.data[g][m]}"""
             cursor.execute(cmd)
 
