@@ -53,7 +53,7 @@ def gui(main):
 def llaves(window, data, FONTS, main):
 
     main.cursor.execute(
-        "SELECT sum(copias)  FROM 'P-895185-(5)(21)()(340)-000' WHERE Secuencia LIKE 'K-%'"
+        "SELECT SUM(copias), SUM(FabricadoLlaveCopias) FROM 'P-932042-(1)(0)()(2354)-000' WHERE Jerarquia = 'K'"
     )
 
     data = {"GGMK": (1, 0), "GMK": (7, 3), "MK": (11, 2), "K": (108, 12)}
