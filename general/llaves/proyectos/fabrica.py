@@ -24,7 +24,7 @@ def gui(main):
     window.title("Fabrica de Proyecto")
     window.iconphoto(False, PhotoImage(file=os.path.join("static", "key1.png")))
 
-    main.cursor.execute("SELECT * FROM 'P-895185-(5)(21)()(340)-000'")
+    main.cursor.execute("SELECT * FROM 'P-895185-(5)(21)()(340)-001'")
     toda_data = main.cursor.fetchall()
 
     data_pines = [
@@ -53,7 +53,7 @@ def gui(main):
 def llaves(window, data, FONTS, main):
 
     main.cursor.execute(
-        "SELECT SUM(copias), SUM(FabricadoLlaveCopias) FROM 'P-932042-(1)(0)()(2354)-000' WHERE Jerarquia = 'K'"
+        "SELECT SUM(copias), SUM(FabricadoLlaveCopias) FROM 'P-895185-(5)(21)()(340)-001' WHERE Jerarquia = 'K'"
     )
 
     data = {"GGMK": (1, 0), "GMK": (7, 3), "MK": (11, 2), "K": (108, 12)}
@@ -62,10 +62,6 @@ def llaves(window, data, FONTS, main):
         window, bootstyle="success", text=" Avance Creacion de Llaves "
     )
     frame.grid(row=0, column=0, columnspan=2, padx=10, pady=5)
-
-    # ttkb.Label(frame, text="Avance Creacion de Llaves", font=FONTS[2]).grid(
-    #     row=0, column=0, columnspan=5, pady=5
-    # )
 
     columnas = ["Nivel de Llave", "Completas", "Pendientes", "Totales", "% Completas"]
 
@@ -189,15 +185,11 @@ def editar_llave(window, data, FONTS):
     codigo = "135739"
 
     canvas = ttkb.Canvas(frame, width=500, height=200, bg="yellow")
-    canvas.grid(row=2, column=0, columnspan=2, pady=20)
+    canvas.grid(row=2, column=0, columnspan=2, pady=20, padx=40)
     FACTOR = 1
-    points_fixed = [10, 21, 0, 14, 10, 7, 70, 7, 90, 0, 110, 14, 90, 21, 70, 21]
-    points_fixed = [80, 4, 10, 4, 0, 22, 10, 34]
-
-    points_fixed = [25, 125, 5, 90, 25, 55, 245, 55, 245, 125, 225, 125]
     points_fixed = [225, 125, 245, 125, 245, 55, 25, 55, 5, 90, 25, 125]
-
     points_vary = []
+
     for x, diente in enumerate(codigo):
         canvas.create_text(
             46 + (30 * x),
@@ -240,6 +232,28 @@ def editar_llave(window, data, FONTS):
         font=("Helvetica 10 bold"),
         angle=90,
     )
+
+    ttkb.Button(
+        frame, text="Copia lista", command=copia_lista, bootstyle="success"
+    ).grid(row=3, column=0, padx=10, pady=10)
+    ttkb.Button(
+        frame, text="Eliminar copia", command=eliminar_copia, bootstyle="warning"
+    ).grid(row=3, column=1, padx=10, pady=10)
+    ttkb.Button(
+        frame, text="Siguiente codigo", command=siguiente_codigo, bootstyle="primary"
+    ).grid(row=3, column=2, padx=10, pady=10)
+
+
+def copia_lista():
+    return
+
+
+def eliminar_copia():
+    return
+
+
+def siguiente_codigo():
+    return
 
 
 def editar_cilindro(window, data, FONTS):
