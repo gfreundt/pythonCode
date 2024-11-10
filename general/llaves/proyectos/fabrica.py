@@ -1,5 +1,6 @@
 from copy import deepcopy as copy
-from tkinter import PhotoImage, StringVar
+from tkinter import PhotoImage, StringVar, ARC
+from PIL import Image, ImageTk
 import ttkbootstrap as ttkb
 from pprint import pprint
 from datetime import datetime as dt
@@ -14,10 +15,11 @@ def gui(main):
         "Helvetica 12 bold",
         "Helvetica 15 bold",
         "Helvetica 10 bold",
+        "Helvetica 20 bold",
     )
 
     window = ttkb.Toplevel()
-    winx, winy = (1250, 1400)
+    winx, winy = (1300, 1400)
     x = main.win_posx + 20
     y = main.win_posy + 20
     window.geometry(f"{winx}x{winy}+{x}+{y}")
@@ -48,6 +50,13 @@ def gui(main):
     meters(window, data=data_meters, FONTS=FONTS)
     editar_llave(window, data=None, FONTS=FONTS)
     editar_cilindro(window, data=None, FONTS=FONTS)
+    ttkb.Button(
+        window, text="Finalizar", command=boton_regresar, bootstyle="danger"
+    ).grid(row=4, column=0, columnspan=4, pady=50)
+
+
+def boton_regresar():
+    return
 
 
 def llaves(window, data, FONTS, main):
@@ -185,7 +194,7 @@ def editar_llave(window, data, FONTS):
     codigo = "135739"
 
     canvas = ttkb.Canvas(frame, width=500, height=200, bg="yellow")
-    canvas.grid(row=2, column=0, columnspan=2, pady=20, padx=40)
+    canvas.grid(row=2, column=0, columnspan=2, pady=50, padx=20)
     FACTOR = 1
     points_fixed = [225, 125, 245, 125, 245, 55, 25, 55, 5, 90, 25, 125]
     points_vary = []
@@ -233,15 +242,21 @@ def editar_llave(window, data, FONTS):
         angle=90,
     )
 
+    button_frame = ttkb.Frame(frame)
+    button_frame.grid(row=3, column=0, columnspan=3, pady=20)
+
     ttkb.Button(
-        frame, text="Copia lista", command=copia_lista, bootstyle="success"
-    ).grid(row=3, column=0, padx=10, pady=10)
+        button_frame, text="Copia lista", command=copia_lista, bootstyle="success"
+    ).grid(row=0, column=0, padx=20, pady=10)
     ttkb.Button(
-        frame, text="Eliminar copia", command=eliminar_copia, bootstyle="warning"
-    ).grid(row=3, column=1, padx=10, pady=10)
+        button_frame, text="Eliminar copia", command=eliminar_copia, bootstyle="warning"
+    ).grid(row=0, column=1, padx=20, pady=10)
     ttkb.Button(
-        frame, text="Siguiente codigo", command=siguiente_codigo, bootstyle="primary"
-    ).grid(row=3, column=2, padx=10, pady=10)
+        button_frame,
+        text="Siguiente código",
+        command=siguiente_codigo,
+        bootstyle="primary",
+    ).grid(row=0, column=2, padx=20, pady=10)
 
 
 def copia_lista():
@@ -258,6 +273,71 @@ def siguiente_codigo():
 
 def editar_cilindro(window, data, FONTS):
 
+    data = "[1:8][2:6][6][4][1:6][1:2]"
+
+    global img
+
     frame = ttkb.LabelFrame(window, bootstyle="primary", text=" Armado de Cilindros ")
     frame.grid(row=3, column=2, columnspan=2, padx=10, pady=15)
-    ttkb.Label(frame, text="right").pack()
+
+    values = ["K-001-002-003", "K-001-002-002", "K-001-002-004"]
+    v = StringVar(value=values[0])
+    ttkb.OptionMenu(frame, v, *values).grid(row=1, column=0, pady=10)
+
+    canvas = ttkb.Canvas(frame, width=500, height=200)
+    canvas.grid(row=2, column=0, columnspan=2, pady=50, padx=40)
+
+    # Load an image in the script
+    img = ImageTk.PhotoImage(Image.open(os.path.join("static", "cerradura3.png")))
+
+    # Add image to the Canvas Items
+    canvas.create_line(50, 0, 350, 0, width=4, fill="white")
+    canvas.create_line(50, 200, 350, 200, width=4, fill="white")
+    canvas.create_oval(0, 0, 100, 200, outline="white", fill="black", width=4)
+    canvas.create_image(50, 100, image=img)
+    canvas.create_arc(
+        300,
+        0,
+        400,
+        200,
+        outline="white",
+        fill="black",
+        width=4,
+        start=270,
+        extent=180,
+        style=ARC,
+    )
+
+    # Insert pins
+    for x, pinpos in enumerate(data.split("]")[:-1]):
+        pines = (
+            (0, int(pinpos[1:2]))
+            if len(pinpos) == 2
+            else (int(pinpos[1:2]), int(pinpos[3:5]))
+        )
+        if pines[0] > 0:
+            canvas.create_text(
+                130 + x * 45, 60, text=pines[0], fill="white", font=FONTS[5]
+            )
+        canvas.create_text(
+            130 + x * 45, 140, text=pines[1], fill="white", font=FONTS[5]
+        )
+
+    button_frame = ttkb.Frame(frame)
+    button_frame.grid(row=3, column=0, columnspan=3, pady=20)
+
+    ttkb.Button(
+        button_frame, text="Cilindro listo", command=copia_lista, bootstyle="success"
+    ).grid(row=0, column=0, padx=20, pady=10)
+    ttkb.Button(
+        button_frame,
+        text="Eliminar cilindro",
+        command=eliminar_copia,
+        bootstyle="warning",
+    ).grid(row=0, column=1, padx=20, pady=10)
+    ttkb.Button(
+        button_frame,
+        text="Siguiente código",
+        command=siguiente_codigo,
+        bootstyle="primary",
+    ).grid(row=0, column=2, padx=20, pady=10)
