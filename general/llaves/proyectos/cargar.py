@@ -66,11 +66,11 @@ def aplica_formato(data):
 
 
 def seleccionar(main_window, this_window, dt_view, cursor, conn):
-
     selected = dt_view.get_rows(selected=True)
     this_window.destroy()
     proyectos.visor.mostrar(
         cursor=cursor,
+        conn=conn,
         nombre_proyecto=selected[0].values[0],
         nombre_libro=selected[0].values[1],
         main_window=main_window,

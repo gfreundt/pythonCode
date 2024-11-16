@@ -97,7 +97,9 @@ def arma_arbol(nombre_libro, cursor, conn):
     arbol.b4 = ttkb.Button(window, text="Deshacer", command=menu_deshacer)
     arbol.b4.place(x=900, y=170)
 
-    arbol.s1 = ttkb.Spinbox(window, from_=1, textvariable=arbol.s1_valor, width=2)
+    arbol.s1 = ttkb.Spinbox(
+        window, from_=1, to=99, textvariable=arbol.s1_valor, width=2
+    )
     arbol.s1.place(x=800, y=170)
     arbol.s1.config(state="disabled")
 
@@ -171,14 +173,44 @@ def asigna_llaves(cursor, nombre_libro, conn):
     # copia estructura de tabla de libro a nuevo proyecto
     cursor.execute(f"DROP TABLE IF EXISTS '{nombre_proyecto}'")
     cursor.execute(
-        f"CREATE TABLE '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, CodigoLlave, Nombre, Copias, CodigoPuerta, TipoPuerta, TipoCerradura, Zona1, Zona2, Zona3, Zona4, ZonaCodigo, Notas, FabricadoLlaveCopias, FabricadoCilindro)"
+        f"""CREATE TABLE '{nombre_proyecto}'
+
+        ('LibroOrigen' TEXT,
+        'Secuencia' TEXT,
+        'Jerarquia' TEXT,
+        'CodigoLlave' TEXT,
+        'Nombre' TEXT,
+        'Copias' TEXT,
+        'CodigoPuerta' TEXT,
+        'TipoPuerta' TEXT,
+        'TipoCerradura' TEXT,
+        'Zona1' TEXT,
+        'Zona2' TEXT,
+        'Zona3' TEXT,
+        'Zona4' TEXT,
+        'ZonaCodigo' TEXT,
+        'Notas' TEXT,
+        'FabricadoLlaveCopias' NUMERIC,
+        'FabricadoCilindro' NUMERIC )"""
     )
 
     # extrae del libro la GGMK
     cursor.execute(f"SELECT DISTINCT GGMK FROM '{nombre_libro}'")
     ggmk_codigo = cursor.fetchone()[0]
     cursor.execute(
-        f"INSERT INTO '{nombre_proyecto}' (LibroOrigen, Secuencia, Jerarquia, CodigoLlave, Copias, FabricadoLlaveCopias, FabricadoCilindro) VALUES ('{nombre_libro}','GGMK','GGMK',{ggmk_codigo},1,0,0)"
+        f"""INSERT INTO '{nombre_proyecto}' 
+        
+        (LibroOrigen, 
+        Secuencia, 
+        Jerarquia, 
+        CodigoLlave, 
+        Copias, 
+        FabricadoLlaveCopias, 
+        FabricadoCilindro)
+
+        VALUES 
+
+        ('{nombre_libro}','GGMK','GGMK',{ggmk_codigo},1,0,0)"""
     )
 
     # extrae del libro la cantidad de GMK necesarias para el proyecto

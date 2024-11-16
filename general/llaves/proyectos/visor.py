@@ -4,10 +4,12 @@ import openpyxl as pyxl
 from fpdf import FPDF
 from copy import deepcopy as copy
 
-import proyectos.editar
+from proyectos.editar2 import Editar
 
 
-def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
+def mostrar(cursor, nombre_proyecto, nombre_libro, main_window, conn):
+
+    editar = Editar(cursor=cursor, conn=conn, nombre_proyecto=nombre_proyecto)
 
     global detalle
     detalle = False
@@ -18,8 +20,8 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
 
     # definir Frames
     frames = {
-        "top": ttkb.Frame(window, height=100),
-        "mid": ttkb.Frame(window, height=1000),
+        "top": ttkb.Frame(window),
+        "mid": ttkb.Frame(window),
         "bottom": ttkb.Frame(window, height=100),
     }
 
@@ -47,18 +49,7 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
         ttkb.Button(frames["top"], text="Exportar XLS", command=menu_exportar_xls),
         ttkb.Button(frames["top"], text="Exportar PDF", command=menu_exportar_pdf),
         ttkb.Button(
-            frames["top"],
-            text="Editar",
-            command=lambda: menu_editar(
-                frames,
-                cursor,
-                nombre_proyecto,
-                nombre_libro,
-                area_texto,
-            ),
-        ),
-        ttkb.Button(
-            frames["top"], text="Guardar", command=menu_guardar, bootstyle="success"
+            frames["top"], text="Editar", command=lambda: menu_editar(frames["bottom"])
         ),
         ttkb.Button(
             frames["top"],
@@ -66,12 +57,23 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
             command=lambda: menu_regresar(main_window=main_window, window=window),
             bootstyle="warning",
         ),
+        ttkb.Button(
+            frames["top"],
+            text="Refrescar",
+            command=lambda: menu_refrescar(
+                cursor=cursor,
+                nombre_proyecto=nombre_proyecto,
+                nombre_libro=nombre_libro,
+                area_texto=area_texto,
+            ),
+            bootstyle="success",
+        ),
     ]
     for x, button in enumerate(buttons):
         button.grid(row=0, column=x, padx=30, pady=20)
 
     # crear zona donde se muestra el texto del arbol
-    area_texto = ttkb.Text(frames["mid"], height=38, width=250)
+    area_texto = ttkb.Text(frames["mid"], height=63, width=250)
     area_texto.pack()
 
     # genera el texto del arbol al visor y mostrar
@@ -81,6 +83,8 @@ def mostrar(cursor, nombre_proyecto, nombre_libro, main_window):
         area_texto=area_texto,
         nombre_libro=nombre_libro,
     )
+
+    editar.gui(frame=frames["bottom"])
 
 
 def menu_detalle(**kwargs):
@@ -96,6 +100,18 @@ def menu_detalle(**kwargs):
 
     muestra_arbol(arbol, area_texto=kwargs["area_texto"])
     detalle = not detalle
+
+
+def menu_refrescar(**kwargs):
+
+    arbol = genera_texto_arbol(
+        detalle=detalle,
+        cursor=kwargs["cursor"],
+        nombre_proyecto=kwargs["nombre_proyecto"],
+        nombre_libro=kwargs["nombre_libro"],
+    )
+
+    muestra_arbol(arbol, area_texto=kwargs["area_texto"])
 
 
 def menu_exportar_xls(cursor, nombre_proyecto):
@@ -165,7 +181,7 @@ def menu_exportar_xls(cursor, nombre_proyecto):
     wb.save(f"{nombre_proyecto}.xlsx")
 
 
-def menu_exportar_pdf(self):
+def menu_exportar_pdf():
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=10)
@@ -174,35 +190,17 @@ def menu_exportar_pdf(self):
         pdf.cell(200, 10, txt=linea, ln=1, align="L")
     pdf.output("mygfg.pdf")
 
-    return
 
+def menu_editar(frame):
 
-def menu_guardar(conn):
-    conn.commit()
-    status_graba_db = True
-
-
-def menu_editar(frames, cursor, nombre_proyecto, nombre_libro, area_texto):
-
-    arbol = genera_texto_arbol(
-        detalle=True,
-        cursor=cursor,
-        nombre_proyecto=nombre_proyecto,
-        nombre_libro=nombre_libro,
-    )
-    muestra_arbol(arbol, area_texto=area_texto)
-    proyectos.editar.gui(frames, cursor, nombre_proyecto)
+    for widget in frame.winfo_children():
+        widget.config(state="normal")
 
 
 def menu_regresar(window, main_window):
 
     main_window.deiconify()
     window.destroy()
-    return
-
-    if not status_graba_db:
-        proceso.cursor.execute(f"DROP TABLE '{proceso.nombre_tabla}'")
-        proceso.conn.commit()
 
 
 def genera_texto_arbol(detalle, cursor, nombre_proyecto, nombre_libro):
@@ -210,58 +208,60 @@ def genera_texto_arbol(detalle, cursor, nombre_proyecto, nombre_libro):
     totales = {"gmk": 0, "mk": 0}
 
     cursor.execute(
-        f"SELECT * FROM '{nombre_proyecto}' AS T1 JOIN '{nombre_libro}' AS T2 ON T1.Secuencia = T2.Secuencia"
+        f"""SELECT  Secuencia, Jerarquia, CodigoLlave, Nombre, Copias, CodigoPuerta, TipoPuerta,
+                    TipoCerradura, Zona1, Zona2, Zona3, Zona4, ZonaCodigo
+                    FROM '{nombre_proyecto}'"""
     )
-    data = cursor.fetchall()
 
-    previous = [0] * 25
-    output = f"GGMK <> Codigo:{data[0][0]}\n"
+    data = [[j if j else "" for j in i] for i in cursor.fetchall()]
+    output = ""
 
-    for line, d in enumerate(data):
+    for (
+        sec,
+        jer,
+        cod,
+        nom,
+        cop,
+        codp,
+        tipp,
+        tipc,
+        zon1,
+        zon2,
+        zon3,
+        zon4,
+        zonc,
+    ) in data:
 
-        sec = d[1]
-        nombre = d[2] if d[2] else ""
-        cop = d[3]
-        cod_puerta = d[4] if d[4] else ""
-        tip_puerta = d[5] if d[5] else ""
-        tip_cerr = d[6] if d[6] else ""
-        zona = " - ".join([i if i else "" for i in d[7:12]])
-        gmk = d[14]
-        mk = d[15]
-        smk = d[16]
-        k = d[17]
-        cil = d[19]
-        mp = d[20]
+        if jer == "GGMK":
+            output += f"{sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} |\n"
 
-        if gmk != previous[14]:
+        if jer == "GMK":
             output += "|\n"
-            output += f"|{'-'*8} GM{sec} <> Codigo: {gmk}\n"
+            output += f"|{'-'*8} {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} |\n"
             totales["gmk"] += 1
 
-        if mk != previous[15]:
+        if jer == "MK":
             output += f"|{' '*9}|\n"
-            output += f"|{' '*9}|{'-'*7} M{sec} <> Codigo:{mk}\n"
-            output += f"|{' '*9}|{' '*8}|\n"
+            output += f"|{' '*9}|{'-'*7} {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} |\n"
+            output += f"|{' '*9}|{' '*10}|\n"
             totales["mk"] += 1
 
             if not detalle:
                 cursor.execute(
-                    f"SELECT * FROM '{nombre_proyecto}' AS T1 JOIN '{nombre_libro}' AS T2 ON T1.Secuencia = T2.Secuencia WHERE MK = '{mk}'"
+                    f"SELECT * FROM '{nombre_proyecto}' AS T1 JOIN '{nombre_libro}' AS T2 ON T1.Secuencia = T2.Secuencia WHERE MK = '{cod}'"
                 )
                 _unicas = len(cursor.fetchall())
-                output += f"|{' '*9}|{' '*8}K-Unicas: {_unicas}\n"
+                output += f"|{' '*9}|{' '*10}|- K-Únicas: {_unicas}\n"
 
-        if detalle:
-            output += f"|{' '*9}|{' '*8}|- {sec} <> Codigo:{k} [{nombre if nombre else '(sin nombre)'}] - Cilindro ({mp} MP): {cil:<30}- Copias: {cop} - Zona: {zona} - Puerta: {tip_puerta} - {cod_puerta} - Cerradura: {tip_cerr}\n"
-
-        previous = copy(data[line])
+        if jer == "K" and detalle:
+            output += f"""|{' '*9}|{' '*10}|- {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} | Puerta: {codp} - {tipp} | Cerradura: {tipc} |\n"""
 
     # agregar resumen al inicio del texto
     cursor.execute(f"SELECT * FROM 'proyectos' WHERE Codigo = '{nombre_proyecto}'")
     d = cursor.fetchone()
 
     output = (
-        f"""{'-'*50}\nProyecto: {nombre_proyecto}\nNombre: {d[3]}\nFecha de Creacion: {d[5]}\nTotal GMKs: {int(d[6]):,}\nTotal MKs: {int(d[7]):,}\nTotal Ks: {int(d[9]):,}\n{'-'*50}\n"""
+        f"""{'-'*50}\nProyecto: {nombre_proyecto}\nNombre: {d[3]}\nFecha de Creacion: {d[5]}\nTotal GMKs: {int(d[6]):,}\nTotal MKs: {int(d[7]):,}\nTotal Ks: {int(d[9]):,}\n{'-'*50}\n\n"""
         + output
     )
 

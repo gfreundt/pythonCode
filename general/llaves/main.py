@@ -18,15 +18,22 @@ class MainMenu:
         self.conn = sqlite3.connect("llaves.db", isolation_level="DEFERRED")
         self.cursor = self.conn.cursor()
 
+        # definir tamano de ventana
+        self.win_size_x, self.win_size_y = (800, 550)
+
+        self.fabrica = proyectos.fabrica.Fabrica(
+            self.cursor, self.conn, self.win_size_x, self.win_size_y
+        )
+
     def main_menu(self):
 
         # GUI - inicializar
-        win_size_x, win_size_y = (800, 550)
+
         self.window = ttkb.Window(themename="darkly")
-        self.win_posx = (int(self.window.winfo_screenwidth()) - win_size_x) // 2
-        self.win_posy = (int(self.window.winfo_screenheight()) - win_size_y) // 3
+        self.win_posx = (int(self.window.winfo_screenwidth()) - self.win_size_x) // 2
+        self.win_posy = (int(self.window.winfo_screenheight()) - self.win_size_y) // 3
         self.window.geometry(
-            f"{win_size_x}x{win_size_y}+{self.win_posx}+{self.win_posy}"
+            f"{self.win_size_x}x{self.win_size_y}+{self.win_posx}+{self.win_posy}"
         )
         self.window.title("Sistema de Maestranza de Llaves v0.6")
         self.window.iconphoto(
@@ -93,7 +100,7 @@ class MainMenu:
             ttkb.Button(
                 bottom_frames[1],
                 text="Fabrica",
-                command=lambda: proyectos.fabrica.gui(self),
+                command=lambda: self.fabrica.gui(),
             ),
         ]
 
