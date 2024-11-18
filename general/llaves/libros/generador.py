@@ -1,5 +1,6 @@
 import itertools as it
 import random
+from copy import deepcopy as copy
 
 from herramientas import validaciones
 
@@ -48,7 +49,7 @@ def sin_smk(level1, matriz, codigo_ggmk):
             level4 = combinaciones(l2, matriz[3], codigo_ggmk)
             for n4, l4 in enumerate(level4):
                 llaves.append(
-                    (
+                    [
                         "".join(codigo_ggmk),
                         "".join(l1),
                         "".join(l2),
@@ -57,7 +58,7 @@ def sin_smk(level1, matriz, codigo_ggmk):
                         f"K-{n1+1:02d}-{n2+1:03d}-{n4+1:03d}",
                         calcula_cilindro(llave=l4, codigo_ggmk=codigo_ggmk),
                         calcula_cilindro(llave=l4, codigo_ggmk=codigo_ggmk).count(":"),
-                    )
+                    ]
                 )
                 # actualizar lista de maestras
                 todas_maestras.update({"".join(l1)})
@@ -140,6 +141,34 @@ def genera_nombre_tabla(codigo_ggmk, matriz):
     return f"L-{codigo_ggmk}-{nombre[:-1]}"
 
 
+def reordena_secuencias(llaves):
+
+    nuevas_llaves = copy(llaves)
+    gmk_counter = mk_counter = 1
+    k_counter = 0
+
+    sec_previa = llaves[0][5].split("-")
+    for k, llave in enumerate(llaves):
+        sec = llave[5].split("-")
+
+        if sec[1] != sec_previa[1]:
+            gmk_counter += 1
+            mk_counter = 1
+            k_counter = 0
+
+        elif sec[2] != sec_previa[2]:
+            mk_counter += 1
+            k_counter = 0
+
+        k_counter += 1
+
+        nuevas_llaves[k][5] = f"K-{gmk_counter:02d}-{mk_counter:03d}-{k_counter:03d}"
+
+        sec_previa = copy(sec)
+
+    return nuevas_llaves
+
+
 def main(codigo_ggmk, formato):
 
     # crea una matriz aleatoria de cuales pines cambiaran para generar combinaciones
@@ -164,9 +193,8 @@ def main(codigo_ggmk, formato):
         )
     ]
 
-    # TODO: reestablece la secuencia de las llaves en caso se hayan eliminado llaves por cruzadas
+    # reestablece la secuencia de las llaves en caso se hayan eliminado llaves por cruzadas
     if len(llaves) > len(llaves2):
-        pass
-        # print(len(llaves), len(llaves2))
+        llaves2 = reordena_secuencias(llaves2)
 
     return llaves2, genera_nombre_tabla("".join(codigo_ggmk), matriz)

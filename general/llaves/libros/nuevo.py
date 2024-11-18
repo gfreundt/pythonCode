@@ -141,7 +141,6 @@ def crear(**kwargs):
             )
 
         # crea tabla
-        # TODO: check if table already exists
         cursor.execute(
             f"CREATE TABLE '{nombre_tabla}' (GGMK, GMK, MK, SMK, K, Secuencia, Cilindro, MP)"
         )
@@ -157,6 +156,7 @@ def crear(**kwargs):
             cursor=cursor, nombre_tabla=nombre_tabla
         ):
             cursor.execute(f"DROP TABLE '{nombre_tabla}'")
+            print("intento")
         else:
             break
 

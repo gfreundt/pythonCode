@@ -33,7 +33,11 @@ def mostrar(cursor, nombre_tabla, main_window):
                 area_texto=area_texto,
             ),
         ),
-        ttkb.Button(top_frame, text="Exportar XLS", command=menu_exportar_xls),
+        ttkb.Button(
+            top_frame,
+            text="Exportar XLS",
+            command=lambda: menu_exportar_xls(cursor, nombre_tabla),
+        ),
         ttkb.Button(top_frame, text="Exportar PDF", command=menu_exportar_pdf),
         ttkb.Button(top_frame, text="Guardar", command=menu_guardar),
         ttkb.Button(top_frame, text="Editar", command=menu_editar),
@@ -92,11 +96,12 @@ def menu_exportar_xls(cursor, nombre_tabla):
         ws[f"B{i}"] = str(b)
 
     # crear hoja "Resumen"
-    wb.create_sheet("Resumen")
-    ws = wb["Resumen"]
-    arbol = genera_texto_arbol(detalle=False)
+    wb.create_sheet("Arbol Resumen")
+    ws = wb["Arbol Resumen"]
+    arbol = genera_texto_arbol(cursor, nombre_tabla, detalle=False)
     fila = 0
     for linea in arbol.split("\n"):
+        # linea = linea.replace("|", "").replace("-", "").strip()
         fila += 1
         if "GGMK" in linea:
             ws[f"A{fila}"] = linea
@@ -110,11 +115,12 @@ def menu_exportar_xls(cursor, nombre_tabla):
             fila -= 1
 
     # crear hoja "Detalle"
-    wb.create_sheet("Detalle")
-    ws = wb["Detalle"]
-    arbol = genera_texto_arbol(detalle=True)
+    wb.create_sheet("Arbol Detalle")
+    ws = wb["Arbol Detalle"]
+    arbol = genera_texto_arbol(cursor, nombre_tabla, detalle=True)
     fila = 0
     for linea in arbol.split("\n"):
+        # linea = linea.replace("|", "").replace("-", "")
         fila += 1
         if "GGMK" in linea:
             ws[f"A{fila}"] = linea
@@ -127,6 +133,23 @@ def menu_exportar_xls(cursor, nombre_tabla):
         else:
             fila -= 1
 
+    # crear hoja "Llaves"
+    wb.create_sheet("Llaves")
+    ws = wb["Llaves"]
+    cursor.execute(f"SELECT * FROM '{nombre_tabla}'")
+    data = [
+        ("GGMK", "GMK", "MK", "SMK", "K", "Secuencia", "Cilindro", "MP")
+    ] + cursor.fetchall()
+    for i, (a, b, c, d, e, f, g, h) in enumerate(data, start=1):
+        ws[f"A{i}"] = str(a)
+        ws[f"B{i}"] = str(b)
+        ws[f"C{i}"] = str(c)
+        ws[f"D{i}"] = str(d)
+        ws[f"E{i}"] = str(e)
+        ws[f"F{i}"] = str(f)
+        ws[f"G{i}"] = str(g)
+        ws[f"H{i}"] = str(h)
+
     # crear plantilla para carga de proyectos
     wb.create_sheet("PlantillaProyecto")
 
@@ -134,11 +157,11 @@ def menu_exportar_xls(cursor, nombre_tabla):
     wb.save(f"{nombre_tabla}.xlsx")
 
 
-def menu_exportar_pdf(self):
+def menu_exportar_pdf(cursor, nombre_libro):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=10)
-    arbol = genera_texto_arbol(detalle=True)
+    arbol = genera_texto_arbol(detalle, cursor, nombre_libro)
     for linea in arbol.split("\n"):
         pdf.cell(200, 10, txt=linea, ln=1, align="L")
     pdf.output("mygfg.pdf")
@@ -166,7 +189,7 @@ def menu_regresar(window, main_window):
         proceso.conn.commit()
 
 
-def genera_texto_arbol(detalle, cursor, nombre_libro):
+def genera_texto_arbol(cursor, nombre_libro, detalle):
 
     # extrae data de libro de base de datos
     cursor.execute(f"SELECT * FROM '{nombre_libro}'")

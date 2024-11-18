@@ -4,7 +4,8 @@ import openpyxl as pyxl
 from fpdf import FPDF
 from copy import deepcopy as copy
 
-from proyectos.editar2 import Editar
+from proyectos.cargar2 import Cargar
+from proyectos.editar import Editar
 
 
 def mostrar(cursor, nombre_proyecto, nombre_libro, main_window, conn):

@@ -1,124 +1,162 @@
-from tkinter import StringVar
+from tkinter import StringVar, END
 import ttkbootstrap as ttkb
+from pprint import pprint
 
 
-def gui(frames, cursor, nombre_proyecto):
+class Editar:
 
-    lock_frame(frames["top"])
+    def __init__(self, cursor, conn, nombre_proyecto):
+        self.cursor = cursor
+        self.conn = conn
+        self.nombre_proyecto = nombre_proyecto
 
-    cursor.execute(f"SELECT * FROM '{nombre_proyecto}'")
-    data = cursor.fetchall()
+    def gui(self, frame):
 
-    secuencias = [i[1] for i in data]
-    secuencia_elegida = StringVar(value=secuencias[0])
+        self.frame = frame
 
-    ttkb.OptionMenu(frames["bottom"], secuencia_elegida, *secuencias).grid(
-        column=0, row=0
-    )
+        self.cursor.execute(f"SELECT * FROM '{self.nombre_proyecto}'")
+        data = self.cursor.fetchall()
 
-    opciones = {"cod_puerta": ["Tipo A", "Tipo A", "Tipo B", "Tipo C"]}
+        secuencias = [i[1] for i in data]
+        secuencia_elegida = StringVar(value=secuencias[0])
 
-    rptas = asigna_valor_campos(cursor, nombre_proyecto, secuencia_elegida.get())
-
-    campos = [
-        ("Nombre", 1, ttkb.Entry(frames["bottom"], textvariable=rptas["nombre"])),
-        (
-            "Copias",
-            1,
-            ttkb.Spinbox(
-                frames["bottom"], from_=0, to=1000, textvariable=rptas["copias"]
+        ttkb.OptionMenu(
+            frame,
+            secuencia_elegida,
+            "GGMK",
+            *secuencias,
+            command=lambda secuencia_elegida: self.asigna_valor_campos(
+                secuencia_elegida
             ),
-        ),
-        (
-            "CodigoPuerta",
-            1,
-            ttkb.OptionMenu(
-                frames["bottom"], rptas["cod_puerta"], *opciones["cod_puerta"]
-            ),
-        ),
-        (
-            "TipoPuerta",
-            1,
-            ttkb.OptionMenu(
-                frames["bottom"], rptas["tip_puerta"], *opciones["cod_puerta"]
-            ),
-        ),
-        (
-            "TipoCerradura",
-            1,
-            ttkb.OptionMenu(
-                frames["bottom"], rptas["tip_cerr"], *opciones["cod_puerta"]
-            ),
-        ),
-        ("Zona1", 2, ttkb.Entry(frames["bottom"], textvariable=rptas["zona1"])),
-        ("Zona2", 2, ttkb.Entry(frames["bottom"], textvariable=rptas["zona2"])),
-        ("Zona3", 2, ttkb.Entry(frames["bottom"], textvariable=rptas["zona3"])),
-        ("Zona4", 2, ttkb.Entry(frames["bottom"], textvariable=rptas["zona4"])),
-        (
-            "ZonaCodigo",
-            2,
-            ttkb.Entry(frames["bottom"], textvariable=rptas["zona_cod"]),
-        ),
-        ("Notas", 3, ttkb.Entry(frames["bottom"], textvariable=rptas["notas"])),
-    ]
+        ).grid(column=0, row=0)
 
-    cols = [0] * 10
-    for campo in campos:
-        ttkb.Label(frames["bottom"], text=campo[0]).grid(
-            padx=7, pady=5, column=(campo[1] * 2) - 1, row=cols[campo[1]]
+        opciones = {
+            "cod_puerta": ["", "Tipo A", "Tipo B", "Tipo C"],
+            "tip_puerta": ["", "Puerta A", "Puerta B", "Puerta C"],
+        }
+
+        self.rptas = [StringVar() for _ in range(11)]
+
+        self.campos = [
+            ("Nombre", 1, ttkb.Entry(frame, textvariable=self.rptas[0])),
+            (
+                "Copias",
+                1,
+                ttkb.Spinbox(frame, from_=0, to=999, textvariable=self.rptas[1]),
+            ),
+            (
+                "CodigoPuerta",
+                1,
+                ttkb.OptionMenu(
+                    frame,
+                    self.rptas[2],
+                    *opciones["cod_puerta"],
+                ),
+            ),
+            (
+                "TipoPuerta",
+                1,
+                ttkb.OptionMenu(
+                    frame,
+                    self.rptas[3],
+                    *opciones["tip_puerta"],
+                ),
+            ),
+            (
+                "TipoCerradura",
+                1,
+                ttkb.OptionMenu(
+                    frame,
+                    self.rptas[4],
+                    *opciones["cod_puerta"],
+                ),
+            ),
+            ("Zona1", 2, ttkb.Entry(frame, textvariable=self.rptas[5])),
+            ("Zona2", 2, ttkb.Entry(frame, textvariable=self.rptas[6])),
+            ("Zona3", 2, ttkb.Entry(frame, textvariable=self.rptas[7])),
+            ("Zona4", 2, ttkb.Entry(frame, textvariable=self.rptas[8])),
+            ("ZonaCodigo", 2, ttkb.Entry(frame, textvariable=self.rptas[9])),
+            ("Notas", 3, ttkb.Entry(frame, textvariable=self.rptas[10])),
+        ]
+
+        cols = [0] * 10
+        for campo in self.campos:
+            ttkb.Label(frame, text=campo[0]).grid(
+                column=(campo[1] * 2) - 1, row=cols[campo[1]]
+            )
+            campo[2].grid(column=(campo[1] * 2), row=cols[campo[1]], pady=5, padx=10)
+
+            cols[campo[1]] += 1
+
+        ttkb.Button(
+            frame,
+            text="Guardar",
+            command=lambda: self.boton_grabar(),
+            bootstyle="success",
+        ).grid(row=0, column=self.campos[-1][1] * 2 + 1, padx=30, pady=5)
+
+        self.secuencia_activa = "GGMK"
+        self.asigna_valor_campos(secuencia_elegida="GGMK", initial=True)
+
+    def boton_grabar(self):
+
+        self.grabar()
+        self.lock_frame()
+
+    def grabar(self):
+
+        self.cursor.execute(
+            f"""UPDATE '{self.nombre_proyecto}'
+                SET Nombre=?,
+                Copias = ?,
+                CodigoPuerta = ?,
+                TipoPuerta = ?, 
+                TipoCerradura = ?, 
+                Zona1 = ?, 
+                Zona2 = ?, 
+                Zona3 = ?, 
+                Zona4 = ?, 
+                ZonaCodigo = ?, 
+                Notas = ? 
+                WHERE 
+                Secuencia = '{self.secuencia_activa}'""",
+            [i.get() for i in self.rptas],
         )
-        campo[2].grid(column=(campo[1] * 2), row=cols[campo[1]])
 
-        cols[campo[1]] += 1
+        self.conn.commit()
 
-    ttkb.Button(
-        frames["bottom"],
-        text="Guardar",
-        command=lambda: boton_grabar(secuencia_elegida.get(), rptas, nombre_proyecto),
-        bootstyle="success",
-    ).grid(row=0, column=campos[-1][1] * 2 + 1, padx=30, pady=5)
-    ttkb.Button(
-        frames["bottom"],
-        text="Regresar",
-        command=lambda: boton_regresar(frames),
-        bootstyle="warning",
-    ).grid(row=1, column=campos[-1][1] * 2 + 1, padx=30, pady=5)
+    def asigna_valor_campos(self, secuencia_elegida, initial=False):
 
+        # graba valores de registro activo antes de cambiar de registro
+        if not initial:
+            self.grabar()
 
-def boton_grabar(secuencia_elegida, rptas, nombre_proyecto):
-    for k, v in rptas.items():
-        print(v.get())
+        self.cursor.execute(
+            f"""SELECT Nombre,
+                Copias,
+                CodigoPuerta,
+                TipoPuerta,
+                TipoCerradura,
+                Zona1,
+                Zona2,
+                Zona3,
+                Zona4,
+                ZonaCodigo,
+                Notas
+                FROM '{self.nombre_proyecto}'
+                WHERE Secuencia = '{secuencia_elegida}'"""
+        )
 
+        data = self.cursor.fetchone()
 
-def boton_regresar(frames):
-    lock_frame(frames["bottom"])
-    lock_frame(frames["top"], unlock=True)
+        for indice, _ in enumerate(self.campos):
+            self.rptas[indice].set(data[indice] if data[indice] else "")
 
+        self.secuencia_activa = secuencia_elegida
 
-def asigna_valor_campos(cursor, nombre_proyecto, secuencia_elegida):
-    cursor.execute(
-        f"SELECT * FROM '{nombre_proyecto}' WHERE Secuencia = '{secuencia_elegida}'"
-    )
-    r = cursor.fetchone()
-
-    return {
-        "nombre": StringVar(value=r[2] if r[2] else ""),
-        "copias": StringVar(value=r[3]),
-        "cod_puerta": StringVar(value=r[4] if r[4] else ""),
-        "tip_puerta": StringVar(value=r[5] if r[5] else ""),
-        "tip_cerr": StringVar(value=r[6] if r[6] else ""),
-        "zona1": StringVar(value=r[7] if r[7] else ""),
-        "zona2": StringVar(value=r[8] if r[8] else ""),
-        "zona3": StringVar(value=r[9] if r[9] else ""),
-        "zona4": StringVar(value=r[10] if r[10] else ""),
-        "zona_cod": StringVar(value=r[11] if r[11] else ""),
-        "notas": StringVar(value=r[12] if r[12] else ""),
-    }
-
-
-def lock_frame(frame, unlock=False):
-    for widget in frame.winfo_children():
-        if unlock:
-            widget.config(state="normal")
-        else:
-            widget.config(state="disabled")
+    def lock_frame(self, unlock=False):
+        for widget in self.frame.winfo_children():
+            if unlock:
+                widget.config(state="normal")
+            else:
+                widget.config(state="disabled")
