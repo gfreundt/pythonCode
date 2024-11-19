@@ -5,10 +5,10 @@ from pprint import pprint
 
 class Editar:
 
-    def __init__(self, cursor, conn, nombre_proyecto):
-        self.cursor = cursor
-        self.conn = conn
-        self.nombre_proyecto = nombre_proyecto
+    def __init__(self, previous):
+        self.cursor = previous.cursor
+        self.conn = previous.conn
+        self.nombre_proyecto = previous.nombre_proyecto
 
     def gui(self, frame):
 
@@ -97,6 +97,9 @@ class Editar:
 
         self.secuencia_activa = "GGMK"
         self.asigna_valor_campos(secuencia_elegida="GGMK", initial=True)
+
+        # empezar con campos para editar bloqueados
+        self.lock_frame()
 
     def boton_grabar(self):
 

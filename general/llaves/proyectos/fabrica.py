@@ -6,10 +6,12 @@ from pprint import pprint
 from datetime import datetime as dt
 import os
 
+from proyectos.cargar2 import Cargar
+
 
 class Fabrica:
 
-    def __init__(self, cursor, conn, x, y):
+    def __init__(self, cursor, conn):
         self.FONTS = (
             "Helvetica 10",
             "Helvetica 12",
@@ -20,23 +22,26 @@ class Fabrica:
         )
         self.cursor = cursor
         self.conn = conn
-        self.main_win_posx = x
-        self.main_win_posy = y
 
         self.secuencia_elegida = None
         self.secuencia_elegida2 = None
 
-        self.cursor.execute(f"SELECT LibroOrigen from 'P-895185-(5)(21)()(340)-005'")
-        self.libro_origen = self.cursor.fetchone()[0]
+    def gui_pre_cargar(self):
 
-    def gui(self):
+        # abrir dialogo para elegir archivo
+        cargar = Cargar(self)
+        cargar.gui("proyectos")
+
+    def gui_post_cargar(self):
+
+        # capturar nombre de proyecto y libro que vienen del dialogo para elegir archivo
+        self.nombre_proyecto = self.archivo_elegido[0]
+        self.libro_origen = self.archivo_elegido[1]
 
         # crear y configurar ventana
         self.window = ttkb.Toplevel()
         winx, winy = (1350, 1500)
-        x = self.main_win_posx - 120
-        y = self.main_win_posy - 120
-        self.window.geometry(f"{winx}x{winy}+{x}+{y}")
+        self.window.geometry(f"{winx}x{winy}")
         self.window.title("Fabrica de Proyecto")
         self.window.iconphoto(
             False, PhotoImage(file=os.path.join("static", "key1.png"))
@@ -77,7 +82,7 @@ class Fabrica:
 
         for jerarquia in ("GGMK", "GMK", "MK", "K"):
             self.cursor.execute(
-                f"SELECT SUM(copias), SUM(FabricadoLlaveCopias) FROM 'P-895185-(5)(21)()(340)-005' WHERE Jerarquia = '{jerarquia}'"
+                f"SELECT SUM(copias), SUM(FabricadoLlaveCopias) FROM '{self.nombre_proyecto}' WHERE Jerarquia = '{jerarquia}'"
             )
             data.update({jerarquia: self.cursor.fetchone()})
 
@@ -126,7 +131,7 @@ class Fabrica:
     def dashboard_cilindros(self):
 
         self.cursor.execute(
-            f"SELECT COUNT(*), SUM(FabricadoCilindro) FROM 'P-895185-(5)(21)()(340)-005' WHERE Jerarquia = 'K'"
+            f"SELECT COUNT(*), SUM(FabricadoCilindro) FROM '{self.nombre_proyecto}' WHERE Jerarquia = 'K'"
         )
         data = self.cursor.fetchone()
 
@@ -154,12 +159,12 @@ class Fabrica:
     def dashboard_pines(self):
 
         self.cursor.execute(
-            f"SELECT Cilindro from 'L-895185-(5)(21)()(340)' AS t1 JOIN 'P-895185-(5)(21)()(340)-005' AS t2 ON t1.Secuencia = t2.Secuencia WHERE FabricadoCilindro > 0"
+            f"SELECT Cilindro from 'L-895185-(5)(21)()(340)' AS t1 JOIN '{self.nombre_proyecto}' AS t2 ON t1.Secuencia = t2.Secuencia WHERE FabricadoCilindro > 0"
         )
         cil_ok = "".join([i[0] for i in self.cursor.fetchall()])
 
         self.cursor.execute(
-            f"SELECT Cilindro from 'L-895185-(5)(21)()(340)' AS t1 JOIN 'P-895185-(5)(21)()(340)-005' AS t2 ON t1.Secuencia = t2.Secuencia"
+            f"SELECT Cilindro from 'L-895185-(5)(21)()(340)' AS t1 JOIN '{self.nombre_proyecto}' AS t2 ON t1.Secuencia = t2.Secuencia"
         )
         cil_tot = "".join([i[0] for i in self.cursor.fetchall()])
 
@@ -229,7 +234,7 @@ class Fabrica:
 
         # extraer informacion necesaria de la bd
         self.cursor.execute(
-            f"SELECT Secuencia, Copias, FabricadoLlaveCopias, CodigoLlave from 'P-895185-(5)(21)()(340)-005'"
+            f"SELECT Secuencia, Copias, FabricadoLlaveCopias, CodigoLlave from '{self.nombre_proyecto}'"
         )
         self.llaves_data = {
             i[0]: [str(i[1]), str(i[2]), str(i[3])] for i in self.cursor.fetchall()
@@ -382,7 +387,7 @@ class Fabrica:
         # aumenta una copia al total de copias listas
         data[1] = int(data[1]) + 1
         self.cursor.execute(
-            f"UPDATE 'P-895185-(5)(21)()(340)-005' SET FabricadoLlaveCopias = {data[1]} WHERE CodigoLlave = '{data[2]}'"
+            f"UPDATE '{self.nombre_proyecto}' SET FabricadoLlaveCopias = {data[1]} WHERE CodigoLlave = '{data[2]}'"
         )
         self.actualizar_dashboard()
 
@@ -394,14 +399,14 @@ class Fabrica:
         # reduce una copia al total de copias listas
         data[1] = int(data[1]) - 1
         self.cursor.execute(
-            f"UPDATE 'P-895185-(5)(21)()(340)-005' SET FabricadoLlaveCopias = {data[1]} WHERE CodigoLlave = '{data[2]}'"
+            f"UPDATE '{self.nombre_proyecto}' SET FabricadoLlaveCopias = {data[1]} WHERE CodigoLlave = '{data[2]}'"
         )
         self.actualizar_dashboard()
 
     def siguiente_codigo(self):
         # extraer informacion necesaria de la bd
         self.cursor.execute(
-            f"SELECT Secuencia, Copias, FabricadoLlaveCopias, CodigoLlave from 'P-895185-(5)(21)()(340)-005' WHERE FabricadoLlaveCopias < Copias"
+            f"SELECT Secuencia, Copias, FabricadoLlaveCopias, CodigoLlave from '{self.nombre_proyecto}' WHERE FabricadoLlaveCopias < Copias"
         )
         data = self.cursor.fetchone()
 
@@ -417,9 +422,8 @@ class Fabrica:
     def editar_cilindro(self):
 
         # extraer informacion necesaria de la bd
-
         self.cursor.execute(
-            f"SELECT T1.Secuencia, FabricadoCilindro, Cilindro, CodigoLlave FROM 'P-895185-(5)(21)()(340)-005' AS T1 JOIN '{self.libro_origen}' AS T2 ON T1.Secuencia = T2.Secuencia"
+            f"SELECT T1.Secuencia, FabricadoCilindro, Cilindro, CodigoLlave FROM '{self.nombre_proyecto}' AS T1 JOIN '{self.libro_origen}' AS T2 ON T1.Secuencia = T2.Secuencia"
         )
         self.cilindros_data = {i[0]: [i[1], i[2], i[3]] for i in self.cursor.fetchall()}
 
@@ -553,7 +557,7 @@ class Fabrica:
         # aumenta una copia al total de copias listas
         data[0] += 1
         self.cursor.execute(
-            f"UPDATE 'P-895185-(5)(21)()(340)-005' SET FabricadoCilindro = {data[0]} WHERE CodigoLlave = '{data[2]}'"
+            f"UPDATE '{self.nombre_proyecto}' SET FabricadoCilindro = {data[0]} WHERE CodigoLlave = '{data[2]}'"
         )
         self.actualizar_dashboard()
 
@@ -565,7 +569,7 @@ class Fabrica:
         # reduce una copia al total de copias listas
         data[0] -= 1
         self.cursor.execute(
-            f"UPDATE 'P-895185-(5)(21)()(340)-005' SET FabricadoCilindro = {data[0]} WHERE CodigoLlave = '{data[2]}'"
+            f"UPDATE '{self.nombre_proyecto}' SET FabricadoCilindro = {data[0]} WHERE CodigoLlave = '{data[2]}'"
         )
         self.actualizar_dashboard()
 
@@ -573,7 +577,7 @@ class Fabrica:
 
         # extraer informacion necesaria de la bd
         self.cursor.execute(
-            f"SELECT T1.Secuencia, FabricadoCilindro, Cilindro, CodigoLlave FROM 'P-895185-(5)(21)()(340)-005' AS T1 JOIN '{self.libro_origen}' AS T2 ON T1.Secuencia = T2.Secuencia WHERE FabricadoCilindro = 0 AND Jerarquia = 'K'"
+            f"SELECT T1.Secuencia, FabricadoCilindro, Cilindro, CodigoLlave FROM '{self.nombre_proyecto}' AS T1 JOIN '{self.libro_origen}' AS T2 ON T1.Secuencia = T2.Secuencia WHERE FabricadoCilindro = 0 AND Jerarquia = 'K'"
         )
         data = self.cursor.fetchone()
 

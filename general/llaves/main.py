@@ -6,7 +6,7 @@ import sqlite3
 import os
 
 import libros.nuevo, libros.cargar
-import proyectos.nuevo, proyectos.cargar, proyectos.fabrica
+import proyectos.nuevo, proyectos.visor, proyectos.fabrica
 import herramientas.cilindros, herramientas.validaciones, herramientas.configurar
 
 
@@ -21,9 +21,9 @@ class MainMenu:
         # definir tamano de ventana
         self.win_size_x, self.win_size_y = (800, 550)
 
-        self.fabrica = proyectos.fabrica.Fabrica(
-            self.cursor, self.conn, self.win_size_x, self.win_size_y
-        )
+        self.proyectos_nuevo = proyectos.nuevo.Nuevo(self.cursor, self.conn)
+        self.proyectos_visor = proyectos.visor.Visor(self.cursor, self.conn)
+        self.proyectos_fabrica = proyectos.fabrica.Fabrica(self.cursor, self.conn)
 
     def main_menu(self):
 
@@ -86,21 +86,17 @@ class MainMenu:
             ttkb.Button(
                 bottom_frames[1],
                 text="Nuevo",
-                command=lambda: proyectos.nuevo.gui(
-                    self.cursor, self.window, self.conn
-                ),
+                command=lambda: self.proyectos_nuevo.gui_pre_cargar(),
             ),
             ttkb.Button(
                 bottom_frames[1],
                 text="Cargar",
-                command=lambda: proyectos.cargar.gui(
-                    self.cursor, self.window, self.conn
-                ),
+                command=lambda: self.proyectos_visor.gui_pre_cargar(self),
             ),
             ttkb.Button(
                 bottom_frames[1],
                 text="Fabrica",
-                command=lambda: self.fabrica.gui(),
+                command=lambda: self.proyectos_fabrica.gui_pre_cargar(),
             ),
         ]
 

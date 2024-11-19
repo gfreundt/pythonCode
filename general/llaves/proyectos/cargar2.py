@@ -1,24 +1,21 @@
-from tkinter import IntVar, END
 import ttkbootstrap as ttkb
 from ttkbootstrap.tableview import Tableview
-from datetime import datetime as dt
-import time
 
 
 class Cargar:
 
     def __init__(self, previous):
 
+        self.previous = previous
         self.cursor = previous.cursor
         self.conn = previous.conn
 
-    def gui(self, previous):
+    def gui(self, formato):
 
-        window = ttkb.Toplevel()
-        window.geometry("1400x1300")
+        self.window = ttkb.Toplevel()
+        self.window.geometry("1400x1300")
 
-        cursor.execute("SELECT * FROM proyectos")
-
+        # estructura de datos para proyectos
         col_data = [
             "Codigo",
             "Libro Origen",
@@ -32,36 +29,40 @@ class Cargar:
             "Ks",
         ]
 
-        row_data = aplica_formato(cursor.fetchall())
+        # cambiar dos campos en caso estructura de datos sea para libros
+        if formato == "libros":
+            col_data[1] = "GGMK"
+            col_data[2] = "Formato"
 
-        dt_view = Tableview(
-            window,
+        # extrae y limpia datos
+        self.cursor.execute(f"SELECT * FROM '{formato}'")
+        row_data = self.aplica_formato(self.cursor.fetchall())
+
+        self.dt_view = Tableview(
+            self.window,
             coldata=col_data,
             rowdata=row_data,
             autofit=True,
             autoalign=True,
-            height=min(60, len(row_data)),
+            height=min(42, len(row_data)),
         )
 
-        dt_view.pack(padx=20, pady=10)
+        self.dt_view.pack(padx=20, pady=10)
 
         # crea y coloca botones
         ttkb.Button(
-            window,
+            self.window,
             text="Seleccionar",
-            command=lambda: seleccionar(
-                main_window=main_window,
-                this_window=window,
-                dt_view=dt_view,
-                cursor=cursor,
-                conn=conn,
-            ),
+            command=self.seleccionar,
         ).pack(pady=20)
-        ttkb.Button(window, text="Regresar", command=lambda: regresar(window)).pack(
-            pady=20
-        )
 
-    def aplica_formato(data):
+        ttkb.Button(
+            self.window,
+            text="Regresar",
+            command=self.regresar,
+        ).pack(pady=20)
+
+    def aplica_formato(self, data):
         new_data = [list(i) for i in data]
 
         # elimina cero
@@ -72,16 +73,10 @@ class Cargar:
 
         return new_data
 
-    def seleccionar(main_window, this_window, dt_view, cursor, conn):
-        selected = dt_view.get_rows(selected=True)
-        this_window.destroy()
-        proyectos.visor.mostrar(
-            cursor=cursor,
-            conn=conn,
-            nombre_proyecto=selected[0].values[0],
-            nombre_libro=selected[0].values[1],
-            main_window=main_window,
-        )
+    def seleccionar(self):
+        self.previous.archivo_elegido = self.dt_view.get_rows(selected=True)[0].values
+        self.window.destroy()
+        self.previous.gui_post_cargar()
 
-    def regresar(window):
-        window.destroy()
+    def regresar(self):
+        self.window.destroy()

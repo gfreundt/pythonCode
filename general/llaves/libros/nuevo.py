@@ -156,7 +156,6 @@ def crear(**kwargs):
             cursor=cursor, nombre_tabla=nombre_tabla
         ):
             cursor.execute(f"DROP TABLE '{nombre_tabla}'")
-            print("intento")
         else:
             break
 
