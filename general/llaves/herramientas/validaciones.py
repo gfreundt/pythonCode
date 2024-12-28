@@ -1,8 +1,27 @@
+import ttkbootstrap as ttkb
 import itertools
 
 
-def gui(*args):
-    pass
+class Validar:
+
+    def __init__(self, *args):
+        pass
+
+    def gui(self):
+
+        # definir ventana
+        self.window = ttkb.Toplevel()
+        self.window.geometry("400x150")
+
+        ttkb.Label(self.window, text="Disponible en Siguiente Version").pack(
+            padx=10, pady=10
+        )
+        ttkb.Button(
+            self.window, text="Regresar", command=self.regresar, bootstyle="danger"
+        ).pack(padx=10, pady=10)
+
+    def regresar(self):
+        self.window.destroy()
 
 
 def valida_libro_completo(cursor, nombre_tabla):

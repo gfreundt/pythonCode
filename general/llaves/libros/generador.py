@@ -29,6 +29,7 @@ def con_smk(level1, matriz, codigo_ggmk):
                             calcula_cilindro(llave=l4, codigo_ggmk=codigo_ggmk).count(
                                 ":"
                             ),
+                            0,
                         )
                     )
                     # actualizar lista de maestras
@@ -58,6 +59,7 @@ def sin_smk(level1, matriz, codigo_ggmk):
                         f"K-{n1+1:02d}-{n2+1:03d}-{n4+1:03d}",
                         calcula_cilindro(llave=l4, codigo_ggmk=codigo_ggmk),
                         calcula_cilindro(llave=l4, codigo_ggmk=codigo_ggmk).count(":"),
+                        0,
                     ]
                 )
                 # actualizar lista de maestras

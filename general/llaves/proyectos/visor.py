@@ -4,7 +4,7 @@ import openpyxl as pyxl
 from fpdf import FPDF
 from copy import deepcopy as copy
 
-from proyectos.cargar2 import Cargar
+from proyectos.cargar import Cargar
 from proyectos.editar import Editar
 
 
@@ -14,7 +14,6 @@ class Visor:
 
         self.cursor = cursor
         self.conn = conn
-
         self.detalle = False
 
     def gui_pre_cargar(self, previous):
@@ -79,12 +78,6 @@ class Visor:
                 command=lambda: self.menu_regresar(),
                 bootstyle="warning",
             ),
-            ttkb.Button(
-                self.frames["top"],
-                text="Refrescar",
-                command=lambda: self.menu_refrescar(),
-                bootstyle="success",
-            ),
         ]
         for x, button in enumerate(buttons):
             button.grid(row=0, column=x, padx=30, pady=20)
@@ -103,11 +96,6 @@ class Visor:
         arbol = self.genera_texto_arbol()
         self.muestra_arbol(arbol)
         self.detalle = not self.detalle
-
-    def menu_refrescar(self):
-
-        arbol = self.genera_texto_arbol()
-        self.muestra_arbol(arbol)
 
     def menu_exportar_xls(self):
         wb = pyxl.Workbook()
@@ -206,7 +194,7 @@ class Visor:
 
         self.cursor.execute(
             f"""SELECT  Secuencia, Jerarquia, CodigoLlave, Nombre, Copias, CodigoPuerta, TipoPuerta,
-                        TipoCerradura, Zona1, Zona2, Zona3, Zona4, ZonaCodigo
+                        TipoCerradura, Zona1, Zona2, Zona3, Zona4, Zona5
                         FROM '{self.nombre_proyecto}'"""
         )
 

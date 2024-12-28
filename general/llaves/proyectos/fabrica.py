@@ -1,12 +1,8 @@
-from copy import deepcopy as copy
-from tkinter import PhotoImage, StringVar, ARC, DoubleVar
+from tkinter import PhotoImage, StringVar, ARC
 from PIL import Image, ImageTk
 import ttkbootstrap as ttkb
-from pprint import pprint
-from datetime import datetime as dt
 import os
-
-from proyectos.cargar2 import Cargar
+from proyectos.cargar import Cargar
 
 
 class Fabrica:

@@ -5,9 +5,9 @@ from PIL import Image, ImageTk
 import sqlite3
 import os
 
-import libros.nuevo, libros.cargar
-import proyectos.nuevo, proyectos.visor, proyectos.fabrica
-import herramientas.cilindros, herramientas.validaciones, herramientas.configurar
+import libros.nuevo, libros.cargar, libros.listados
+import proyectos.nuevo, proyectos.visor, proyectos.fabrica, proyectos.zonas
+import herramientas.configuraciones, herramientas.validaciones, herramientas.kpis
 
 
 class MainMenu:
@@ -21,14 +21,24 @@ class MainMenu:
         # definir tamano de ventana
         self.win_size_x, self.win_size_y = (800, 550)
 
+        self.libros_listado = libros.listados.Listados(self.cursor, self.conn)
+
         self.proyectos_nuevo = proyectos.nuevo.Nuevo(self.cursor, self.conn)
         self.proyectos_visor = proyectos.visor.Visor(self.cursor, self.conn)
         self.proyectos_fabrica = proyectos.fabrica.Fabrica(self.cursor, self.conn)
+        self.proyectos_listados = proyectos.zonas.Zonas(self.cursor, self.conn)
+
+        self.herramientas_configuraciones = (
+            herramientas.configuraciones.Configuraciones(self.cursor, self.conn)
+        )
+        self.herramientas_mantenimiento = herramientas.kpis.Kpis(self.cursor, self.conn)
+        self.herramientas_validaciones = herramientas.validaciones.Validar(
+            self.cursor, self.conn
+        )
 
     def main_menu(self):
 
         # GUI - inicializar
-
         self.window = ttkb.Window(themename="darkly")
         self.win_posx = (int(self.window.winfo_screenwidth()) - self.win_size_x) // 2
         self.win_posy = (int(self.window.winfo_screenheight()) - self.win_size_y) // 3
@@ -79,6 +89,11 @@ class MainMenu:
                 text="Cargar",
                 command=lambda: libros.cargar.gui(self),
             ),
+            ttkb.Button(
+                bottom_frames[0],
+                text="Listados",
+                command=lambda: self.libros_listado.gui(),
+            ),
         ]
 
         # proyectos - botones: nuevo, cargar, fabrica
@@ -98,24 +113,29 @@ class MainMenu:
                 text="Fabrica",
                 command=lambda: self.proyectos_fabrica.gui_pre_cargar(),
             ),
+            ttkb.Button(
+                bottom_frames[1],
+                text="Zonas",
+                command=lambda: self.proyectos_listados.gui_pre_cargar(),
+            ),
         ]
 
         # herramientas - botones: cilindros, validaciones, configuracion
         b3 = [
             ttkb.Button(
                 bottom_frames[2],
-                text="Cilindros",
-                command=lambda: herramientas.cilindros.gui(),
+                text="Configuraciones",
+                command=lambda: self.herramientas_configuraciones.gui(),
             ),
             ttkb.Button(
                 bottom_frames[2],
                 text="Validaciones",
-                command=lambda: herramientas.validaciones.gui(),
+                command=lambda: self.herramientas_validaciones.gui(),
             ),
             ttkb.Button(
                 bottom_frames[2],
-                text="Configuracion",
-                command=lambda: herramientas.configuraciones.gui(),
+                text="Mantenimiento",
+                command=lambda: self.herramientas_mantenimiento.gui(),
             ),
         ]
 

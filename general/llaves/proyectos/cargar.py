@@ -1,81 +1,80 @@
-from tkinter import IntVar, END
 import ttkbootstrap as ttkb
 from ttkbootstrap.tableview import Tableview
-from datetime import datetime as dt
-import proyectos.visor
 
 
-def gui(cursor, main_window, conn):
+class Cargar:
 
-    window = ttkb.Toplevel()
-    window.geometry("1400x1300")
+    def __init__(self, previous):
 
-    cursor.execute("SELECT * FROM proyectos")
+        self.previous = previous
+        self.cursor = previous.cursor
+        self.conn = previous.conn
 
-    col_data = [
-        "Codigo",
-        "Libro Origen",
-        "GGMK",
-        "Nombre",
-        "Notas",
-        "Creacion",
-        "GMKs",
-        "MKs",
-        "SMKs",
-        "Ks",
-    ]
+    def gui(self, formato):
 
-    row_data = aplica_formato(cursor.fetchall())
+        self.window = ttkb.Toplevel()
+        self.window.geometry("1400x1300")
 
-    dt_view = Tableview(
-        window,
-        coldata=col_data,
-        rowdata=row_data,
-        autofit=True,
-        autoalign=True,
-        height=min(60, len(row_data)),
-    )
+        # estructura de datos para proyectos
+        col_data = [
+            "Codigo",
+            "Libro Origen",
+            "GGMK",
+            "Nombre",
+            "Notas",
+            "Creacion",
+            "GMKs",
+            "MKs",
+            "SMKs",
+            "Ks",
+        ]
 
-    dt_view.pack(padx=20, pady=10)
+        # cambiar dos campos en caso estructura de datos sea para libros
+        if formato == "libros":
+            col_data[1] = "GGMK"
+            col_data[2] = "Formato"
 
-    # crea y coloca botones
-    ttkb.Button(
-        window,
-        text="Seleccionar",
-        command=lambda: seleccionar(
-            main_window=main_window,
-            this_window=window,
-            dt_view=dt_view,
-            cursor=cursor,
-            conn=conn,
-        ),
-    ).pack(pady=20)
-    ttkb.Button(window, text="Regresar", command=lambda: regresar(window)).pack(pady=20)
+        # extrae y limpia datos
+        self.cursor.execute(f"SELECT * FROM '{formato}'")
+        row_data = self.aplica_formato(self.cursor.fetchall())
 
+        self.dt_view = Tableview(
+            self.window,
+            coldata=col_data,
+            rowdata=row_data,
+            autofit=True,
+            autoalign=True,
+            height=min(42, len(row_data)),
+        )
 
-def aplica_formato(data):
-    new_data = [list(i) for i in data]
+        self.dt_view.pack(padx=20, pady=10)
 
-    # elimina cero
-    for i, m in enumerate(data):
-        for j, n in enumerate(m):
-            if n == 0:
-                new_data[i][j] = ""
+        # crea y coloca botones
+        ttkb.Button(
+            self.window,
+            text="Seleccionar",
+            command=self.seleccionar,
+        ).pack(pady=20)
 
-    return new_data
+        ttkb.Button(
+            self.window, text="Regresar", command=self.regresar, bootstyle="warning"
+        ).pack(pady=20)
 
+    def aplica_formato(self, data):
+        new_data = [list(i) for i in data]
 
-def seleccionar(main_window, this_window, dt_view, cursor, conn):
-    selected = dt_view.get_rows(selected=True)
-    this_window.destroy()
-    proyectos.visor.mostrar(
-        cursor=cursor,
-        conn=conn,
-        nombre_proyecto=selected[0].values[0],
-        nombre_libro=selected[0].values[1],
-        main_window=main_window,
-    )
+        # elimina cero
+        for i, m in enumerate(data):
+            for j, n in enumerate(m):
+                if n == 0:
+                    new_data[i][j] = ""
 
+        return new_data
 
-def regresar(window):
-    window.destroy()
+    def seleccionar(self):
+        self.previous.archivo_elegido = self.dt_view.get_rows(selected=True)[0].values
+        self.window.destroy()
+        self.previous.gui_post_cargar()
+
+    def regresar(self):
+        self.window.destroy()

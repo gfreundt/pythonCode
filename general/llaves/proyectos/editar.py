@@ -30,10 +30,40 @@ class Editar:
             ),
         ).grid(column=0, row=0)
 
+        self.cursor.execute("SELECT * FROM 'CodigosPuertas'")
+        _cp = [i[0] for i in self.cursor.fetchall()]
+
+        self.cursor.execute("SELECT * FROM 'TiposPuertas'")
+        _tp = [i[0] for i in self.cursor.fetchall()]
+
+        self.cursor.execute("SELECT * FROM 'TiposCerraduras'")
+        _tc = [i[0] for i in self.cursor.fetchall()]
+
+        self.cursor.execute(
+            f"SELECT NombreZona, ZonaID FROM 'Zonas' WHERE NombreProyecto = '{self.nombre_proyecto}'"
+        )
+        _data = self.cursor.fetchall()
+        _nz = [i[0] for i in _data]
+        _ids = [i[1] for i in _data]
+
+        print("ppp", _ids)
+
+        _zo = []
+        for id in _ids:
+            self.cursor.execute(
+                f"SELECT Opcion FROM 'ZonasOpciones' WHERE ZonaID_FK = {id}"
+            )
+            _zo.append([""] + [i[0] for i in self.cursor.fetchall()])
+
         opciones = {
-            "cod_puerta": ["", "Tipo A", "Tipo B", "Tipo C"],
-            "tip_puerta": ["", "Puerta A", "Puerta B", "Puerta C"],
+            "tipo_puerta": [""] + _tp,
+            "codigo_puerta": [""] + _cp,
+            "tipo_cerradura": [""] + _tc,
+            "zonas": _zo,
         }
+
+        print(opciones)
+        print(*opciones["zonas"][1])
 
         self.rptas = [StringVar() for _ in range(11)]
 
@@ -50,7 +80,7 @@ class Editar:
                 ttkb.OptionMenu(
                     frame,
                     self.rptas[2],
-                    *opciones["cod_puerta"],
+                    *opciones["codigo_puerta"],
                 ),
             ),
             (
@@ -59,7 +89,7 @@ class Editar:
                 ttkb.OptionMenu(
                     frame,
                     self.rptas[3],
-                    *opciones["tip_puerta"],
+                    *opciones["tipo_puerta"],
                 ),
             ),
             (
@@ -68,16 +98,17 @@ class Editar:
                 ttkb.OptionMenu(
                     frame,
                     self.rptas[4],
-                    *opciones["cod_puerta"],
+                    *opciones["tipo_cerradura"],
                 ),
             ),
-            ("Zona1", 2, ttkb.Entry(frame, textvariable=self.rptas[5])),
-            ("Zona2", 2, ttkb.Entry(frame, textvariable=self.rptas[6])),
-            ("Zona3", 2, ttkb.Entry(frame, textvariable=self.rptas[7])),
-            ("Zona4", 2, ttkb.Entry(frame, textvariable=self.rptas[8])),
-            ("ZonaCodigo", 2, ttkb.Entry(frame, textvariable=self.rptas[9])),
-            ("Notas", 3, ttkb.Entry(frame, textvariable=self.rptas[10])),
+            (_nz[0], 2, ttkb.OptionMenu(frame, self.rptas[5], *opciones["zonas"][0])),
+            (_nz[1], 2, ttkb.OptionMenu(frame, self.rptas[6], *opciones["zonas"][1])),
+            (_nz[2], 2, ttkb.OptionMenu(frame, self.rptas[7], *opciones["zonas"][2])),
+            (_nz[3], 2, ttkb.OptionMenu(frame, self.rptas[8], *opciones["zonas"][3])),
+            (_nz[4], 2, ttkb.OptionMenu(frame, self.rptas[9], *opciones["zonas"][4])),
         ]
+        #     ("Notas", 3, ttkb.Entry(frame, self.rptas[10])),
+        # ]
 
         cols = [0] * 10
         for campo in self.campos:
@@ -110,7 +141,7 @@ class Editar:
 
         self.cursor.execute(
             f"""UPDATE '{self.nombre_proyecto}'
-                SET Nombre=?,
+                SET Nombre = ?,
                 Copias = ?,
                 CodigoPuerta = ?,
                 TipoPuerta = ?, 
@@ -119,7 +150,7 @@ class Editar:
                 Zona2 = ?, 
                 Zona3 = ?, 
                 Zona4 = ?, 
-                ZonaCodigo = ?, 
+                Zona5 = ?, 
                 Notas = ? 
                 WHERE 
                 Secuencia = '{self.secuencia_activa}'""",
@@ -144,7 +175,7 @@ class Editar:
                 Zona2,
                 Zona3,
                 Zona4,
-                ZonaCodigo,
+                Zona5,
                 Notas
                 FROM '{self.nombre_proyecto}'
                 WHERE Secuencia = '{secuencia_elegida}'"""
