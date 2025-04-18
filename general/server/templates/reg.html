@@ -1,0 +1,119 @@
+{% extends "base_page.html" %}
+
+{% block title %}
+Nuevo Usuario
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2 class="mb-4">Completa esta informacion para empezar.</h2>
+        
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre</label>
+                {{ form.nombre(class="form-control", placeholder="") }}
+                {% if form.nombre.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.nombre.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="dni" class="form-label">DNI</label>
+                {{ form.dni(class="form-control", placeholder="") }}
+                {% if form.dni.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.dni.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="correo" class="form-label">Correo Electrónico</label>
+                {{ form.correo(class="form-control", placeholder="") }}
+                {% if form.correo.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.correo.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="celular" class="form-label">Celular</label>
+                {{ form.celular(class="form-control", placeholder="... ingresa el numero sin espacios ni guiones ...") }}
+                {% if form.celular.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.celular.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="placa1" class="form-label">Placa 1</label>
+                {{ form.placa1(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
+                {% if form.placa1.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.placa1.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="placa2" class="form-label">Placa 2 (opcional)</label>
+                {{ form.placa2(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
+                {% if form.placa2.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.placa2.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="placa3" class="form-label">Placa 3 (opcional)</label>
+                {{ form.placa3(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
+                {% if form.placa3.errors %}
+                    <div class="alert alert-danger mt-2">
+                        {% for error in form.placa3.errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            
+            
+            <button type="submit" class="btn btn-primary">Siguiente</button>
+        </form>
+    </div>
+
+    
+
+{% endblock content %}
+
