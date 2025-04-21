@@ -38,7 +38,7 @@ def gui(main):
     ttkb.Label(top_frame, image=image).grid(row=0, column=0, columnspan=3)
 
     # GUI - capturar informacion de usuario para nuevo libro
-    opciones_formato = ["1-1-1-0-4", "1-1-1-0-4", "1-1-2-0-3"]
+    opciones_formato = ["1-1-1-0-4", "1-1-1-0-4", "1-1-2-0-3", "1-2-1-0-3"]
     formato = StringVar(value=opciones_formato[0])
     codigo_ggmk = StringVar()
     nombre = StringVar()

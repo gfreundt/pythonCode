@@ -8,7 +8,8 @@ import ctypes
 from PIL import Image
 import pypdfium2.raw as pdfium
 import img2pdf
-import pywhatkit
+
+# import pywhatkit
 import pyautogui
 import dotenv
 import smtplib
@@ -16,7 +17,8 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import speech_recognition
+
+# import speech_recognition
 import win32com.client
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *

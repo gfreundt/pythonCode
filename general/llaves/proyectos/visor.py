@@ -222,7 +222,7 @@ class Visor:
 
             if jer == "GMK":
                 output += "|\n"
-                output += f"|{'-'*8} {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} |\n"
+                output += f"|{'-'*8} {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc}\n"
                 totales["gmk"] += 1
 
             if jer == "MK":
@@ -239,7 +239,11 @@ class Visor:
                     output += f"|{' '*9}|{' '*10}|- K-Únicas: {_unicas}\n"
 
             if jer == "K" and detalle:
-                output += f"""|{' '*9}|{' '*10}|- {sec} | Codigo:{cod} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} | Puerta: {codp} - {tipp} | Cerradura: {tipc} |\n"""
+                self.cursor.execute(
+                    f"SELECT Cilindro FROM '{self.libro_origen}' WHERE Secuencia = '{sec}'"
+                )
+                cil = self.cursor.fetchone()[0]
+                output += f"""|{' '*9}|{' '*10}|- {sec} | Codigo:{cod} | Cilindro: {cil} | Nombre: {nom} | Copias: {cop} | Zona: {zon1} {zon2} {zon3} {zon4} {zonc} | Puerta: {codp} - {tipp} | Cerradura: {tipc} |\n"""
 
         # agregar resumen al inicio del texto
         self.cursor.execute(
