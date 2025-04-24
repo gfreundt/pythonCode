@@ -71,44 +71,6 @@ Nuevo Usuario
                 {% endif %}
             </div>
             
-            <div class="mb-3">
-                <label for="placa1" class="form-label">Placa 1</label>
-                {{ form.placa1(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
-                {% if form.placa1.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.placa1.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="placa2" class="form-label">Placa 2 (opcional)</label>
-                {{ form.placa2(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
-                {% if form.placa2.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.placa2.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="placa3" class="form-label">Placa 3 (opcional)</label>
-                {{ form.placa3(class="form-control", placeholder="... ingresa la placa sin espacios ni guiones ...") }}
-                {% if form.placa3.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.placa3.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            
-            
-            
             <button type="submit" class="btn btn-primary">Siguiente</button>
         </form>
     </div>

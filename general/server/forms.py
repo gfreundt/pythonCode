@@ -101,34 +101,6 @@ class RegisterFormPage1(FlaskForm):
             celular_no_en_db,
         ],
     )
-    placa1 = StringField(
-        "Placa 1",
-        [
-            DataRequired(message="La placa es requerida"),
-            Regexp(
-                r"^[A-Z0-9]{6,7}$",
-                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
-            ),
-        ],
-    )
-    placa2 = StringField(
-        "Placa 2",
-        [
-            Regexp(
-                r"^[A-Z0-9]{6,7}$",
-                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
-            ),
-        ],
-    )
-    placa3 = StringField(
-        "Placa 3",
-        [
-            Regexp(
-                r"^[A-Z0-9]{6,7}$",
-                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
-            ),
-        ],
-    )
 
 
 class RegisterFormPage2(FlaskForm):
@@ -210,6 +182,38 @@ class RecoverFormPage2(FlaskForm):
             EqualTo("password", message="Las contraseñas no coinciden"),
         ],
     )
+
+
+class MiCuenta(FlaskForm):
+
+    placa1 = StringField(
+        "Placa 1",
+        [
+            Regexp(
+                r"^[A-Z0-9]{6,7}$",
+                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
+            ),
+        ],
+    )
+    placa2 = StringField(
+        "Placa 2",
+        [
+            Regexp(
+                r"^[A-Z0-9]{6,7}$",
+                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
+            ),
+        ],
+    )
+    placa3 = StringField(
+        "Placa 3",
+        [
+            Regexp(
+                r"^[A-Z0-9]{6,7}$",
+                message="La placa debe tener 6 o 7 caracteres alfanuméricos",
+            ),
+        ],
+    )
+    submit = SubmitField("Actualizar")
 
 
 todos_dni, todos_celular, todos_correo = load_db()

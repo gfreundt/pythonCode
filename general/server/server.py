@@ -4,6 +4,7 @@ from random import randrange
 from string import ascii_uppercase
 from pprint import pprint
 import sqlite3
+from datetime import datetime as dt
 
 from validation import Actions
 import data_extraction
@@ -86,9 +87,14 @@ def reg2():
             cel = session["reg_data"][4]
             pwd = request.form["password"]
 
+            db.cursor.execute(f"SELECT IdMember FROM members ORDER BY IdMember DESC")
+            rec = int(db.cursor.fetchone()[0]) + 1
+            dat = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+
             db.cursor.execute(
-                f"INSERT INTO members VALUES (199, '{cod}','{nom}', 'DNI', '{dni}', '{cel}', '{cor}', 0, 0, '2020-01-01 00:00:00', 0, '{pwd}')"
+                f"INSERT INTO members VALUES ({rec},'{cod}','{nom}','DNI','{dni}','{cel}','{cor}',0,0,'{dat}',0,'{pwd}')"
             )
+
             db.conn.commit()
             session.clear()
             return render_template("reg-3.html")
@@ -147,17 +153,27 @@ def main():
         return render_template("log.html")
 
 
-# navbar endpoints
+# my account endpoint (NAVBAR)
+@app.route("/micuenta")
+def mi_cuenta():
+    if "user_data" not in session:
+        return redirect("log")
+
+    form = forms.MiCuenta()
+
+    db.cursor.execute(f"SELECT * FROM placas WHERE IdMember_FK = 23")
+    placas = [i[2] for i in db.cursor.fetchall()]
+    print(placas)
+    return render_template("mi_cuenta.html", form=form, placas=placas)
+
+
+# home endpoint (NAVBAR)
 @app.route("/home")
 def home():
     return redirect("log")
 
 
-@app.route("/micuenta")
-def mi_cuenta():
-    return render_template("mi_cuenta.html")
-
-
+# logout endpoint (NAVBAR)
 @app.route("/logout")
 def logout():
     session.clear()
