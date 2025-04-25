@@ -87,12 +87,15 @@
                                 style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px">
                                 Mensajes
                             </h3>
-                            <div class="form-check form-switch">
+                            <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" id="emailPreference" checked>
                                 <label class="form-check-label" for="emailPreference">
                                     Quiero Recibir Correos Mensuales de Resumen
                                 </label>
                             </div>
+                            <h3 class="h6 mb-3", style="margin-left: 40px; font-style: italic;">
+                                Siguiente mensaje: {{ comm.siguiente_mensaje }}
+                            </h3>
                         </div>
                     </div>
 
@@ -108,19 +111,19 @@
                                     Quiero Recibir Alertas de Vencimiento
                                 </label>
                             </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 40px">
+                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
                                 <input class="form-check-input" type="checkbox" id="soatCheck" checked>
                                 <label class="form-check-label" for="soatCheck">SOAT</label>
                             </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 40px">
+                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
                                 <input class="form-check-input" type="checkbox" id="revisionCheck" checked>
                                 <label class="form-check-label" for="revisionCheck">Revisión Técnica</label>
                             </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 40px">
+                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
                                 <input class="form-check-input" type="checkbox" id="breveteCheck" checked>
                                 <label class="form-check-label" for="breveteCheck">Brevete</label>
                             </div>
-                            <div class="doc-checkbox", style="margin-left: 40px">
+                            <div class="doc-checkbox", style="margin-left: 30px">
                                 <input class="form-check-input" type="checkbox" id="dniCheck" checked>
                                 <label class="form-check-label" for="dniCheck">DNI</label>
                             </div>
@@ -136,23 +139,23 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="emailPreference" checked>
                                 <label class="form-check-label mb-2" for="emailPreference">
-                                    Quiero Recibir Alertas de Vencimiento
+                                    Quiero Recibir Alertas de Multas
                                 </label>
                             </div>                    
                             <div class="alert-section">
-                                <div class="form-checkbox", style="margin-left: 10px;">
+                                <div class="form-checkbox mb-1", style="margin-left: 30px">
                                     <input class="form-check-input ml-3" type="checkbox" id="newTicketsAlerts1" checked>
-                                    <label class="form-check-label ml-2" for="newTicketsAlerts1", style="margin-bottom: 10px";>
+                                    <label class="form-check-label ml-2" for="newTicketsAlerts1">
                                         Multas SUTRAN
                                     </label>
                                 </div>
-                                <div class="form-checkbox ml-3">
+                                <div class="form-checkbox mb-1", style="margin-left: 30px">
                                     <input class="form-check-input" type="checkbox" id="newTicketsAlerts2" checked>
-                                    <label class="form-check-label" for="newTicketsAlerts2", style="margin-bottom: 10px";>
+                                    <label class="form-check-label" for="newTicketsAlerts2">
                                         Multas SAT Lima
                                     </label>
                                 </div>
-                                <div class="form-checkbox ml-4">
+                                <div class="form-checkbox mb-1", style="margin-left: 30px">
                                     <input class="form-check-input" type="checkbox" id="newTicketsAlerts2" checked>
                                     <label class="form-check-label" for="newTicketsAlerts2">
                                         Papeletas MTC
