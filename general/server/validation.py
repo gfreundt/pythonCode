@@ -41,6 +41,7 @@ class Actions:
         return {"code": 1, "msg": None, "data": data}
 
     def registration2(self, form_data):
+        return
 
         # validation code matches
         if form_data["validation_code"].upper() != self.generated_validation_code:
@@ -64,6 +65,7 @@ class Actions:
         return {"code": 1, "msg": None}
 
     def login(self, form_data, db):
+
         for user in db.users:
             if user[6] == form_data["correo"]:
                 if user[11] == form_data["password"]:

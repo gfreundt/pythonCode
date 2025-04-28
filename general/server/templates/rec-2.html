@@ -1,77 +1,87 @@
 {% extends "base_page.html" %}
 
 {% block title %}
-Clave Nueva
+    Clave Nueva
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <h2 class="mb-4">Elige tu nueva contraseña.</h2>
-        
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mt-5 p-4 shadow-lg">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-            <div class="mb-3">
-                <label for="codigo" class="form-label">Codigo de Validacion</label>
-                {{ form.codigo(class="form-control", placeholder="Ingresa codigo de 4 letras") }}
-                <small class="form-text text-muted">
-                    Debe contener solamente letras
-                </small>
-                {% if form.codigo.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.codigo.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3">
-                <label for="password" class="form-label">Contraseña</label>
-                {{ form.password(class="form-control", placeholder="Cree una contraseña (mínimo 8 caracteres)") }}
-                <small class="form-text text-muted">
-                    Debe contener mayúsculas, minúsculas y números
-                </small>
-                {% if form.password.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.password.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            
-            <div class="mb-3">
-                <label for="confirmar_password" class="form-label">Confirmar Contraseña</label>
-                {{ form.confirmar_password(class="form-control", placeholder="Repita su contraseña") }}
-                {% if form.confirmar_password.errors %}
-                    <div class="alert alert-danger mt-2">
-                        {% for error in form.confirmar_password.errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
-            
-            
-            
-            <button type="submit" class="btn btn-primary">Siguiente</button>
-        </form>
+            <!-- Formulario de codigo de confirmacion y elegir nueva contraseña -->
+            <h2 class="mb-4">
+                Elige tu nueva contraseña
+            </h2>
+
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+                <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                    {{ form.codigo(class="form-control is-invalid" if form.codigo.errors else "form-control", placeholder="empty") }}
+                    <label for="codigo" class="form-label">Codigo de Validacion</label>
+                    {% if form.codigo.errors %}
+                        <div class="mt-2">
+                            {% for error in form.codigo.errors %}
+                                <small class="text-danger">
+                                    {{ error }}
+                                </small>
+                                <br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                    {{ form.password(class="form-control is-invalid" if form.password.errors else "form-control", placeholder="empty") }}
+                    <label for="password" class="form-label">Contraseña</label>
+                    <small class="form-text text-success p-1">
+                        Minimo 6 caracteres y al menos una mayúscula y una minúscula
+                    </small>
+                    {% if form.password.errors %}
+                        <div class="mt-2">
+                            {% for error in form.password.errors %}
+                                <small class="text-danger">
+                                    {{ error }}
+                                </small>
+                                <br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                    {{ form.confirmar_password(class="form-control is-invalid" if form.confirmar_password.errors else "form-control", placeholder="empty") }}
+                    <label for="confirmar_password" class="form-label">Confirmar Contraseña</label>
+                    {% if form.confirmar_password.errors %}
+                        <div class="mt-2">
+                            {% for error in form.confirmar_password.errors %}
+                                <small class="text-danger">
+                                    {{ error }}
+                                </small>
+                                <br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Boton para validar -->
+                <button type="submit" class="btn btn-primary">
+                    Siguiente
+                </button>
+            </form>
+        </div>
     </div>
-
-    
 
 {% endblock content %}
 

@@ -1,13 +1,13 @@
 {% extends "base_page.html" %}
 
 {% block title %}
-Nuevo Usuario
+    Crear Nuevo Usuario
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <h2 class="mb-4">Completa esta informacion para empezar.</h2>
-        
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mt-5 p-4 shadow-lg">
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -19,59 +19,84 @@ Nuevo Usuario
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+        <!-- Formulario de Nombre, Documento, Correo y Celular -->
+        <h2 class="mb-4">
+            Paso 1: Dinos quien eres
+        </h2>
         
         <form method="POST" action="">
             {{ form.hidden_tag() }}
             
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre</label>
-                {{ form.nombre(class="form-control", placeholder="") }}
+            <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                {{ form.nombre(class="form-control is-invalid" if form.nombre.errors else "form-control", placeholder="empty") }}
+                <label for="nombre" class="form-label">
+                    Nombre
+                </label>
                 {% if form.nombre.errors %}
-                    <div class="alert alert-danger mt-2">
+                    <div class="mt-2">
                         {% for error in form.nombre.errors %}
-                            <p class="mb-0">{{ error }}</p>
+                            <small class="text-danger">
+                                {{ error }}
+                            </small>
+                            <br>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
             
-            <div class="mb-3">
+            <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                {{ form.dni(class="form-control is-invalid" if form.dni.errors else "form-control", placeholder="empty") }}
                 <label for="dni" class="form-label">DNI</label>
-                {{ form.dni(class="form-control", placeholder="") }}
                 {% if form.dni.errors %}
-                    <div class="alert alert-danger mt-2">
+                    <div class="mt-2">
                         {% for error in form.dni.errors %}
-                            <p class="mb-0">{{ error }}</p>
+                            <small class="text-danger">
+                                {{ error }}
+                            </small>
+                            <br>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
             
-            <div class="mb-3">
+            <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                {{ form.correo(class="form-control is-invalid" if form.correo.errors else "form-control", placeholder="empty") }}
                 <label for="correo" class="form-label">Correo Electrónico</label>
-                {{ form.correo(class="form-control", placeholder="") }}
                 {% if form.correo.errors %}
-                    <div class="alert alert-danger mt-2">
+                    <div class="mt-2">
                         {% for error in form.correo.errors %}
-                            <p class="mb-0">{{ error }}</p>
+                            <small class="text-danger">
+                                {{ error }}
+                            </small>
+                            <br>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
             
-            <div class="mb-3">
+            <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                {{ form.celular(class="form-control is-invalid" if form.celular.errors else "form-control", placeholder="empty") }}
                 <label for="celular" class="form-label">Celular</label>
-                {{ form.celular(class="form-control", placeholder="... ingresa el numero sin espacios ni guiones ...") }}
+                <small class="form-text text-success p-1">
+                    Sin espacios ni guiones
+                </small>
                 {% if form.celular.errors %}
-                    <div class="alert alert-danger mt-2">
+                    <div class="mt-2">
                         {% for error in form.celular.errors %}
-                            <p class="mb-0">{{ error }}</p>
+                            <small class="text-danger">
+                                {{ error }}
+                            </small>
+                            <br>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
             
-            <button type="submit" class="btn btn-primary">Siguiente</button>
+            <!-- Boton para pasar al siguiente paso -->
+            <button type="submit" class="btn btn-primary">
+                Siguiente
+            </button>
         </form>
     </div>
 

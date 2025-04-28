@@ -18,169 +18,252 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+        
         
         <div class="row">
-            <div class="col-md-6"
 
+            <!-- Columna Izquierda -->
+            <div class="col-6 p-4">
 
-        <div class="container py-5">
-            
-            <h1 class="text-center mt-5 mb-5">
-                Mi Cuenta
-            </h1>
-
-            <form method="POST" action="">
-                {{ form.hidden_tag() }}
-            
+                <!-- Seccion Mis Placas -->
                 <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">
-                        <h2 class="h5 mb-0">Mis Placas</h2>
+                    <div class="card-header bg-success text-white">
+                        <h2 class="h5 mb-0">
+                            Mis Placas
+                        </h2>
                     </div>                
 
-                    <div class="card-body">
-                        <div class="placa-entry justify-content-between align-items-center form-floating mb-3">
-                            {{ form.placa1(class="form-control", value=placas[0], style=placa_style, placeholder="empty") }}
-                            <label for="placa1" class="form-label" >Placa 1</label>
+                    <div class="card-body mb-3">
+                        <div class="justify-content-between align-items-center form-floating mb-3">
+                            {{ form.placa1(class="form-control is-invalid" if form.placa1.errors else "form-control", placeholder="empty", value=placas[0]) }}
+                            <label for="placa1" class="form-label">
+                                Placa 1
+                            </label>
                             {% if form.placa1.errors %}
-                                <div class="alert alert-danger mt-2">
+                                <div class="mt-2">
                                     {% for error in form.placa1.errors %}
-                                        <p class="mb-0">{{ error }}</p>
+                                        <small class="text-danger">
+                                            {{ error }}
+                                        </small>
+                                        <br>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="placa-entry justify-content-between align-items-center form-floating mb-3">
-                            {{ form.placa2(class="form-control", value=placas[1], style=placa_style, placeholder="empty") }}
-                            <label for="placa1" class="form-label">Placa 2</label>
+
+                        <div class="justify-content-between align-items-center form-floating mb-3">
+                            {{ form.placa2(class="form-control is-invalid" if form.placa2.errors else "form-control", placeholder="empty", value=placas[1]) }}
+                            <label for="placa2" class="form-label">
+                                Placa 2
+                            </label>
                             {% if form.placa2.errors %}
-                                <div class="alert alert-danger mt-2">
+                                <div class="mt-2">
                                     {% for error in form.placa2.errors %}
-                                        <p class="mb-0">{{ error }}</p>
+                                        <small class="text-danger">
+                                            {{ error }}
+                                        </small>
+                                        <br>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="placa-entry justify-content-between align-items-center form-floating mb-3">
-                            {{ form.placa3(class="form-control", value=placas[2], style=placa_style, placeholder="empty") }}
-                            <label for="placa1" class="form-label">Placa 3</label>
+
+                        <div class="justify-content-between align-items-center form-floating mb-3">
+                            {{ form.placa3(class="form-control is-invalid" if form.placa3.errors else "form-control", placeholder="empty", value=placas[2]) }}
+                            <label for="placa3" class="form-label">
+                                Placa 3
+                            </label>
                             {% if form.placa3.errors %}
-                                <div class="alert alert-danger mt-2">
+                                <div class="mt-2">
                                     {% for error in form.placa3.errors %}
-                                        <p class="mb-0">{{ error }}</p>
+                                        <small class="text-danger">
+                                            {{ error }}
+                                        </small>
+                                        <br>
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        
                     </div>
                 </div>
 
+                <!-- Seccion Recibir Correos -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h2 class="h5 mb-0">Mis Comunicaciones</h2>
+                    <div class="card-header bg-success text-white">
+                        <h2 class="h5 mb-0">
+                            Recibir Correos
+                        </h2>
                     </div>
-
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col">
-                            <h3 class="h6 section-title mb-3",
-                                style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px">
-                                Mensajes
-                            </h3>
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" id="emailPreference" checked>
-                                <label class="form-check-label" for="emailPreference">
-                                    Quiero Recibir Correos Mensuales de Resumen
-                                </label>
-                            </div>
-                            <h3 class="h6 mb-3", style="margin-left: 40px; font-style: italic;">
-                                Siguiente mensaje: {{ comm.siguiente_mensaje }}
-                            </h3>
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col">
-                            <h3 class="h6 section-title",
-                                style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px; margin-bottom: 20px;">
-                                Alertas de Vencimiento
-                            </h3>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="emailPreference" checked>
-                                <label class="form-check-label mb-2" for="emailPreference">
-                                    Quiero Recibir Alertas de Vencimiento
-                                </label>
-                            </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
-                                <input class="form-check-input" type="checkbox" id="soatCheck" checked>
-                                <label class="form-check-label" for="soatCheck">SOAT</label>
-                            </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
-                                <input class="form-check-input" type="checkbox" id="revisionCheck" checked>
-                                <label class="form-check-label" for="revisionCheck">Revisión Técnica</label>
-                            </div>
-                            <div class="doc-checkbox mb-1", style="margin-left: 30px">
-                                <input class="form-check-input" type="checkbox" id="breveteCheck" checked>
-                                <label class="form-check-label" for="breveteCheck">Brevete</label>
-                            </div>
-                            <div class="doc-checkbox", style="margin-left: 30px">
-                                <input class="form-check-input" type="checkbox" id="dniCheck" checked>
-                                <label class="form-check-label" for="dniCheck">DNI</label>
+                
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h3 class="h6 section-title mb-3",
+                                    style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px">
+                                    Mensajes
+                                </h3>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="emailPreference" checked>
+                                    <label class="form-check-label" for="emailPreference">
+                                        Quiero Recibir Correos Mensuales de Resumen
+                                    </label>
+                                </div>
+                                <h3 class="h6 mb-3 text-primary", style="margin-left: 40px;">
+                                    Siguiente mensaje: {{ comm.siguiente_mensaje }}
+                                </h3>
                             </div>
                         </div>
                     </div>
+                </div>  
+            </div>
+            
+            <!-- Columna Derecha -->
+            <div class="col-6 p-4">
 
-                    <div class="row mb-2">
-                        <div class="col">
-                            <h3 class="h6 section-title mb-3",
-                                style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px;">
-                                Alertas de Nuevas Multas
-                            </h3>    
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="emailPreference" checked>
-                                <label class="form-check-label mb-2" for="emailPreference">
-                                    Quiero Recibir Alertas de Multas
-                                </label>
-                            </div>                    
-                            <div class="alert-section">
-                                <div class="form-checkbox mb-1", style="margin-left: 30px">
-                                    <input class="form-check-input ml-3" type="checkbox" id="newTicketsAlerts1" checked>
-                                    <label class="form-check-label ml-2" for="newTicketsAlerts1">
-                                        Multas SUTRAN
+                <!-- Seccion Recibir Alertas -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h2 class="h5 mb-0">Recibir Alertas</h2>
+                    </div>                    
+                    <div class="card-body">
+
+                        <!-- Sub Seccion Alertas Vencimiento -->
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h3 class="h6 section-title",
+                                    style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px; margin-bottom: 20px;">
+                                    Alertas de Vencimiento
+                                </h3>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="alertaPreference1" checked>
+                                    <label class="form-check-label" for="alertaPreference1">
+                                        Quiero Recibir Alertas de Vencimiento
                                     </label>
                                 </div>
-                                <div class="form-checkbox mb-1", style="margin-left: 30px">
-                                    <input class="form-check-input" type="checkbox" id="newTicketsAlerts2" checked>
-                                    <label class="form-check-label" for="newTicketsAlerts2">
-                                        Multas SAT Lima
-                                    </label>
+
+                                <div class="doc-options" style="margin-left: 30px">
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input doc-option1" type="checkbox" id="soatCheck" checked>
+                                        <label class="form-check-label" for="soatCheck">
+                                            SOAT
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input doc-option1" type="checkbox" id="revisionCheck" checked>
+                                        <label class="form-check-label" for="revisionCheck">
+                                            Revisión Técnica
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input doc-option1" type="checkbox" id="breveteCheck" checked>
+                                        <label class="form-check-label" for="breveteCheck">
+                                            Brevete
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input doc-option1" type="checkbox" id="dniCheck" checked>
+                                        <label class="form-check-label" for="dniCheck">
+                                            DNI
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="form-checkbox mb-1", style="margin-left: 30px">
-                                    <input class="form-check-input" type="checkbox" id="newTicketsAlerts2" checked>
-                                    <label class="form-check-label" for="newTicketsAlerts2">
-                                        Papeletas MTC
+                            </div>
+                        </div>
+
+                        <!-- Sub Seccion Alertas Multas -->
+                        <div class="row mb-2">
+                            <div class="col">
+                                <h3 class="h6 section-title mb-3",
+                                    style="border-bottom: 2px solid #0d6efd; padding-bottom: 8px;">
+                                    Alertas de Nuevas Multas
+                                </h3>    
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="alertaPreference2" checked>
+                                    <label class="form-check-label mb-2" for="alertaPreference2">
+                                        Quiero Recibir Alertas de Multas
                                     </label>
+                                </div>             
+
+                                <div class="doc-options" style="margin-left: 30px">
+                                    <div class="form-checkbox mb-1">
+                                        <input class="form-check-input doc-option2"  type="checkbox" id="newTicketsAlerts1" checked>
+                                        <label class="form-check-label" for="newTicketsAlerts1">
+                                            Multas SUTRAN
+                                        </label>
+                                    </div>
+                                     <div class="form-checkbox mb-1">
+                                        <input class="form-check-input doc-option2" type="checkbox" id="newTicketsAlerts2" checked>
+                                        <label class="form-check-label" for="newTicketsAlerts2">
+                                            Multas SAT Lima
+                                        </label>
+                                    </div>
+                                     <div class="form-checkbox mb-1">
+                                        <input class="form-check-input doc-option2" type="checkbox" id="newTicketsAlerts2" checked>
+                                        <label class="form-check-label" for="newTicketsAlerts2">
+                                            Papeletas MTC
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         
+        <!-- Boton Grabar Cambios -->
         <div class = "row">
-            <div col-md-6>
-                <button type="submit" class="btn btn-primary float-right">Actualizar</button>
+            <div class="col-12 p-4">
+                <button type="submit" class="btn btn-success">Actualizar</button>
             </div>
         </div>
-        
-
         </form>
         </div>
     </div>
 </div>
 
-    
+<script>
+
+    // Cambia el estado de los checkboxes a desactivado si "Quiero Recibir Alerta" se desactiva
+    document.addEventListener('DOMContentLoaded', function() {
+        const mainSwitch1 = document.getElementById('alertaPreference1');
+        const docOptions1 = document.querySelectorAll('.doc-option1');
+        const docLabels1 = document.querySelectorAll('.doc-option1 + label');
+
+        const mainSwitch2 = document.getElementById('alertaPreference2');
+        const docOptions2 = document.querySelectorAll('.doc-option2');
+        const docLabels2 = document.querySelectorAll('.doc-option2 + label');
+
+        function updateCheckboxStates() {
+            const isEnabled1 = mainSwitch1.checked;
+            const isEnabled2 = mainSwitch2.checked;
+            
+            docOptions1.forEach(option => {
+                option.disabled = !isEnabled1;
+                option.parentElement.classList.toggle('disabled', !isEnabled1);
+            });
+            docOptions2.forEach(option => {
+                option.disabled = !isEnabled2;
+                option.parentElement.classList.toggle('disabled', !isEnabled2);
+            });
+            
+            docLabels1.forEach(label => {
+                label.classList.toggle('text-muted', !isEnabled1);
+            });
+
+            docLabels2.forEach(label => {
+                label.classList.toggle('text-muted', !isEnabled2);
+            });
+        }
+       
+        updateCheckboxStates();
+        
+        mainSwitch1.addEventListener('change', updateCheckboxStates);
+        mainSwitch2.addEventListener('change', updateCheckboxStates);
+    });
+
+</script>
 
 {% endblock content %}

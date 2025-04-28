@@ -1,12 +1,13 @@
 {% extends "base_page.html" %}
 
 {% block title %}
-Nuevo Usuario
+    Recuperar Contraseña
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <h2 class="mb-4">Ingresa tu correo electrónico.</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mt-5 p-4 shadow-lg">        
         
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -14,32 +15,41 @@ Nuevo Usuario
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                        </button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+        <!-- Formulario de correo -->
+        <h2 class="mb-4 mt-2">
+            Ingresa tu correo {{message}}
+        </h2>
         
         <form method="POST" action="">
-            {{ form.hidden_tag() }}
-            
-            <div class="mb-3">
-                <label for="correo" class="form-label">Correo Electrónico</label>
-                {{ form.correo(class="form-control", placeholder="") }}
+            {{ form.hidden_tag() }}            
+            <div class="form-group justify-content-between align-items-center form-floating mb-3">
+                {{ form.correo(class="form-control is-invalid" if form.correo.errors else "form-control", placeholder="empty") }}
+                <label for="correo" class="form-label">
+                    Correo
+                </label>
                 {% if form.correo.errors %}
-                    <div class="alert alert-danger mt-2">
+                    <div class="mt-2">
                         {% for error in form.correo.errors %}
-                            <p class="mb-0">{{ error }}</p>
+                            <small class="text-danger">
+                                {{ error }}
+                            </small>
+                            <br>
                         {% endfor %}
                     </div>
                 {% endif %}
             </div>
-               
-            <button type="submit" class="btn btn-primary">Siguiente</button>
+            
+            <!-- Boton para validar -->
+            <button type="submit" class="btn btn-primary mt-2">Siguiente</button>
         </form>
     </div>
-
-    
 
 {% endblock content %}
 

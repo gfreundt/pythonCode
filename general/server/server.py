@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, flash, session
+from flask import Flask, render_template, request, redirect, flash, session, jsonify
 from flask_wtf import FlaskForm
 from random import randrange
 from string import ascii_uppercase
 from pprint import pprint
 import sqlite3
 from datetime import datetime as dt
+from datetime import timedelta as td
 
 from validation import Actions
 import data_extraction
@@ -24,6 +25,7 @@ class Database:
 # initialize Flask app
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "sdlkfjsdlojf3r49tgf8"
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # root endpoint
@@ -36,20 +38,16 @@ def root():
 @app.route("/log", methods=["GET", "POST"])
 def log():
     # if user already logged in, go directly to main page
-    if "user_data" in session:
-        return redirect("main")
+    if "user" in session:
+        return redirect("reportes")
 
     # if user not logged in, display log-in page
     form = forms.LoginForm()
-
     if form.validate_on_submit():
         # flash("Login ok", "success")
         result = ACTIONS.login(request.form, db=db)
-        if result["code"] == 0:
-            return render_template("error.html", msg=result["msg"])
-        else:
-            session["user_data"] = result["data"]
-            return redirect("main")
+        session["user"] = result["data"]
+        return redirect("reportes")
 
     return render_template("log.html", form=form)
 
@@ -137,34 +135,101 @@ def rec2():
 
 
 # dashboard endpoints
-@app.route("/main", methods=["GET"])
-def main():
-    if session["user_data"]:
-        data = data_extraction.get_user_data(
-            cursor=db.cursor, user=session["user_data"]
-        )
-        return render_template(
-            "main.html",
-            user=data["user"],
-            brevete=data["brevete"],
-            record=data["record"],
-        )
-    else:
+@app.route("/reportes", methods=["GET", "POST"])
+def reportes():
+
+    # user not logged in, go to login page
+    if not session["user"]:
         return render_template("log.html")
+
+    if request.method == "POST":
+        session["selection"] = request.form["selection"]
+
+    else:
+        session["data"] = data_extraction.get_user_data(
+            cursor=db.cursor, user=session["user"]
+        )
+        session["selection"] = ""
+
+    data = session["data"]
+    return render_template(
+        "reportes.html",
+        user=data["user"],
+        brevete=data["brevete"],
+        satimps=data["satimps"],
+        record=data["record"],
+        placas=data["placas"],
+        sutrans=data["sutrans"],
+        satmuls=data["satmuls"],
+        papeletas=data["papeletas"],
+        soats=data["soats"],
+        revtecs=data["revtecs"],
+        sunarps=data["sunarps"],
+        selection=session["selection"],
+    )
 
 
 # my account endpoint (NAVBAR)
-@app.route("/micuenta")
-def mi_cuenta():
-    if "user_data" not in session:
+@app.route("/mic", methods=["GET", "POST"])
+def mic():
+    # user not logged in, got to login page
+    if "user" not in session:
         return redirect("log")
 
+    # opening form, retrieve data and show in form
     form = forms.MiCuenta()
+    if not form.validate_on_submit():
+        db.cursor.execute(
+            f"SELECT * FROM placas WHERE IdMember_FK = {session['user'][0]}"
+        )
+        placas = [i[2] for i in db.cursor.fetchall()]
+        db.cursor.execute(
+            f"SELECT Fecha FROM mensajes WHERE IdMember_FK = {session['user'][0]} ORDER BY Fecha DESC"
+        )
+        _fecha = db.cursor.fetchone()
+        siguiente_mensaje = (
+            (
+                max(
+                    dt.strptime(_fecha[0], "%Y-%m-%d %H:%M:%S") + td(days=30),
+                    dt.now() + td(days=1),
+                ).strftime("%Y-%m-%d")
+            )
+            if _fecha
+            else (dt.now() + td(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        )
+        comm = {
+            "siguiente_mensaje": siguiente_mensaje,
+            "opt_in_mensajes": True,
+            "Soat": True,
+            "Brevete": True,
+            "RevTec": False,
+            "Dni": False,
+            "opt_in_alertas1": True,
+            "Sutran": False,
+            "Sat": True,
+            "Mtc": False,
+            "opt_in_alertas2": False,
+        }
+        return render_template("mi_cuenta.html", form=form, placas=placas, comm=comm)
 
-    db.cursor.execute(f"SELECT * FROM placas WHERE IdMember_FK = 23")
-    placas = [i[2] for i in db.cursor.fetchall()]
-    print(placas)
-    return render_template("mi_cuenta.html", form=form, placas=placas)
+    # returning from completed form, update database
+    incoming = request.form
+
+    # process updated placas
+    db.cursor.execute(f"DELETE FROM placas WHERE IdMember_FK = {session['user'][0]}")
+    db.cursor.execute(f"SELECT IdPlaca FROM placas ORDER BY IdPlaca DESC")
+    rec = int(db.cursor.fetchone()[0]) + 1
+    for placa in (incoming["placa1"], incoming["placa2"], incoming["placa3"]):
+        db.cursor.execute(
+            f"INSERT INTO placas VALUES ({rec}, {session['user'][0]}, '{placa}')"
+        )
+        rec += 1
+
+    # TODO: process updated communication options
+
+    db.conn.commit()
+
+    return render_template("mic-2.html")
 
 
 # home endpoint (NAVBAR)
