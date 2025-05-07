@@ -1,7 +1,6 @@
 import time
 from threading import Thread
 from updates import *
-from streamlit.runtime.scriptrunner import get_script_run_ctx
 
 
 def gather_no_threads(db_conn, db_cursor, monitor, all_updates):
@@ -12,12 +11,14 @@ def gather_no_threads(db_conn, db_cursor, monitor, all_updates):
     gather_sutrans.gather(db_cursor, monitor, all_updates["sutrans"])
     gather_satimps.gather(db_cursor, monitor, all_updates["satimpCodigos"])
     gather_recvehic.gather(db_cursor, monitor, all_updates["recvehic"])
-    gather_sunats.gather(db_cursor, monitor, all_updates["sunats"])
     gather_sunarps.gather(db_cursor, monitor, all_updates["sunarps"])
 
     # manual gathering
-    gather_satmuls.gather(db_conn, db_cursor, monitor, all_updates["satmuls"])
     gather_soats.gather(db_conn, db_cursor, monitor, all_updates["soats"])
+    gather_satmuls.gather(db_conn, db_cursor, monitor, all_updates["satmuls"])
+
+    # in development
+    # gather_sunats.gather(db_cursor, monitor, all_updates["sunats"])
 
 
 def gather_threads(db_conn, db_cursor, monitor, all_updates):
@@ -55,12 +56,12 @@ def gather_threads(db_conn, db_cursor, monitor, all_updates):
             args=(db_cursor, monitor, all_updates["recvehic"]),
         )
     )
-    threads.append(
-        Thread(
-            target=gather_sunats.gather,
-            args=(db_cursor, monitor, all_updates["sunats"]),
-        )
-    )
+    # threads.append(
+    #     Thread(
+    #         target=gather_sunats.gather,
+    #         args=(db_cursor, monitor, all_updates["sunats"]),
+    #     )
+    # )
     threads.append(
         Thread(
             target=gather_sunarps.gather,

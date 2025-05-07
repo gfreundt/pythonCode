@@ -56,6 +56,7 @@ class Monitor:
         self.window.mainloop()
 
     def console_add_text(self, txt, font):
+        print("---->", txt)
         self.console_text.append((txt, font))
         self.console_display_text((txt, font))
 

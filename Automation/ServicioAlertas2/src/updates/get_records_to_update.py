@@ -12,11 +12,11 @@ def get_records(db_cursor):
     # get records that require updating
 
     # records that have expiration dates within time threshold (in days)
-    all_updates["brevetes"] = get_records_brevete(db_cursor, threshold=45)
+    all_updates["brevetes"] = get_records_brevete(db_cursor, threshold=30)
     all_updates["soats"] = get_records_soats(db_cursor, threshold=15)
     all_updates["revtecs"] = get_records_revtecs(db_cursor, threshold=30)
 
-    # records that are updated every time an email is sent (unless updated in last 24 hours)
+    # records that are updated every time an email is sent (unless updated in last 48 hours)
     all_updates["satimpCodigos"] = get_records_satimps(db_cursor)
     all_updates["satmuls"] = get_records_satmuls(db_cursor)
     all_updates["sutrans"] = get_records_sutrans(db_cursor)
@@ -45,6 +45,8 @@ def get_records(db_cursor):
 
 
 def create_tables_need_messages(db_cursor):
+    """creates two tables (docs and placas) with all the members that require a monthly email
+    which are later used as reference for determining which records to update"""
 
     cmd = """   DROP TABLE IF EXISTS _regmsg_members;
                 CREATE TABLE _regmsg_members (IdMember_FK, DocTipo, DocNum);
@@ -69,81 +71,134 @@ def create_tables_need_messages(db_cursor):
 
 
 def get_records_brevete(db_cursor, threshold):
-    # condition to update: will get email and (BREVETE expiring within threshold or no BREVETE in db)
+    # condition to update: will get email and (BREVETE expiring within threshold or no BREVETE in db) and only DNI as document and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_members WHERE IdMember_FK NOT IN 
-	         (SELECT IdMember_FK FROM brevetes
-		     WHERE FechaHasta >= datetime('now','localtime', '+{threshold} days'))"""
+        f""" SELECT * FROM _regmsg_members
+                WHERE IdMember_FK
+                    NOT IN 
+	                (SELECT IdMember_FK FROM brevetes
+		                WHERE
+                            FechaHasta >= datetime('now','localtime', '+{threshold} days'))
+                            AND
+                            DocTipo = 'DNI' 
+                            AND
+                            IdMember_FK
+                            NOT IN 
+			                (SELECT IdMember_FK FROM membersLastUpdate
+		                        WHERE LastUpdateBrevete >= datetime('now','localtime', '-120 hours'))
+             """
     )
     return db_cursor.fetchall()
 
 
 def get_records_soats(db_cursor, threshold):
-    # condition to update: will get email and (SOAT expiring within threshold or no SOAT in db)
+    # condition to update: will get email and (SOAT expiring within threshold or no SOAT in db) and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas WHERE IdPlaca_FK NOT IN 
-	         (SELECT IdPlaca_FK FROM soats
-		     WHERE FechaHasta >= datetime('now','localtime', '+{threshold} days'))"""
+        f""" SELECT * FROM _regmsg_placas
+                WHERE IdPlaca_FK
+                    NOT IN 
+	                (SELECT IdPlaca_FK FROM soats
+		                WHERE
+                            FechaHasta >= datetime('now','localtime', '+{threshold} days'))
+                            AND
+                            IdPlaca_FK
+                            NOT IN 
+			                (SELECT IdPlaca FROM placas
+		                        WHERE LastUpdateSOAT >= datetime('now','localtime', '-120 hours'))
+        """
     )
     return db_cursor.fetchall()
 
 
 def get_records_revtecs(db_cursor, threshold):
-    # condition to update: will get email and (REVTEC expiring within threshold or no REVTEC in db)
+    # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas WHERE IdPlaca_FK NOT IN 
-	         (SELECT IdPlaca_FK FROM revtecs
-		     WHERE FechaHasta >= datetime('now','localtime', '+{threshold} days'))"""
+        f""" SELECT * FROM _regmsg_placas
+                WHERE
+                    IdPlaca_FK
+                    NOT IN
+                    (SELECT IdPlaca_FK FROM revtecs
+                        WHERE 
+                        FechaHasta >= datetime('now','localtime', '+{threshold} days'))
+                    AND
+                    IdPlaca_FK
+                    NOT IN
+                    (SELECT IdPlaca FROM placas
+                        WHERE
+                        LastUpdateRevtec >= datetime('now','localtime', '-120 hours'))
+        """
     )
     return db_cursor.fetchall()
 
 
 def get_records_satimps(db_cursor):
-    # condition to update: will get email and SATIMP not updated in last 24 hours
+    # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_members WHERE IdMember_FK
-            NOT IN (SELECT IdMember_FK FROM satimpCodigos
-            WHERE LastUpdate >= datetime('now','localtime', '-24 hours'))"""
+        """ SELECT * FROM _regmsg_members
+                WHERE
+                    IdMember_FK
+                    NOT IN
+			        (SELECT IdMember_FK FROM membersLastUpdate
+		                WHERE LastUpdateImpSAT >= datetime('now','localtime', '-120 hours'))
+        """
     )
     return db_cursor.fetchall()
 
 
 def get_records_satmuls(db_cursor):
-    # condition to update: will get email and SATMUL not updated in last 24 hours
+    # condition to update: will get email and SATMUL not updated in last 48 hours
     db_cursor.execute(
-        """SELECT * FROM _regmsg_placas WHERE IdPlaca_FK
-                         NOT IN (SELECT IdPlaca_FK FROM satmuls
-                         WHERE LastUpdate >= datetime('now','localtime', '-24 hours'))"""
+        """ SELECT * FROM _regmsg_placas
+                WHERE
+                    IdPlaca_FK
+                    NOT IN
+                    (SELECT IdPlaca FROM placas
+                        WHERE LastUpdateSATMUL >= datetime('now', 'localtime', '-120 hours'))
+        """
     )
     return db_cursor.fetchall()
 
 
 def get_records_sutrans(db_cursor):
-    # condition to update: will get email and SUTRAN not updated in last 24 hours
+    # condition to update: will get email and SUTRAN not updated in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_placas WHERE IdPlaca_FK
-            NOT IN (SELECT IdPlaca_FK FROM sutrans
-            WHERE LastUpdate >= datetime('now','localtime', '-24 hours'))"""
+        """ SELECT * FROM _regmsg_placas
+                WHERE
+                    IdPlaca_FK
+                    NOT IN 
+			        (SELECT IdPlaca FROM placas
+		                WHERE LastUpdateSUTRAN >= datetime('now','localtime', '-120 hours'))
+        """
     )
     return db_cursor.fetchall()
 
 
 def get_records_recvehic(db_cursor):
-    # condition to update: will get email and RECVEHIC not updated in last 24 hours
+    # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_members WHERE IdMember_FK
-            NOT IN (SELECT IdMember_FK FROM recordConductores
-            WHERE LastUpdate >= datetime('now','localtime', '-24 hours'))"""
+        """ SELECT * FROM _regmsg_members
+                WHERE
+                    IdMember_FK
+                    NOT IN
+                    (SELECT IdMember_FK FROM membersLastUpdate
+            		    WHERE LastUpdateRecord >= datetime('now','localtime', '-120 hours'))
+                    AND DocTipo = 'DNI'
+        """
     )
+
     return db_cursor.fetchall()
 
 
 def get_records_sunarps(db_cursor, threshold):
     # condition to update: will get email and last updated within time threshold
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas WHERE IdPlaca_FK
-             NOT IN (SELECT IdPlaca_FK FROM sunarps
-             WHERE LastUpdate >= datetime('now','localtime', '-{threshold} days'))"""
+        f""" SELECT * FROM _regmsg_placas
+                WHERE
+                    IdPlaca_FK
+                    NOT IN
+			        (SELECT IdPlaca FROM placas
+		                WHERE LastUpdateSUNARP >= datetime('now','localtime', '-{threshold} days'))
+        """
     )
     return db_cursor.fetchall()
 
@@ -151,9 +206,13 @@ def get_records_sunarps(db_cursor, threshold):
 def get_records_sunats(db_cursor, threshold):
     # condition to update: will get email and last updated within time threshold
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas WHERE IdPlaca_FK
-             NOT IN (SELECT IdPlaca_FK FROM sunats
-             WHERE LastUpdate >= datetime('now','localtime', '-{threshold} days'))"""
+        f""" SELECT * FROM _regmsg_placas
+                WHERE
+                    IdPlaca_FK
+                    NOT IN
+                    (SELECT IdPlaca_FK FROM sunats
+                        WHERE LastUpdate >= datetime('now','localtime', '-{threshold} days'))
+        """
     )
     return db_cursor.fetchall()
 

@@ -20,16 +20,13 @@ def gather(db_conn, db_cursor, monitor, update_data):
                 # send request to scraper
                 response_satmul = scrape_satmul.browser(placa=placa)
 
+                _now = dt.now().strftime("%Y-%m-%d")
                 # if there is data in response, enter into database, go to next placa
                 for response in response_satmul:
 
                     # adjust date to match db format (YYYY-MM-DD)
                     new_record_dates_fixed = date_to_db_format(data=response.values())
-                    _values = (
-                        [id_placa]
-                        + new_record_dates_fixed
-                        + [dt.now().strftime("%Y-%m-%d")]
-                    )
+                    _values = [id_placa] + new_record_dates_fixed + [_now]
 
                     # delete all old records from member
                     db_cursor.execute(
@@ -38,6 +35,11 @@ def gather(db_conn, db_cursor, monitor, update_data):
 
                     # insert new record into database
                     db_cursor.execute(f"INSERT INTO satmuls VALUES {tuple(_values)}")
+
+                # update placas table with last update information
+                db_cursor.execute(
+                    f"UPDATE placas SET LastUpdateSATMUL = '{_now}' WHERE Placa = '{placa}'"
+                )
 
                 # register action
                 log_action_in_db(db_cursor, table_name="satmuls", idPlaca=id_placa)

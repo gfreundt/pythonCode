@@ -26,6 +26,12 @@ def gather(db_cursor, monitor, update_data):
                 # send request to scraper
                 revtec_response = scrape_revtec.browser(ocr=ocr, placa=placa)
 
+                # update placas table with last update information
+                _now = dt.now().strftime("%Y-%m-%d")
+                db_cursor.execute(
+                    f"UPDATE placas SET LastUpdateRevTec = '{_now}' WHERE Placa = '{placa}'"
+                )
+
                 # stop processing if blank response from scraper
                 if not revtec_response:
                     break
@@ -36,13 +42,9 @@ def gather(db_cursor, monitor, update_data):
                 )
 
                 # add foreign key and current date to scraper response
-                _values = (
-                    [id_placa]
-                    + new_record_dates_fixed
-                    + [dt.now().strftime("%Y-%m-%d")]
-                )
+                _values = [id_placa] + new_record_dates_fixed + [_now]
 
-                # delete all old records from member
+                # delete all old records from placa
                 db_cursor.execute(
                     f"DELETE FROM revtecs WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{placa}')"
                 )

@@ -41,12 +41,13 @@ def gather(db_cursor, monitor, update_data, ctx=None):
 
                 # if there is data in response, enter into database, go to next placa
                 _img_filename = f"SUNARP_{placa}.png"
+                _now = dt.now().strftime("%Y-%m-%d")
 
                 # add foreign key and current date to response
                 _values = (
                     [id_placa]
                     + extract_data_from_image(_img_filename)
-                    + [_img_filename, dt.now().strftime("%Y-%m-%d")]
+                    + [_img_filename, _now]
                 )
 
                 # delete all old records from placa
@@ -56,6 +57,11 @@ def gather(db_cursor, monitor, update_data, ctx=None):
 
                 # insert new record into database
                 db_cursor.execute(f"INSERT INTO sunarps VALUES {tuple(_values)}")
+
+                # update placas table with last update information
+                db_cursor.execute(
+                    f"UPDATE placas SET LastUpdateSUNARP = '{_now}' WHERE Placa = '{placa}'"
+                )
 
                 # register action and skip to next record
                 log_action_in_db(db_cursor, table_name="sunarps", idMember=id_placa)

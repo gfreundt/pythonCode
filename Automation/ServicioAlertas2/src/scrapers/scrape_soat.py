@@ -8,7 +8,7 @@ class Soat:
 
     def __init__(self):
         self.webdriver = ChromeUtils().init_driver(
-            headless=False, maximized=True, verbose=False, incognito=True
+            headless=True, maximized=True, verbose=False, incognito=True
         )
 
     def get_captcha(self):
@@ -17,7 +17,11 @@ class Soat:
             By.XPATH,
             "/html/body/div/main/article/div/section[2]/div/div/div[1]/div/div[3]/div[1]/form/div[2]/img",
         )
-        return _img.screenshot_as_png
+        with open(
+            "D:\pythonCode\Automation\ServicioAlertas2\images\soat_captcha_temp.png",
+            "wb+",
+        ) as file:
+            file.write(_img.screenshot_as_png)
 
     def browser(self, placa=None, captcha_txt=None):
 

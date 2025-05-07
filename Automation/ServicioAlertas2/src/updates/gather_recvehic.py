@@ -45,12 +45,18 @@ def gather(db_cursor, monitor, update_data):
                 # register action
                 log_action_in_db(db_cursor, table_name="revtec", idMember=id_member)
 
+                # update memberLastUpdate table with last update information
+                _now = dt.now().strftime("%Y-%m-%d")
+                db_cursor.execute(
+                    f"UPDATE membersLastUpdate SET LastUpdateRecord = '{_now}' WHERE IdMember_FK = '{id_member}'"
+                )
+
                 # stop processing if blank response from scraper
                 if not _img_filename:
-                    continue
+                    break
 
                 # add foreign key and current date to response
-                _values = (id_member, _img_filename, dt.now().strftime("%Y-%m-%d"))
+                _values = (id_member, _img_filename, _now)
 
                 # delete all old records from member
                 db_cursor.execute(

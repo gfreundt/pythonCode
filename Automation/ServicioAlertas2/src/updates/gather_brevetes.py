@@ -11,7 +11,7 @@ def gather(db_cursor, monitor, update_data):
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
 
-    monitor.log("Updating Brevetes...", type=1)
+    monitor.log(action="Updating Brevetes...")
 
     # iterate on all records that require updating and get scraper results
     for id_member, doc_tipo, doc_num in update_data:
@@ -21,6 +21,9 @@ def gather(db_cursor, monitor, update_data):
             monitor.log(f"BREVETE (Skip - not DNI): {doc_tipo}-{doc_num}", type=3)
             continue
 
+        # log action
+        monitor.log(f"Attempting BREVETE: {doc_tipo}-{doc_num}", type=4)
+
         retry_attempts = 0
         # loop to catch scraper errors and retry limited times
         while retry_attempts < 3:
@@ -28,6 +31,13 @@ def gather(db_cursor, monitor, update_data):
                 # send request to scraper
                 brevete_response, pimpagas_response = scrape_brevete.browser(
                     doc_num=doc_num, ocr=ocr
+                )
+
+                # update memberLastUpdate table with last update information
+                _now = dt.now().strftime("%Y-%m-%d")
+                print("&&&&&&&&&&", id_member)
+                db_cursor.execute(
+                    f"UPDATE membersLastUpdate SET LastUpdateBrevete = '{_now}' WHERE IdMember_FK = {id_member}"
                 )
 
                 # stop processing if blank response from scraper
@@ -40,22 +50,18 @@ def gather(db_cursor, monitor, update_data):
                 )
 
                 # add foreign key and current date to scraper response
-                _values = (
-                    [id_member]
-                    + new_record_dates_fixed
-                    + [dt.now().strftime("%Y-%m-%d")]
-                )
+                _values = [id_member] + new_record_dates_fixed + [_now]
 
                 # delete all old records from member
                 db_cursor.execute(
-                    f"DELETE FROM brevetes WHERE IdMember_FK = (SELECT IdMember FROM members WHERE DocTipo = '{doc_tipo}' AND DocNum = '{doc_num}')"
+                    f"DELETE FROM brevetes WHERE IdMember_FK = {id_member}"
                 )
 
                 # insert new record into database
                 db_cursor.execute(f"INSERT INTO brevetes VALUES {tuple(_values)}")
 
                 # log action
-                monitor.log(f"BREVETE: {doc_tipo}-{doc_num}", type=4)
+                monitor.log(f"Succesful BREVETE: {doc_tipo}-{doc_num}", type=4)
 
                 # process list of papeletas impagas and put them in different table
                 for papeleta in pimpagas_response:
@@ -66,11 +72,7 @@ def gather(db_cursor, monitor, update_data):
                     )
 
                     # add foreign key and current date to response
-                    _values = (
-                        [id_member]
-                        + papeleta_dates_fixed
-                        + [dt.now().strftime("%Y-%m-%d")]
-                    )
+                    _values = [id_member] + papeleta_dates_fixed + [_now]
 
                     # delete all old records from member
                     db_cursor.execute(

@@ -1,51 +1,41 @@
-import io
-import threading
-from tkinter import Tk, Label
-from PIL import Image, ImageTk
-
 from gft_utils import SpeechUtils
+import cv2
 
 
-def get_captcha(img):
-    # show image in separated thread
-    t1 = threading.Thread(target=show_captcha, args=(img,), daemon=True)
-    t1.start()
-    # capture captcha with speech
-    return get_speech()
-
-
-def show_captcha(captcha_img):
-    # show captcha image on screen from image object (not filename)
-
-    # define a context to be used in thread for Streamlit to work
-    window = Tk()
-    window.geometry("1085x245")
-    window.config(background="black")
-    img = Image.open(io.BytesIO(captcha_img)).resize((1085, 245))
-    _img = ImageTk.PhotoImage(master=window, image=img)
-    label = Label(master=window, image=_img)
-    label.grid(row=0, column=0)
-    window.mainloop()
-
-
-def get_speech():
+def get_captcha():
     # capture speech and return only if it matches criteria
+    img = cv2.imread(
+        "D:\pythonCode\Automation\ServicioAlertas2\images\soat_captcha_temp.png"
+    )
+    img = cv2.resize(img, (0, 0), fx=4, fy=4)
+    cv2.imshow("captcha", img)
+    cv2.waitKey(500)
+
     while True:
-        text = SpeechUtils().get_speech()
+        text = SpeechUtils().get_speech().lower()
 
         # eliminate blank spaces
-        text = text.lower().replace(" ", "")
+        text = text.replace(" ", "")
+
+        text = text.replace("zero", "0")
+        text = text.replace("one", "1")
+        text = text.replace("to", "2")
+        text = text.replace("two", "2")
+        text = text.replace("for", "4")
+        text = text.replace("five", "5")
 
         # show captured text
         print(f"Captured: {text}")
 
-        # if speech is "pass" return wrong captcha to request a new one
+        # if speech is "pass" return wrong captcha to get a new one
         if text.lower() == "pass":
+            cv2.destroyAllWindows()
             return "xxxxxx"
 
         # only accept 6-letter captchas
         if len(text) == 6:
             print("[ACCEPTED]")
+            cv2.destroyAllWindows()
             return text
         else:
             print("[NOT VALID]")

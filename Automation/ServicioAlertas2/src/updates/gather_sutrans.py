@@ -22,9 +22,16 @@ def gather(db_cursor, monitor, update_data):
                 # send request to scraper
                 sutran_response = scrape_sutran.browser(placa=placa)
 
+                _now = dt.now().strftime("%Y-%m-%d")
+
                 # if no error in scrape, erase any prior records of this placa
                 db_cursor.execute(
                     f"DELETE FROM sutrans WHERE IdPlaca_FK = (SELECT IdPlaca FROM placas WHERE Placa = '{placa}')"
+                )
+
+                # update placas table with last update information
+                db_cursor.execute(
+                    f"UPDATE placas SET LastUpdateSUTRAN = '{_now}' WHERE Placa = '{placa}'"
                 )
 
                 # register action
@@ -37,11 +44,7 @@ def gather(db_cursor, monitor, update_data):
                 # iterate on all multas
                 for response in sutran_response:
                     new_record_dates_fixed = date_to_db_format(data=response.values())
-                    _values = (
-                        [id_placa]
-                        + new_record_dates_fixed
-                        + [dt.now().strftime("%Y-%m-%d")]
-                    )
+                    _values = [id_placa] + new_record_dates_fixed + [_now]
 
                     # insert gathered record of member
                     db_cursor.execute(f"INSERT INTO sutrans VALUES {tuple(_values)}")

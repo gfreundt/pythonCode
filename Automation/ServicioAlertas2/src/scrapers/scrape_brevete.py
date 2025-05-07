@@ -113,6 +113,21 @@ def browser(doc_num, ocr):
     except NoSuchElementException:
         response = []
 
+    # check if no licencia registrada, respond with empty for each field
+    _nr = webdriver.find_elements(By.CLASS_NAME, "div_non_data")
+    if _nr:
+        return {
+            "clase": "",
+            "numero": "",
+            "tipo": "",
+            "fecha_expedicion": "",
+            "restricciones": "",
+            "fecha_hasta": "",
+            "centro": "",
+            "puntos": 0,
+            "record_num": "",
+        }, []
+
     # next tab (Puntos) - make sure all is populated before tabbing along (with timeout) and wait a little
     timeout = 0
     while not webdriver.find_elements(By.ID, "mat-tab-label-0-0"):

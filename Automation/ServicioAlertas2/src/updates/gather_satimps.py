@@ -39,13 +39,15 @@ def gather(db_cursor, monitor, update_data):
                         DELETE FROM satimpCodigos WHERE IdMember_FK = '{id_member}'"""
                 )
 
+                _now = dt.now().strftime("%Y-%m-%d")
+
                 for new_record in new_records:
 
                     # add foreign key and current date to scraper response
                     _values = [
                         id_member,
                         new_record["codigo"],
-                        dt.now().strftime("%Y-%m-%d"),
+                        _now,
                     ]
 
                     # insert gathered record of member
@@ -73,6 +75,12 @@ def gather(db_cursor, monitor, update_data):
                         log_action_in_db(
                             db_cursor, table_name="satimpDeudas", idMember=id_member
                         )
+
+                # update memberLastUpdate table with last update information
+                print("++++++++++", id_member)
+                db_cursor.execute(
+                    f"UPDATE membersLastUpdate SET LastUpdateImpSAT = '{_now}' WHERE IdMember_FK = '{id_member}'"
+                )
 
                 # register action and go to next record
                 log_action_in_db(

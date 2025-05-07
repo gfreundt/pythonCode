@@ -21,7 +21,7 @@ def browser(placa, ocr):
 
         # start chromedriver
         webdriver = ChromeUtils().init_driver(
-            headless=False, verbose=False, maximized=True, incognito=True
+            headless=True, verbose=False, maximized=True, incognito=True
         )
 
         # open first URL, wait and open second URL (avoids limiting requests)
@@ -73,7 +73,7 @@ def browser(placa, ocr):
                 ).click()
 
                 webdriver.quit()
-                return None
+                return False
 
             # no error... continue
             else:
@@ -93,11 +93,16 @@ def browser(placa, ocr):
 
         # grab image and save in file, return succesful
         else:
-            # load card image into memory
-            image_object = Image.open(io.BytesIO(_card_image[0].screenshot_as_png))
-            time.sleep(1)
+
+            # save image in file
+            _img_path = os.path.abspath(
+                os.path.join("..", "data", "images", f"SUNARP_{placa}.png")
+            )
+            with open(_img_path, "wb") as file:
+                file.write(_card_image[0].screenshot_as_png)
 
             # press boton to start over
+            time.sleep(1)
             q = webdriver.find_element(
                 By.XPATH,
                 "/html/body/app-root/nz-content/div/app-inicio/app-vehicular/nz-layout/nz-content/div/nz-card/div/app-form-datos-consulta/div/nz-form-item/nz-form-control/div/div/div/button",
@@ -105,7 +110,7 @@ def browser(placa, ocr):
             q.click()
 
             webdriver.quit()
-            return image_object
+            return True
 
 
 def process_captcha(img, ocr):
