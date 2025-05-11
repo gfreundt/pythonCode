@@ -5,13 +5,25 @@ import logging
 import easyocr
 
 
-def gather(db_cursor, monitor, update_data):
+def gather(db_cursor, dash, update_data):
+
+    CARD = 2
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Revisión Técnica [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # remove easyocr warnings in logger and start reader
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
 
-    monitor.log("Updating Revisón Tecnica...", type=1)
+    dash.log(card=CARD, title="Revisión Tecnica", status=1)
 
     # iterate on all records that require updating and get scraper results
     for counter, (id_placa, placa) in enumerate(update_data, start=1):
@@ -21,7 +33,7 @@ def gather(db_cursor, monitor, update_data):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(f"[{counter}/{len(update_data)}] REVTEC: {placa}", type=4)
+                dash.log(card=CARD, text=f"Procesando: {placa}")
 
                 # send request to scraper
                 revtec_response = scrape_revtec.browser(ocr=ocr, placa=placa)
@@ -30,6 +42,13 @@ def gather(db_cursor, monitor, update_data):
                 _now = dt.now().strftime("%Y-%m-%d")
                 db_cursor.execute(
                     f"UPDATE placas SET LastUpdateRevTec = '{_now}' WHERE Placa = '{placa}'"
+                )
+
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
                 )
 
                 # stop processing if blank response from scraper
@@ -61,11 +80,19 @@ def gather(db_cursor, monitor, update_data):
 
             except:
                 retry_attempts += 1
-                monitor.log(f"< REVTEC > Retrying Record {placa}.", type=3, error=True)
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {placa}",
+                )
 
             # if code gets here, means scraping has encountred three consecutive errors, skip placa
-            monitor.log(
-                f"< REVTEC > Could not process {placa}. Skipping Record.",
-                type=3,
-                error=True,
-            )
+            dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {placa}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Revisión Técnica",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

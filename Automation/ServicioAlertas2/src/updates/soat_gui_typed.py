@@ -1,6 +1,7 @@
 import io
-import pygame
-from pygame.locals import *
+
+# import pygame
+# from pygame.locals import *
 
 
 def show_captcha(canvas, captcha_img):

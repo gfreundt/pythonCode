@@ -1,13 +1,21 @@
 from datetime import datetime as dt
 from utils import date_to_db_format, log_action_in_db
 from scrapers import scrape_sutran
-from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 
-def gather(db_cursor, monitor, update_data):
+def gather(db_cursor, dash, update_data):
 
-    # log action
-    monitor.log("Updating SUTRAN...", type=1)
+    CARD = 7
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Sutran [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # iterate on all records that require updating and get scraper results
     for counter, (id_placa, placa) in enumerate(update_data, start=1):
@@ -17,7 +25,7 @@ def gather(db_cursor, monitor, update_data):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(f"[{counter}/{len(update_data)}] SUTRANS: {placa}", type=1)
+                dash.log(card=CARD, text=f"Procesando: {placa}")
 
                 # send request to scraper
                 sutran_response = scrape_sutran.browser(placa=placa)
@@ -36,6 +44,13 @@ def gather(db_cursor, monitor, update_data):
 
                 # register action
                 log_action_in_db(db_cursor, table_name="sutrans", idPlaca=id_placa)
+
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
+                )
 
                 # if response is blank, skip to next placa
                 if not sutran_response:
@@ -57,12 +72,19 @@ def gather(db_cursor, monitor, update_data):
 
             except:
                 retry_attempts += 1
-                monitor.log(f"< SUTRAN > Retrying {placa}.", type=1, error=True)
-                break
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {placa}",
+                )
 
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< SUTRAN > Could not process {placa}. Skipping Record.",
-                type=1,
-                error=True,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {placa}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Sutran",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

@@ -59,7 +59,7 @@ def get_captcha(ocr):
     return text
 
 
-def browser(doc_num, monitor, ocr):
+def browser(doc_num, ocr):
 
     # erase file from destination directory before downloading new one
     from_path = os.path.join(

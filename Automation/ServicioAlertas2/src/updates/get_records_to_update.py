@@ -33,14 +33,6 @@ def get_records(db_cursor):
     # eliminate any duplicates
     all_updates = {i: set(j) for i, j in all_updates.items()}
 
-    # display # of records for each table on monitor
-    # TODO: get nice names with SQL query
-    _quant = [len(j) for j in all_updates.values()]
-    data = {
-        "Process": [i for i in nice_names] + ["TOTAL"],
-        "Quant": _quant + [sum(_quant)],
-    }
-
     return all_updates
 
 
@@ -48,24 +40,52 @@ def create_tables_need_messages(db_cursor):
     """creates two tables (docs and placas) with all the members that require a monthly email
     which are later used as reference for determining which records to update"""
 
-    cmd = """   DROP TABLE IF EXISTS _regmsg_members;
-                CREATE TABLE _regmsg_members (IdMember_FK, DocTipo, DocNum);
-                INSERT INTO _regmsg_members (IdMember_FK, DocTipo, DocNum) SELECT IdMember, DocTipo, DocNum FROM members JOIN (
-	                SELECT IdMember AS x FROM members
-                    EXCEPT
-	                    SELECT IdMember_FK FROM mensajes
-		                JOIN mensajeContenidos
-		                ON IdMensaje = IdMensaje_FK
-		            WHERE Fecha >= datetime('now','localtime', '-1 month')
-			        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
-	            )
-                    ON members.IdMember = x;
-				
-                DROP TABLE IF EXISTS _regmsg_placas;
-                CREATE TABLE _regmsg_placas (IdPlaca_FK, Placa);			
-                INSERT INTO _regmsg_placas (IdPlaca_FK, Placa) SELECT IdPlaca, Placa FROM placas 
-                    JOIN (_regmsg_members)
-                    ON placas.IdMember_FK = _regmsg_members.IdMember_FK"""
+    # cmd = """   DROP TABLE IF EXISTS _necesitan_mensajes_usuarios;
+    #             CREATE TABLE _necesitan_mensajes_usuarios (IdMember_FK, DocTipo, DocNum, Tipo);
+    #             INSERT INTO _necesitan_mensajes_usuarios (IdMember_FK, DocTipo, DocNum, Tipo) SELECT IdMember, DocTipo, DocNum FROM members JOIN (
+    #                 SELECT IdMember AS x FROM members
+    #                 EXCEPT
+    #                     SELECT IdMember_FK FROM mensajes
+    # 	                JOIN mensajeContenidos
+    # 	                ON IdMensaje = IdMensaje_FK
+    # 	            WHERE Fecha >= datetime('now','localtime', '-1 month')
+    # 		        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13)
+    #             )
+    #                 ON members.IdMember = x;
+
+    #             DROP TABLE IF EXISTS _necesitan_mensajes_placas;
+    #             CREATE TABLE _necesitan_mensajes_placas (IdPlaca_FK, Placa);
+    #             INSERT INTO _necesitan_mensajes_placas (IdPlaca_FK, Placa) SELECT IdPlaca, Placa FROM placas
+    #                 JOIN (_necesitan_mensajes_usuarios)
+    #                 ON placas.IdMember_FK = _necesitan_mensajes_usuarios.IdMember_FK"""
+
+    cmd = """
+            -- Crear tabla temporal primaria de usuarios que necesitan mensajes
+            DROP TABLE IF EXISTS _necesitan_mensajes_usuarios;
+            CREATE TABLE _necesitan_mensajes_usuarios (IdMember_FK, DocTipo, DocNum, Tipo);
+
+
+
+            -- Incluir usuarios que han recibido ultimo mensaje regular o de bienvenida hace mas de un mes (mensaje regular)
+            INSERT INTO _necesitan_mensajes_usuarios (IdMember_FK, DocTipo, DocNum, Tipo)
+                SELECT IdMember, DocTipo, DocNum, "R" from members 
+                WHERE IdMember NOT IN (
+                    SELECT IdMember_FK FROM mensajes 
+                        WHERE FechaEnvio >= datetime('now','localtime', '-1 month')
+                        AND (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13));
+                        
+            -- Cambiar flag de mensaje de regular a bienvenida si nunca antes han recibido mensajes		
+            UPDATE _necesitan_mensajes_usuarios SET Tipo = "B"
+                WHERE IdMember_FK NOT IN (
+                    SELECT IdMember_FK FROM mensajes
+                    WHERE (IdTipoMensaje_FK = 12 OR IdTipoMensaje_FK = 13));
+                        
+            -- Crear tabla temporal secundaria que lista las placas de usarios que necesitan mensajes
+            DROP TABLE IF EXISTS _necesitan_mensajes_placas;
+            CREATE TABLE _necesitan_mensajes_placas (IdPlaca_FK, Placa);
+            INSERT INTO _necesitan_mensajes_placas (IdPlaca_FK, Placa) select idplaca, placa from placas where IdMember_FK IN (SELECT IdMember_FK from _necesitan_mensajes_usuarios)
+
+            """
 
     db_cursor.executescript(cmd)
 
@@ -73,7 +93,7 @@ def create_tables_need_messages(db_cursor):
 def get_records_brevete(db_cursor, threshold):
     # condition to update: will get email and (BREVETE expiring within threshold or no BREVETE in db) and only DNI as document and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_members
+        f""" SELECT * FROM _necesitan_mensajes_usuarios
                 WHERE IdMember_FK
                     NOT IN 
 	                (SELECT IdMember_FK FROM brevetes
@@ -94,7 +114,7 @@ def get_records_brevete(db_cursor, threshold):
 def get_records_soats(db_cursor, threshold):
     # condition to update: will get email and (SOAT expiring within threshold or no SOAT in db) and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas
+        f""" SELECT * FROM _necesitan_mensajes_placas
                 WHERE IdPlaca_FK
                     NOT IN 
 	                (SELECT IdPlaca_FK FROM soats
@@ -104,7 +124,7 @@ def get_records_soats(db_cursor, threshold):
                             IdPlaca_FK
                             NOT IN 
 			                (SELECT IdPlaca FROM placas
-		                        WHERE LastUpdateSOAT >= datetime('now','localtime', '-120 hours'))
+		                        WHERE LastUpdateSOAT >= datetime('now','localtime', '-48 hours'))
         """
     )
     return db_cursor.fetchall()
@@ -113,7 +133,7 @@ def get_records_soats(db_cursor, threshold):
 def get_records_revtecs(db_cursor, threshold):
     # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas
+        f""" SELECT * FROM _necesitan_mensajes_placas
                 WHERE
                     IdPlaca_FK
                     NOT IN
@@ -134,7 +154,7 @@ def get_records_revtecs(db_cursor, threshold):
 def get_records_satimps(db_cursor):
     # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_members
+        """ SELECT * FROM _necesitan_mensajes_usuarios
                 WHERE
                     IdMember_FK
                     NOT IN
@@ -148,12 +168,12 @@ def get_records_satimps(db_cursor):
 def get_records_satmuls(db_cursor):
     # condition to update: will get email and SATMUL not updated in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_placas
+        """ SELECT * FROM _necesitan_mensajes_placas
                 WHERE
                     IdPlaca_FK
                     NOT IN
                     (SELECT IdPlaca FROM placas
-                        WHERE LastUpdateSATMUL >= datetime('now', 'localtime', '-120 hours'))
+                        WHERE LastUpdateSATMUL >= datetime('now', 'localtime', '-24 hours'))
         """
     )
     return db_cursor.fetchall()
@@ -162,7 +182,7 @@ def get_records_satmuls(db_cursor):
 def get_records_sutrans(db_cursor):
     # condition to update: will get email and SUTRAN not updated in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_placas
+        """ SELECT * FROM _necesitan_mensajes_placas
                 WHERE
                     IdPlaca_FK
                     NOT IN 
@@ -176,7 +196,7 @@ def get_records_sutrans(db_cursor):
 def get_records_recvehic(db_cursor):
     # condition to update: will get email and no attempt to update in last 48 hours
     db_cursor.execute(
-        """ SELECT * FROM _regmsg_members
+        """ SELECT * FROM _necesitan_mensajes_usuarios
                 WHERE
                     IdMember_FK
                     NOT IN
@@ -192,7 +212,7 @@ def get_records_recvehic(db_cursor):
 def get_records_sunarps(db_cursor, threshold):
     # condition to update: will get email and last updated within time threshold
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas
+        f""" SELECT * FROM _necesitan_mensajes_placas
                 WHERE
                     IdPlaca_FK
                     NOT IN
@@ -206,7 +226,7 @@ def get_records_sunarps(db_cursor, threshold):
 def get_records_sunats(db_cursor, threshold):
     # condition to update: will get email and last updated within time threshold
     db_cursor.execute(
-        f""" SELECT * FROM _regmsg_placas
+        f""" SELECT * FROM _necesitan_mensajes_placas
                 WHERE
                     IdPlaca_FK
                     NOT IN

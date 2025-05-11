@@ -3,21 +3,25 @@ from utils import log_action_in_db
 from scrapers import scrape_sunarp
 import logging
 import easyocr
-from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 
-def gather(db_cursor, monitor, update_data, ctx=None):
+def gather(db_cursor, dash, update_data):
 
-    # start streamlit context manager if opened as thread
-    if ctx:
-        print("sunarps")
-        add_script_run_ctx(ctx)
+    CARD = 6
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Fichas Sunarp [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # remove easyocr warnings in logger and start reader
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
-
-    monitor.log("Updating SUNARP...", type=1)
 
     # iterate on every placa and write to database
     for counter, (id_placa, placa) in enumerate(update_data, start=1):
@@ -27,12 +31,19 @@ def gather(db_cursor, monitor, update_data, ctx=None):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(f"[{counter}/{len(update_data)}] SUNARPS: {placa}", type=1)
+                dash.log(card=CARD, text=f"Procesando: {placa}")
 
                 # send request to scraper
                 response = scrape_sunarp.browser(placa=placa, ocr=ocr)
 
-                # correct captcha, no data for placa - enter update attempt to review database, next placa
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
+                )
+
+                # correct captcha, no image for placa - enter update attempt to review database, next placa
                 if not response:
                     db_cursor.execute(
                         f"INSERT INTO '$review' (IdPlaca_FK, Reason) VALUES ({id_placa}, 'SUNARP')"
@@ -72,15 +83,24 @@ def gather(db_cursor, monitor, update_data, ctx=None):
 
             except:
                 retry_attempts += 1
-                monitor.log(f"< SATIMP > Retrying {placa}.")
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {placa}",
+                )
 
-        else:
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< SUNARP > Could not process {placa}. Skipping Record.",
-                error=True,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {placa}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Fichas Sunarp",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )
 
 
+# TODO: move to post-processing
 def extract_data_from_image(img_filename):
     return [""] * 14

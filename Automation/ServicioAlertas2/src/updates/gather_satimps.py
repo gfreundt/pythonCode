@@ -5,13 +5,23 @@ import logging
 import easyocr
 
 
-def gather(db_cursor, monitor, update_data):
+def gather(db_cursor, dash, update_data):
+
+    CARD = 3
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Impuestos SAT [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # remove easyocr warnings in logger and start reader
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
-
-    monitor.log("Updating Impuestos SAT...", type=1)
 
     # iterate on all records that require updating and get scraper results
     for counter, (id_member, doc_tipo, doc_num) in enumerate(update_data, start=1):
@@ -21,10 +31,7 @@ def gather(db_cursor, monitor, update_data):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(
-                    f"[{counter}/{len(update_data)}] SATIMPS: {doc_tipo} {doc_num}",
-                    type=1,
-                )
+                dash.log(card=CARD, text=f"Procesando: {doc_tipo} {doc_num}")
 
                 # send request to scraper
                 new_records = scrape_satimp.browser(
@@ -77,15 +84,23 @@ def gather(db_cursor, monitor, update_data):
                         )
 
                 # update memberLastUpdate table with last update information
-                print("++++++++++", id_member)
                 db_cursor.execute(
                     f"UPDATE membersLastUpdate SET LastUpdateImpSAT = '{_now}' WHERE IdMember_FK = '{id_member}'"
                 )
 
-                # register action and go to next record
+                # register action
                 log_action_in_db(
                     db_cursor, table_name="satimpCodigos", idMember=id_member
                 )
+
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
+                )
+
+                # next record
                 break
 
             except KeyboardInterrupt:
@@ -93,10 +108,19 @@ def gather(db_cursor, monitor, update_data):
 
             except:
                 retry_attempts += 1
-                monitor.log(f"< SATIMP > Retrying {doc_tipo}-{doc_num}.")
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {doc_tipo} {doc_num}",
+                )
 
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< SATIMP > Could not process {doc_tipo}-{doc_num}. Skipping Record.",
-                error=True,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {doc_tipo} {doc_num}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Impuestos SAT",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

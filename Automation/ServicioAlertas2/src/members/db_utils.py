@@ -1,8 +1,6 @@
 import os
 import sqlite3
 
-from pprint import pprint
-
 
 class Database:
 
@@ -18,6 +16,7 @@ class Database:
         if dev:
             # development
             SQLDATABASE = os.path.join("..", "data", "dev", "members.db")
+            # SQLDATABASE = os.path.join(r"\\192.168.68.105", "Downloads", "members.db")
 
         self.conn = sqlite3.connect(SQLDATABASE, check_same_thread=False)
         self.cursor = self.conn.cursor()

@@ -6,9 +6,19 @@ from scrapers import scrape_soat
 from copy import deepcopy as copy
 
 
-def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
+def gather(db_oonn, db_cursor, dash, update_data, gui_option="SPEECH"):
 
-    monitor.log("Updating SOATS...", type=1)
+    CARD = 5
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Certificados Soat [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # if gui option is typed, initiate canvas
     if gui_option == "TYPED":
@@ -23,7 +33,7 @@ def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(f"[{counter}/{len(update_data)}] SOAT: {placa}", type=3)
+                dash.log(card=CARD, text=f"Procesando: {placa}")
 
                 # grab captcha image from website and save to temp file
                 scraper.get_captcha()
@@ -34,18 +44,35 @@ def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
                 elif gui_option == "SPEECH":
                     captcha = soat_gui_speech.get_captcha()
 
+                # captcha timeout - manual user not there to enter captcha, skip process
+                if captcha == -1:
+                    dash.log(
+                        card=CARD,
+                        title="Certificados Soat",
+                        status=0,
+                        text="Timeout (usuario)",
+                        lastUpdate=dt.now(),
+                    )
+                    return
+
+                # with captcha manually resolved, proceed to scraping
                 response_soat = scraper.browser(placa=placa, captcha_txt=captcha)
+
                 # wrong captcha - restart loop with same placa
                 if response_soat == -2:
                     continue
+
                 # scraper exceed limit of manual captchas - abort iteration
                 elif response_soat == -1:
-                    monitor.log(
-                        f"< SOAT > Reached APESEG limit ({dt.now()}). Aborting operation.",
-                        error=True,
-                        type=1,
+                    dash.log(
+                        card=CARD,
+                        title="Certificados Soat",
+                        status=0,
+                        text="Detenido por limite Apeseg.",
+                        lastUpdate=dt.now(),
                     )
                     return
+
                 # if there is data in response, enter into database, go to next placa
                 elif response_soat:
 
@@ -53,7 +80,6 @@ def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
                     new_record_dates_fixed = date_to_db_format(
                         data=response_soat.values()
                     )
-                    print("what the func", new_record_dates_fixed)
 
                     # if soat data gathered succesfully, generate soat image and save in folder
                     img_name = soat_image_generator.generate(
@@ -84,6 +110,13 @@ def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
                 # register action and skip to next record
                 log_action_in_db(db_cursor, table_name="soats", idPlaca=id_placa)
 
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
+                )
+
                 # no errors - update database and next member
                 db_oonn.commit()
                 break
@@ -93,12 +126,19 @@ def gather(db_oonn, db_cursor, monitor, update_data, gui_option="SPEECH"):
 
             except Exception:
                 retry_attempts += 1
-                monitor.log(f"< SOAT > Retrying {placa}.", error=True, type=1)
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {placa}",
+                )
 
-        else:
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< SOAT > Could not process {placa}. Skipping Record.",
-                error=True,
-                type=1,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {placa}.")
+
+        # log last action
+    dash.log(
+        card=CARD,
+        title="Certificados Soat",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

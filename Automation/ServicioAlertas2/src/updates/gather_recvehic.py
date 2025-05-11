@@ -8,23 +8,29 @@ import easyocr
 logging.getLogger("easyocr").setLevel(logging.ERROR)
 
 
-def gather(db_cursor, monitor, update_data):
+def gather(db_cursor, dash, update_data):
+
+    CARD = 1
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Record del Conductor [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # remove easyocr warnings in logger and start reader
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
-
-    monitor.log("Updating Record del Conductor...", type=1)
 
     # iterate on all records that require updating and get scraper results
     for counter, (id_member, doc_tipo, doc_num) in enumerate(update_data, start=1):
 
         # records are only available for members with DNI
         if doc_tipo != "DNI":
-            monitor.log(
-                f"[{counter}/{len(update_data)}] RECORD: {doc_tipo} {doc_num} (Skipping Not DNI)",
-                type=3,
-            )
             continue
 
         retry_attempts = 0
@@ -32,15 +38,10 @@ def gather(db_cursor, monitor, update_data):
         while retry_attempts < 3:
             try:
                 # log action
-                monitor.log(
-                    f"[{counter}/{len(update_data)}] RECORD: {doc_tipo} {doc_num}",
-                    type=4,
-                )
+                dash.log(card=CARD, text=f"Procesando: {doc_tipo} {doc_num}")
 
                 # send request to scraper
-                _img_filename = scrape_recvehic.browser(
-                    doc_num=doc_num, ocr=ocr, monitor=monitor
-                )
+                _img_filename = scrape_recvehic.browser(doc_num=doc_num, ocr=ocr)
 
                 # register action
                 log_action_in_db(db_cursor, table_name="revtec", idMember=id_member)
@@ -76,11 +77,19 @@ def gather(db_cursor, monitor, update_data):
 
             except:
                 retry_attempts += 1
-                monitor.log(f"< RECORD > Retrying {doc_tipo}-{doc_num}.", type=3)
+                dash.log(
+                    card=CARD,
+                    text=f"|ADVERTENCIA| Reintentando [{retry_attempts}/3]: {doc_tipo} {doc_num}",
+                )
 
-        else:
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< RECORD > Could not process {doc_tipo}-{doc_num}. Skipping Record.",
-                error=True,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {doc_tipo} {doc_num}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Record del Conductor",
+        status=0,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

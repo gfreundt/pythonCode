@@ -12,11 +12,15 @@ def get_captcha():
     cv2.waitKey(500)
 
     while True:
-        text = SpeechUtils().get_speech().lower()
+        text = SpeechUtils().get_speech(timeout=10).lower()
 
-        # eliminate blank spaces
+        # if speech recognition returns timeout, let gather know
+        if text == "$$timeout$$":
+            cv2.destroyAllWindows()
+            return -1
+
+        # text corrections
         text = text.replace(" ", "")
-
         text = text.replace("zero", "0")
         text = text.replace("one", "1")
         text = text.replace("to", "2")

@@ -5,29 +5,38 @@ import logging
 import easyocr
 
 
-def gather(db_cursor, monitor, update_data):
+def gather(db_cursor, dash, update_data):
+
+    CARD = 0
+
+    # log first action
+    dash.log(
+        card=CARD,
+        title=f"Brevete [{len(update_data)}]",
+        status=1,
+        progress=0,
+        text="Inicializando",
+        lastUpdate="Actualizado:",
+    )
 
     # remove easyocr warnings in logger and start reader
     logging.getLogger("easyocr").setLevel(logging.ERROR)
     ocr = easyocr.Reader(["es"], gpu=False)
 
-    monitor.log(action="Updating Brevetes...")
-
     # iterate on all records that require updating and get scraper results
-    for id_member, doc_tipo, doc_num in update_data:
+    for counter, (id_member, doc_tipo, doc_num) in enumerate(update_data):
 
-        # skip member if doc tipo is not DNI (CE mostly)
+        # skip member if doc tipo is not DNI (CE mostly) - should have been filtered, double check
         if doc_tipo != "DNI":
-            monitor.log(f"BREVETE (Skip - not DNI): {doc_tipo}-{doc_num}", type=3)
             continue
-
-        # log action
-        monitor.log(f"Attempting BREVETE: {doc_tipo}-{doc_num}", type=4)
 
         retry_attempts = 0
         # loop to catch scraper errors and retry limited times
         while retry_attempts < 3:
             try:
+                # log action
+                dash.log(card=CARD, text=f"Procesando: {doc_tipo} {doc_num}")
+
                 # send request to scraper
                 brevete_response, pimpagas_response = scrape_brevete.browser(
                     doc_num=doc_num, ocr=ocr
@@ -35,7 +44,6 @@ def gather(db_cursor, monitor, update_data):
 
                 # update memberLastUpdate table with last update information
                 _now = dt.now().strftime("%Y-%m-%d")
-                print("&&&&&&&&&&", id_member)
                 db_cursor.execute(
                     f"UPDATE membersLastUpdate SET LastUpdateBrevete = '{_now}' WHERE IdMember_FK = {id_member}"
                 )
@@ -60,9 +68,6 @@ def gather(db_cursor, monitor, update_data):
                 # insert new record into database
                 db_cursor.execute(f"INSERT INTO brevetes VALUES {tuple(_values)}")
 
-                # log action
-                monitor.log(f"Succesful BREVETE: {doc_tipo}-{doc_num}", type=4)
-
                 # process list of papeletas impagas and put them in different table
                 for papeleta in pimpagas_response:
 
@@ -84,6 +89,13 @@ def gather(db_cursor, monitor, update_data):
                         f"INSERT INTO mtcPapeletas VALUES {tuple(_values)}"
                     )
 
+                # update dashboard with progress and last update timestamp
+                dash.log(
+                    card=CARD,
+                    progress=int((counter / len(update_data)) * 100),
+                    lastUpdate=dt.now(),
+                )
+
                 # register action and skip to next record
                 log_action_in_db(db_cursor, table_name="brevetes", idMember=id_member)
                 log_action_in_db(
@@ -98,16 +110,19 @@ def gather(db_cursor, monitor, update_data):
 
             except:
                 retry_attempts += 1
-                monitor.log(
-                    f"< BREVETE > Retrying Record {doc_tipo}-{doc_num}. ",
-                    type=3,
-                    error=True,
+                dash.log(
+                    card=CARD, msg=f"< BREVETE > Retrying Record {doc_tipo}-{doc_num}."
                 )
 
-        else:
-            # if code gets here, means scraping has encountred three consecutive errors, skip record
-            monitor.log(
-                f"< BREVETES > Could not process {doc_tipo}-{doc_num}. Skipping Record.",
-                type=3,
-                error=True,
-            )
+        # if code gets here, means scraping has encountred three consecutive errors, skip record
+        dash.log(card=CARD, msg=f"|ERROR| No se pudo procesar {doc_tipo} {doc_num}.")
+
+    # log last action
+    dash.log(
+        card=CARD,
+        title="Brevetes",
+        progress=100,
+        status=3,
+        text="Inactivo",
+        lastUpdate=dt.now(),
+    )

@@ -17,6 +17,9 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect("test.db", check_same_thread=False)
         self.cursor = self.conn.cursor()
+        self.reload_db()
+
+    def reload_db(self):
         # load members and create lists for validation
         self.cursor.execute("SELECT * FROM members")
         self.users = self.cursor.fetchall()
@@ -95,6 +98,7 @@ def reg2():
 
             db.conn.commit()
             session.clear()
+            db.reload_db()
             return render_template("reg-3.html")
 
     return render_template("reg-2.html", form=form)

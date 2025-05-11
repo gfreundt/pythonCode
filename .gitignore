@@ -37,3 +37,6 @@ Automation/test.db
 Automation/test2.db
 Automation/ServicioAlertas.rar
 general/llaves/llaves.db
+general/server/virtualenv/
+general/server/static/images/
+general/f1/CircuitLayouts/

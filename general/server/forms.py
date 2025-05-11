@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import (
     DataRequired,
     Email,
@@ -7,8 +7,13 @@ from wtforms.validators import (
     EqualTo,
     Regexp,
     ValidationError,
+    Optional,
 )
 import sqlite3
+
+
+class Test:
+    pass
 
 
 # custom error validations
@@ -23,6 +28,7 @@ def correo_no_en_db(form, field):
 
 
 def correo_si_en_db(form, field):
+    test.user = field.data
     if field.data not in todos_correo:
         raise ValidationError("Correo no existe.")
 
@@ -30,6 +36,11 @@ def correo_si_en_db(form, field):
 def celular_no_en_db(form, field):
     if field.data in todos_celular:
         raise ValidationError("Celular ya registrado.")
+
+
+def password_correcto(form, field):
+    if usuario_pwd[test.user] != field.data:
+        raise ValidationError("Contraseña equivocada.")
 
 
 # def codigo_validacion(form, field):
@@ -44,7 +55,12 @@ def load_db():
     cmd = f"SELECT * FROM members"
     cursor.execute(cmd)
     db = cursor.fetchall()
-    return [i[4] for i in db], [i[5] for i in db], [i[6] for i in db]
+    return (
+        [i[4] for i in db],
+        [i[5] for i in db],
+        [i[6] for i in db],
+        {i[6]: i[11] for i in db},
+    )
 
 
 class LoginForm(FlaskForm):
@@ -54,15 +70,16 @@ class LoginForm(FlaskForm):
         [
             DataRequired(message="El correo es requerido"),
             Email(message="Ingrese un correo electrónico válido"),
+            correo_si_en_db,
         ],
     )
     password = PasswordField(
         "Contraseña",
         [
             DataRequired(message="La contraseña es requerida"),
+            password_correcto,
         ],
     )
-    recordarme = BooleanField("Recordarme")
     submit = SubmitField("Empezar")
 
 
@@ -122,8 +139,8 @@ class RegisterFormPage2(FlaskForm):
             DataRequired(message="La contraseña es requerida"),
             Length(min=6, message="La contraseña debe tener al menos 6 caracteres"),
             Regexp(
-                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$",
-                message="La contraseña debe contener mayúsculas, minúsculas y números",
+                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$",
+                message="Contraseña minimo 6 digitos y tener mayúsculas y minúsculas",
             ),
         ],
     )
@@ -169,8 +186,8 @@ class RecoverFormPage2(FlaskForm):
             DataRequired(message="La contraseña es requerida"),
             Length(min=6, message="La contraseña debe tener al menos 6 caracteres"),
             Regexp(
-                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$",
-                message="La contraseña debe contener mayúsculas, minúsculas y números",
+                r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$",
+                message="Contraseña minimo 6 digitos y tener mayúsculas y minúsculas",
             ),
         ],
     )
@@ -188,7 +205,8 @@ class MiCuenta(FlaskForm):
 
     placa1 = StringField(
         "Placa 1",
-        [
+        validators=[
+            Optional(),  # Explicitly allows empty
             Regexp(
                 r"^[A-Z0-9]{6,7}$",
                 message="La placa debe tener 6 o 7 caracteres alfanuméricos",
@@ -197,7 +215,8 @@ class MiCuenta(FlaskForm):
     )
     placa2 = StringField(
         "Placa 2",
-        [
+        validators=[
+            Optional(),  # Explicitly allows empty
             Regexp(
                 r"^[A-Z0-9]{6,7}$",
                 message="La placa debe tener 6 o 7 caracteres alfanuméricos",
@@ -206,7 +225,8 @@ class MiCuenta(FlaskForm):
     )
     placa3 = StringField(
         "Placa 3",
-        [
+        validators=[
+            Optional(),  # Explicitly allows empty
             Regexp(
                 r"^[A-Z0-9]{6,7}$",
                 message="La placa debe tener 6 o 7 caracteres alfanuméricos",
@@ -216,4 +236,5 @@ class MiCuenta(FlaskForm):
     submit = SubmitField("Actualizar")
 
 
-todos_dni, todos_celular, todos_correo = load_db()
+todos_dni, todos_celular, todos_correo, usuario_pwd = load_db()
+test = Test()

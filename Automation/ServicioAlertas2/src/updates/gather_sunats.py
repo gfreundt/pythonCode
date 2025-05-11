@@ -5,7 +5,9 @@ from scrapers import scrape_sunat
 
 def gather(db_cursor, monitor, update_data):
 
-    monitor.log("Updating Consulta RUC de SUNAT...", type=1)
+    CARD = 8
+
+    monitor.log(card=CARD, title="Consulta RUC de SUNAT...", status=1)
 
     # iterate on all records that require updating and get scraper results
     for counter, (id_member, doc_tipo, doc_num) in enumerate(update_data, start=1):
@@ -15,7 +17,8 @@ def gather(db_cursor, monitor, update_data):
             try:
                 # log action
                 monitor.log(
-                    f"[{counter}/{len(update_data)}] SUNAT: {doc_tipo}-{doc_num}",
+                    card=CARD,
+                    msg=f"[{counter}/{len(update_data)}] SUNAT: {doc_tipo}-{doc_num}",
                     type=1,
                 )
 
@@ -48,16 +51,20 @@ def gather(db_cursor, monitor, update_data):
             except KeyboardInterrupt:
                 quit()
 
-            # except:
-            #     retry_attempts += 1
-            #     monitor.log(
-            #         f"< SUNAT > Retrying {doc_tipo}-{doc_num}.", error=True, type=1
-            #     )
+            except:
+                retry_attempts += 1
+                monitor.log(
+                    card=CARD,
+                    msg=f"< SUNAT > Retrying {doc_tipo}-{doc_num}.",
+                    error=True,
+                    type=1,
+                )
 
         else:
             # if code gets here, means scraping has encountred three consecutive errors, skip record
             monitor.log(
-                f"< SUNAT > Could not process {doc_tipo}-{doc_num}. Skipping Record.",
+                card=CARD,
+                msg=f"< SUNAT > Could not process {doc_tipo}-{doc_num}. Skipping Record.",
                 error=True,
                 type=1,
             )

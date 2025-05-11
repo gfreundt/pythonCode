@@ -8,6 +8,8 @@ from gft_utils import ChromeUtils
 
 def browser(placa):
 
+    TIMEOUT = 30
+
     webdriver = ChromeUtils().init_driver(
         headless=False, verbose=False, maximized=True, incognito=False
     )
@@ -35,8 +37,13 @@ def browser(placa):
     c.send_keys(placa)
 
     # wait until clicking on Buscar does not produce error (means "I'm not a robot passed")
+    # or return with timeout
+    timeout_start = time.time()
     while webdriver.find_elements(By.ID, "ctl00_cplPrincipal_txtPlaca"):
-        time.sleep(0.2)
+        if time.time() - timeout_start > TIMEOUT:
+            print("timeout")
+            return -1
+        time.sleep(0.5)
         e = webdriver.find_elements(By.ID, "ctl00_cplPrincipal_CaptchaContinue")
         if e:
             try:

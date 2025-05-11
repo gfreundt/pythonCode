@@ -18,7 +18,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# import speech_recognition
+import speech_recognition
 import win32com.client
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import *
@@ -52,7 +52,7 @@ class ChromeUtils:
         if parameters["incognito"]:
             options.add_argument("--incognito")
         if parameters["headless"]:
-            options.add_argument("--headless=old")
+            options.add_argument("--headless=new")
         if parameters["load_profile"]:
             options.add_argument(
                 r"user-data-dir=C:\Users\Gabriel\AppData\Local\Google\Chrome\User Data"
@@ -634,12 +634,12 @@ class SpeechUtils:
                 text = text.replace(word, word[0])
         return text
 
-    def get_speech(self, use_military_alphabet=True, max_driver_errors=5):
+    def get_speech(self, use_military_alphabet=True, max_driver_errors=5, timeout=10):
         while True:
             try:
                 with speech_recognition.Microphone() as mic:
                     self.speech.adjust_for_ambient_noise(mic, duration=0.2)
-                    _audio = self.speech.listen(mic)
+                    _audio = self.speech.listen(mic, timeout=timeout)
                     text = self.speech.recognize_google(_audio)
 
                 # clean military alphabet letters
@@ -647,6 +647,10 @@ class SpeechUtils:
                     text = self.clean_military_alphabet(text.lower())
 
                 return text
+
+            except speech_recognition.WaitTimeoutError:
+                print("[ SPEECH RECOGNITION TIMEOUT ]")
+                return "$$TIMEOUT$$"
 
             except:
                 if self.speech_driver_errors < max_driver_errors:
